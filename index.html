@@ -8,8 +8,20 @@
 <meta name="description" content="Lx050 的数字庭院。提一盏灯，走近作品、服务与故事。">
 <title>Lx050 · 夜游数字庭院</title>
 <script>
-// 背景音乐：换曲只需修改此处，使用本站自托管文件。
-const BGM_SRC='assets/audio/lanterns.mp3';
+// 夜间随机播放曲目（东方古曲/乐器 + 西方古典与夏夜氛围），本站自托管、按需加载；点右上角曲名切下一首。
+const TRACKS=[
+ {f:'guqin-zuiyu-changwan.mp3',n:'醉渔唱晚 · 古琴',a:'演奏 CharlieHuang',l:'CC BY-SA 3.0'},
+ {f:'guqin-yangguan-sandie.mp3',n:'阳关三叠 · 古琴',a:'演奏 CharlieHuang',l:'CC BY-SA 3.0'},
+ {f:'erhu-erquan-yingyue.mp3',n:'二泉映月 · 二胡',a:'阿炳 作曲并演奏',l:'CC BY-SA 4.0'},
+ {f:'yuda-bajiao.mp3',n:'雨打芭蕉 · 高胡与竹笛',a:'广东民间乐曲，丘鹤俦整理',l:'CC BY-SA 4.0'},
+ {f:'guzheng-morning.mp3',n:'Guzheng Morning · 古筝',a:'Antti Luode',l:'CC BY 3.0'},
+ {f:'shakuhachi-yoiyami.mp3',n:'宵闇 · 尺八与钢琴',a:'OpenGameArt',l:'CC0'},
+ {f:'koto-booth.mp3',n:'Koto Booth · 日本筝',a:'OpenGameArt',l:'CC0'},
+ {f:'hot-spring-town.mp3',n:'Hot Spring Town · 日式小町',a:'OpenGameArt',l:'CC0'},
+ {f:'clair-de-lune.mp3',n:'月光 Clair de Lune · 德彪西',a:'Claude Debussy',l:'Public Domain'},
+ {f:'fireflies-stardust.mp3',n:'Fireflies and Stardust · 萤火',a:'Kevin MacLeod',l:'CC BY 3.0'},
+ {f:'lanterns.mp3',n:'Lanterns in the Hollowed Forest',a:'Tsorthan Grove',l:'CC0'}
+];
 </script>
 <style>
 :root{color-scheme:dark;--ink:#0c0e10;--paper:#e8e2d5;--muted:#aaa69b;--red:#c0563e;--line:rgba(232,226,213,.16);--serif:"Songti SC","Noto Serif CJK SC","STSong",serif}
@@ -27,6 +39,13 @@ const BGM_SRC='assets/audio/lanterns.mp3';
 #bgm-button[hidden]{display:none}#bgm-button:hover{border-color:var(--muted)}#bgm-button:focus-visible{outline:2px solid var(--paper);outline-offset:3px}
 #bgm-button svg{width:16px;height:16px}#bgm-button .bgm-waves{display:none}#bgm-button[aria-pressed="true"] .bgm-waves{display:inline}#bgm-button[aria-pressed="true"] .bgm-cross{display:none}
 @media(max-width:360px){#bgm-button{position:absolute;right:0;bottom:5px;width:22px;padding:2px}}
+#track-button{display:none;align-items:center;gap:6px;max-width:190px;height:28px;padding:0 10px;border:1px solid var(--line);border-radius:5px;background:var(--ink);color:var(--muted);font-size:11px;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#track-button.show{display:inline-flex}#track-button:hover{color:var(--paper);border-color:var(--muted)}#track-button:focus-visible{outline:2px solid var(--paper);outline-offset:3px}#track-button .note{color:var(--red);flex-shrink:0}#track-button .tname{overflow:hidden;text-overflow:ellipsis}
+@media(max-width:760px){#track-button{max-width:120px;font-size:10px;padding:0 8px}}
+.music-credits{grid-column:1/-1;margin-top:14px;padding-top:18px;border-top:1px solid #e8e2d50e}
+.music-credits h3{font-size:11px;color:var(--red);letter-spacing:4px;font-weight:400;margin:0 0 8px}
+.music-credits small{display:block;color:var(--muted);font-size:11px;line-height:1.9;font-size:11px}
+.music-credits .mc-note{margin-bottom:8px;opacity:.8}
 </style>
 </head>
 <body>
@@ -38,7 +57,7 @@ const BGM_SRC='assets/audio/lanterns.mp3';
     <nav class="districts" aria-label="前往分区">
       <button data-zone="0" title="前往作品区">作品<span>08</span></button><button data-zone="1" title="前往服务区">服务<span>05</span></button><button data-zone="2" title="前往项目区">项目<span>11</span></button><button data-zone="3" title="前往连接区">连接<span>02</span></button>
     </nav>
-    <div class="tools"><span id="visited" title="已探访并点亮的入口" aria-live="polite">00 / 26</span><button id="home" title="返回庭心（R）">归庭</button><button id="list-button" aria-haspopup="dialog">目录 ↗</button><button id="bgm-button" type="button" aria-label="开启背景音乐" aria-pressed="false" title="开启背景音乐"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M11 4 6 8H3v8h3l5 4Z"/><g class="bgm-waves"><path d="M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14"/></g><path class="bgm-cross" d="m16 9 6 6m0-6-6 6"/></svg></button></div>
+    <div class="tools"><span id="visited" title="已探访并点亮的入口" aria-live="polite">00 / 26</span><button id="home" title="返回庭心（R）">归庭</button><button id="list-button" aria-haspopup="dialog">目录 ↗</button><button id="bgm-button" type="button" aria-label="开启背景音乐" aria-pressed="false" title="开启背景音乐"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M11 4 6 8H3v8h3l5 4Z"/><g class="bgm-waves"><path d="M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14"/></g><path class="bgm-cross" d="m16 9 6 6m0-6-6 6"/></svg></button><button id="track-button" type="button" title="" aria-label="下一首"><span class="note">♪</span><span class="tname"></span></button></div>
   </header>
   <div class="margin-note" aria-hidden="true"><i></i>灯火所及，皆是来处。</div>
   <div class="viewpad" id="viewpad" tabindex="0" role="group" aria-label="视角控制：拖动旋转视角，聚焦后使用方向键调整，Home 重置"><span class="arrows">↔</span><small>拖动视角</small></div>
@@ -55,7 +74,7 @@ const BGM_SRC='assets/audio/lanterns.mp3';
   <div class="intro-inner"><div class="intro-kicker">A SMALL ISLAND OF THOUGHTS</div><h1>Lx050<span style="color:var(--red)">.</span></h1><div class="intro-poem">在数字之间，留一点人间</div><div class="intro-line"></div><p class="intro-description">一些作品，一些故事，一些仍在生长的念头。<br>借一盏灯，随意走走。</p><button class="start" id="start" disabled>正在点灯<span class="arrow">↗</span></button><div class="intro-controls" id="intro-controls">WASD / 方向键行走 · 拖动环顾 · 回车访问<br>点击或按任意键，开始夜游</div></div>
   <div class="intro-footer"><span>作品 / 服务 / 项目 / 连接</span><span>慢一点，也没有关系。 &nbsp; © Lx050</span></div>
 </section>
-<section id="directory" role="dialog" aria-modal="true" aria-labelledby="directory-title" hidden><div class="directory-inner"><div class="directory-head"><h2 id="directory-title">庭院目录</h2><button id="close-directory" aria-label="关闭目录">×</button></div><p class="directory-sub">二十六个入口，也可以直接抵达。所有链接在新标签页打开。</p><div id="directory-grid" class="directory-grid"></div></div></section>
+<section id="directory" role="dialog" aria-modal="true" aria-labelledby="directory-title" hidden><div class="directory-inner"><div class="directory-head"><h2 id="directory-title">庭院目录</h2><button id="close-directory" aria-label="关闭目录">×</button></div><p class="directory-sub">二十六个入口，也可以直接抵达。所有链接在新标签页打开。</p><div id="directory-grid" class="directory-grid"></div><div class="music-credits" id="music-credits"></div></div></section>
 <div id="error" role="alert" hidden><h2 style="font-family:var(--serif);font-weight:400">灯还没有亮起来</h2><p id="error-message">三维场景暂时无法加载，请刷新重试。也可以从目录直接访问全部入口。</p><button id="fallback-list">打开庭院目录 ↗</button></div>
 <noscript>请启用 JavaScript，来这座小岛走走。</noscript>
 <script src="vendor/three.min.js"></script>
@@ -107,8 +126,9 @@ const $ = id => document.getElementById(id);
 let started=false,ready=false,failed=false,nearest=null,previousFocus=null;
 // Audio owns its own clock: neither render quality nor tab visibility changes it.
 const bgm=(()=>{
-  const button=$('bgm-button'),storageKey='garden-bgm',volume=.22;
-  let audio,context,gain,source,unavailable=false,wanted=true,request=0;
+  const button=$('bgm-button'),trackButton=$('track-button'),storageKey='garden-bgm',volume=.22,prefix='assets/audio/tracks/';
+  let audio,context,gain,unavailable=false,wanted=true,request=0,failures=0;
+  let order=[],pos=0,current=-1;
   let envelope={from:0,to:0,start:0,end:0};
   try{wanted=localStorage.getItem(storageKey)!=='off';}catch(error){/* Session preference still works. */}
   function showPlaying(playing){
@@ -116,8 +136,15 @@ const bgm=(()=>{
     button.title=playing?'关闭背景音乐':'开启背景音乐';
     button.setAttribute('aria-label',button.title);
   }
+  function renderTrack(){
+    const t=TRACKS[current];if(!t)return;
+    trackButton.querySelector('.tname').textContent=t.n;
+    trackButton.title=`正在播放：${t.n} — ${t.a}（${t.l}）。点击切到下一首`;
+    trackButton.setAttribute('aria-label',`正在播放 ${t.n}，点击切到下一首`);
+    trackButton.classList.add('show');
+  }
   function disable(){
-    unavailable=true;request++;showPlaying(false);button.disabled=true;button.hidden=true;
+    unavailable=true;request++;showPlaying(false);button.disabled=true;button.hidden=true;trackButton.classList.remove('show');
     try{if(audio)audio.pause();}catch(error){/* Audio must never interrupt the garden. */}
     try{if(context)context.close().catch(()=>{});}catch(error){/* Already closed. */}
   }
@@ -125,18 +152,24 @@ const bgm=(()=>{
     if(!gain)return;
     const now=context.currentTime;
     const progress=envelope.end>envelope.start?Math.max(0,Math.min(1,(now-envelope.start)/(envelope.end-envelope.start))):1;
-    const current=envelope.from+(envelope.to-envelope.from)*progress;
+    const cv=envelope.from+(envelope.to-envelope.from)*progress;
     gain.gain.cancelScheduledValues(now);
-    gain.gain.setValueAtTime(current,now);
+    gain.gain.setValueAtTime(cv,now);
     gain.gain.linearRampToValueAtTime(target,now+seconds);
-    envelope={from:current,to:target,start:now,end:now+seconds};
+    envelope={from:cv,to:target,start:now,end:now+seconds};
   }
-  function playbackError(error,ticket){
-    if(unavailable||ticket!==request)return;
-    if(error?.name==='NotAllowedError'){
-      wanted=false;fadeTo(0,.4);showPlaying(false); // A fresh speaker click can retry.
-    }else disable();
+  function reshuffle(){order=TRACKS.map((_,i)=>i);for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}pos=0;}
+  function pickNext(){if(!order.length||pos>=order.length)reshuffle();return order[pos++];}
+  function loadTrack(i,fadeIn){
+    const ticket=request;current=i;failures=0;renderTrack();
+    try{audio.src=prefix+TRACKS[i].f;}catch(error){disable();return;}
+    const playing=audio.play();
+    if(playing&&playing.then)playing.then(()=>{if(ticket===request&&!unavailable)fadeTo(wanted?volume:0,fadeIn);}).catch(error=>{
+      if(error&&error.name==='NotAllowedError'){wanted=false;fadeTo(0,.4);showPlaying(false);}
+    });
   }
+  function nextTrack(fadeIn=1.1){if(unavailable)return;if(failures>TRACKS.length){disable();return;}loadTrack(pickNext(),fadeIn);}
+  function playbackFailure(){failures++;if(failures>TRACKS.length){disable();return;}loadTrack(pickNext(),.5);}
   function play(seconds){
     if(unavailable)return;
     const ticket=++request;
@@ -147,31 +180,35 @@ const bgm=(()=>{
         source=context.createMediaElementSource(audio);source.connect(gain);gain.connect(context.destination);
       }
       // Both calls stay synchronous in the entry/click gesture, including on iOS.
-      // Gain starts at zero, so even a remembered "off" preference unlocks silently.
       const resumed=context.resume();
       let playing;
       try{playing=audio.play();}catch(error){Promise.resolve(resumed).catch(()=>{});throw error;}
       Promise.all([resumed,playing]).then(()=>{
         if(unavailable||ticket!==request)return;
         fadeTo(wanted?volume:0,seconds);showPlaying(wanted);
-      }).catch(error=>playbackError(error,ticket));
-    }catch(error){playbackError(error,ticket);}
+      }).catch(error=>{
+        if(error?.name==='NotAllowedError'){wanted=false;fadeTo(0,.4);showPlaying(false);}else disable();
+      });
+    }catch(error){if(error?.name==='NotAllowedError'){wanted=false;showPlaying(false);}else disable();}
   }
+  let source;
   try{
-    audio=new Audio();audio.preload='auto';audio.loop=true;
-    audio.addEventListener('error',disable);
-    audio.src=BGM_SRC;
+    audio=new Audio();audio.preload='none';
+    audio.addEventListener('error',()=>{if(audio.src&&started&&audio.error)playbackFailure();});
+    audio.addEventListener('ended',()=>{if(!wanted)return;fadeTo(0,.5);setTimeout(()=>{if(wanted&&!unavailable)nextTrack(1.4);},380);});
+    reshuffle();current=pickNext();audio.src=prefix+TRACKS[current].f;renderTrack();
   }catch(error){disable();}
   button.addEventListener('click',()=>{
     if(unavailable||!started)return;
     wanted=!wanted;
     try{localStorage.setItem(storageKey,wanted?'on':'off');}catch(error){/* Keep the choice for this visit. */}
-    if(wanted)play(.4);
-    else{
-      request++;
-      try{fadeTo(0,.4);showPlaying(false);}catch(error){disable();}
-      // Keep the silent loop unlocked; no delayed pause can race a quick toggle.
-    }
+    if(wanted){request++;play(.5);}
+    else{request++;try{fadeTo(0,.4);showPlaying(false);}catch(error){disable();}}
+  });
+  trackButton.addEventListener('click',()=>{
+    if(unavailable||!started)return;
+    wanted=true;try{localStorage.setItem(storageKey,'on');}catch(error){/* Keep the choice for this visit. */}
+    fadeTo(0,.3);setTimeout(()=>{request++;nextTrack(1.2);showPlaying(true);},260);
   });
   return {start:()=>play(2.5)};
 })();
@@ -194,6 +231,7 @@ ZONES.forEach((zone,index)=>{
     a.textContent=item.title;const hint=document.createElement('span');hint.textContent=new URL(item.url).hostname+' ↗';a.append(hint);section.append(a);
   });$('directory-grid').append(section);
 });
+$('music-credits').innerHTML='<h3>夜乐 · 背景音乐署名</h3><small class="mc-note">入庭后夜间随机播放，点击右上角曲名可切下一首。以下均为公有领域或 CC0 / CC-BY 授权的演奏录音。</small>'+TRACKS.map(t=>`<small>${t.n} — ${t.a}，${t.l}</small>`).join('');
 function clearInput(){keys.clear();joy.x=joy.y=0;$('stick').style.transform='';}
 function showDirectory(){previousFocus=document.activeElement;clearInput();$('directory').hidden=false;$('hud').inert=true;$('intro').inert=true;$('close-directory').focus();}
 function closeDirectory(){$('directory').hidden=true;$('hud').inert=!started;$('intro').inert=started;previousFocus?.focus();}
