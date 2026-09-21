@@ -7,6 +7,10 @@
 <meta name="theme-color" content="#0c0e10">
 <meta name="description" content="Lx050 的数字庭院。提一盏灯，走近作品、服务与故事。">
 <title>Lx050 · 夜游数字庭院</title>
+<script>
+// 背景音乐：换曲只需修改此处，使用本站自托管文件。
+const BGM_SRC='assets/audio/lanterns.mp3';
+</script>
 <style>
 :root{color-scheme:dark;--ink:#0c0e10;--paper:#e8e2d5;--muted:#aaa69b;--red:#c0563e;--line:rgba(232,226,213,.16);--serif:"Songti SC","Noto Serif CJK SC","STSong",serif}
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--ink);color:var(--paper)}body{font:13px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}button,a{-webkit-tap-highlight-color:transparent}button{font:inherit;color:inherit;cursor:pointer}button:focus-visible,a:focus-visible{outline:2px solid var(--red);outline-offset:5px}button{border:0;background:none}a{color:inherit}button:disabled{cursor:wait}#world{position:fixed;inset:0;outline:none;touch-action:none}#world canvas{display:block;width:100%;height:100%}.vignette{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 45%,transparent 42%,rgba(7,9,11,.48) 100%)}
@@ -19,6 +23,10 @@
 @media(max-width:760px){.topbar{left:20px;right:20px;top:max(20px,env(safe-area-inset-top));flex-wrap:wrap;gap:19px}.wordmark{font-size:22px}.subtitle{font-size:8px}.seal{width:25px;height:30px;font-size:15px}.tools{gap:13px}.districts{order:3;gap:0;padding:3px}.districts button{padding:6px 12px;font-size:11px}.districts span{margin-left:5px;font-size:9px}.viewpad{right:20px;top:139px;width:76px;height:66px}.margin-note{display:none}.bottom-note{left:20px;bottom:25px}.bottom-note .desktop-help{display:none}.mapbox{right:15px;bottom:151px}.mapbox canvas{width:112px;height:112px}.mapbox small{font-size:8px}.touch .bottom-note{bottom:290px;left:26px}#interaction{bottom:max(25px,env(safe-area-inset-bottom));padding:15px 17px;width:calc(100% - 36px);gap:12px}#entry-title{font-size:19px}#entry-desc{font-size:10px}#enter-link{padding-left:14px}#ambient-hint{bottom:68px;font-size:11px;letter-spacing:2px}.intro-inner{padding:0 9vw}.intro-poem{letter-spacing:3px;font-size:17px}.intro-controls{max-width:245px;line-height:2}.intro-footer{font-size:8px;letter-spacing:1px}.intro-description{font-size:11px}.directory-inner{padding:20px}.directory-grid{grid-template-columns:1fr;gap:10px}.intro-kicker{font-size:9px;letter-spacing:3px}}
 @media(max-height:540px){.intro-inner{padding-left:8vw}.intro-kicker,.intro-line,.intro-description,.intro-footer{display:none}h1{font-size:56px;margin-top:0}.intro-poem{font-size:16px}.start{margin-top:5px}.intro-controls{margin-top:12px}.mapbox{bottom:10px}.touch #joystick{bottom:30px;width:100px;height:100px}.touch #stick{left:29px;top:29px}.touch .bottom-note{display:none}.viewpad{top:98px}.topbar{top:15px}.districts{order:initial}.margin-note{display:none}#interaction{max-width:390px;bottom:18px}.mapbox canvas{width:96px;height:96px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
+#bgm-button{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:28px;height:28px;padding:5px;border:1px solid var(--line);border-radius:5px;background:var(--ink);color:var(--paper)}
+#bgm-button[hidden]{display:none}#bgm-button:hover{border-color:var(--muted)}#bgm-button:focus-visible{outline:2px solid var(--paper);outline-offset:3px}
+#bgm-button svg{width:16px;height:16px}#bgm-button .bgm-waves{display:none}#bgm-button[aria-pressed="true"] .bgm-waves{display:inline}#bgm-button[aria-pressed="true"] .bgm-cross{display:none}
+@media(max-width:360px){#bgm-button{position:absolute;right:0;bottom:5px;width:22px;padding:2px}}
 </style>
 </head>
 <body>
@@ -30,7 +38,7 @@
     <nav class="districts" aria-label="前往分区">
       <button data-zone="0" title="前往作品区">作品<span>08</span></button><button data-zone="1" title="前往服务区">服务<span>05</span></button><button data-zone="2" title="前往项目区">项目<span>11</span></button><button data-zone="3" title="前往连接区">连接<span>02</span></button>
     </nav>
-    <div class="tools"><span id="visited" title="已探访并点亮的入口" aria-live="polite">00 / 26</span><button id="home" title="返回庭心（R）">归庭</button><button id="list-button" aria-haspopup="dialog">目录 ↗</button></div>
+    <div class="tools"><span id="visited" title="已探访并点亮的入口" aria-live="polite">00 / 26</span><button id="home" title="返回庭心（R）">归庭</button><button id="list-button" aria-haspopup="dialog">目录 ↗</button><button id="bgm-button" type="button" aria-label="开启背景音乐" aria-pressed="false" title="开启背景音乐"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M11 4 6 8H3v8h3l5 4Z"/><g class="bgm-waves"><path d="M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14"/></g><path class="bgm-cross" d="m16 9 6 6m0-6-6 6"/></svg></button></div>
   </header>
   <div class="margin-note" aria-hidden="true"><i></i>灯火所及，皆是来处。</div>
   <div class="viewpad" id="viewpad" tabindex="0" role="group" aria-label="视角控制：拖动旋转视角，聚焦后使用方向键调整，Home 重置"><span class="arrows">↔</span><small>拖动视角</small></div>
@@ -97,6 +105,76 @@ const ZONES = [
 ];
 const $ = id => document.getElementById(id);
 let started=false,ready=false,failed=false,nearest=null,previousFocus=null;
+// Audio owns its own clock: neither render quality nor tab visibility changes it.
+const bgm=(()=>{
+  const button=$('bgm-button'),storageKey='garden-bgm',volume=.22;
+  let audio,context,gain,source,unavailable=false,wanted=true,request=0;
+  let envelope={from:0,to:0,start:0,end:0};
+  try{wanted=localStorage.getItem(storageKey)!=='off';}catch(error){/* Session preference still works. */}
+  function showPlaying(playing){
+    button.setAttribute('aria-pressed',String(playing));
+    button.title=playing?'关闭背景音乐':'开启背景音乐';
+    button.setAttribute('aria-label',button.title);
+  }
+  function disable(){
+    unavailable=true;request++;showPlaying(false);button.disabled=true;button.hidden=true;
+    try{if(audio)audio.pause();}catch(error){/* Audio must never interrupt the garden. */}
+    try{if(context)context.close().catch(()=>{});}catch(error){/* Already closed. */}
+  }
+  function fadeTo(target,seconds){
+    if(!gain)return;
+    const now=context.currentTime;
+    const progress=envelope.end>envelope.start?Math.max(0,Math.min(1,(now-envelope.start)/(envelope.end-envelope.start))):1;
+    const current=envelope.from+(envelope.to-envelope.from)*progress;
+    gain.gain.cancelScheduledValues(now);
+    gain.gain.setValueAtTime(current,now);
+    gain.gain.linearRampToValueAtTime(target,now+seconds);
+    envelope={from:current,to:target,start:now,end:now+seconds};
+  }
+  function playbackError(error,ticket){
+    if(unavailable||ticket!==request)return;
+    if(error?.name==='NotAllowedError'){
+      wanted=false;fadeTo(0,.4);showPlaying(false); // A fresh speaker click can retry.
+    }else disable();
+  }
+  function play(seconds){
+    if(unavailable)return;
+    const ticket=++request;
+    try{
+      if(!context){
+        const AudioContext=window.AudioContext||window.webkitAudioContext;
+        context=new AudioContext();gain=context.createGain();gain.gain.value=0;
+        source=context.createMediaElementSource(audio);source.connect(gain);gain.connect(context.destination);
+      }
+      // Both calls stay synchronous in the entry/click gesture, including on iOS.
+      // Gain starts at zero, so even a remembered "off" preference unlocks silently.
+      const resumed=context.resume();
+      let playing;
+      try{playing=audio.play();}catch(error){Promise.resolve(resumed).catch(()=>{});throw error;}
+      Promise.all([resumed,playing]).then(()=>{
+        if(unavailable||ticket!==request)return;
+        fadeTo(wanted?volume:0,seconds);showPlaying(wanted);
+      }).catch(error=>playbackError(error,ticket));
+    }catch(error){playbackError(error,ticket);}
+  }
+  try{
+    audio=new Audio();audio.preload='auto';audio.loop=true;
+    audio.addEventListener('error',disable);
+    audio.src=BGM_SRC;
+  }catch(error){disable();}
+  button.addEventListener('click',()=>{
+    if(unavailable||!started)return;
+    wanted=!wanted;
+    try{localStorage.setItem(storageKey,wanted?'on':'off');}catch(error){/* Keep the choice for this visit. */}
+    if(wanted)play(.4);
+    else{
+      request++;
+      try{fadeTo(0,.4);showPlaying(false);}catch(error){disable();}
+      // Keep the silent loop unlocked; no delayed pause can race a quick toggle.
+    }
+  });
+  return {start:()=>play(2.5)};
+})();
 const keys=new Set(),joy={x:0,y:0};
 const touch=matchMedia('(pointer:coarse)').matches || navigator.maxTouchPoints>0;
 const motionQuery=matchMedia('(prefers-reduced-motion:reduce)');
@@ -391,6 +469,7 @@ $('enter-link').addEventListener('click',e=>{if(nearest&&!e.defaultPrevented)mar
 $('enter-link').addEventListener('auxclick',e=>{if(e.button===1&&nearest&&!e.defaultPrevented)markVisited(nearest.index);});
 function start(){
   if(!ready||started||failed)return;started=true;clearInput();$('intro').classList.add('gone');$('intro').inert=true;$('hud').inert=false;document.body.classList.add('playing');$('world').focus();
+  bgm.start();
 }
 $('intro').addEventListener('click',start);
 function teleport(x,z){clearInput();velocity.set(0,0);player.position.set(x,0,z);setNear(null);cameraState.yaw=0;cameraState.pitch=.78;framing.set(0,0,0);if(started)$('world').focus({preventScroll:true});}
