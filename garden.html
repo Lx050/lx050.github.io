@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0c0e10">
+<meta name="description" content="Lx050 的数字园林。在数字之间，留一点人间。提一盏灯，漫游作品、服务、项目与连接。">
+<title>Lx050 · 夜游小园</title>
+<style>
+:root{color-scheme:dark;--ink:#0c0e10;--paper:#e8e2d5;--muted:#999b90;--red:#c0563e;--line:rgba(232,226,213,.15)}
+*{box-sizing:border-box}html,body{margin:0;background:var(--ink);color:var(--paper);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}button,a{-webkit-tap-highlight-color:transparent}button{font:inherit;color:inherit;cursor:pointer}a{color:inherit}button:focus-visible,a:focus-visible,canvas:focus-visible{outline:2px solid var(--red);outline-offset:6px}button{border:0;background:none}button:disabled{cursor:default}button:hover{color:#fff}::selection{background:#7c3b2e} [hidden]{display:none!important}
+#garden{height:100svh;min-height:560px;position:relative;overflow:hidden}#world{display:block;width:100%;height:100%;touch-action:none;outline-offset:-5px}header{position:absolute;z-index:3;top:35px;left:4.5%;right:4.5%;display:flex;justify-content:space-between;align-items:center;pointer-events:none}.brand{display:flex;align-items:center;gap:17px;font-size:19px;letter-spacing:-.5px}.seal{display:grid;place-items:center;width:29px;height:32px;background:var(--red);font-family:serif;font-size:18px;letter-spacing:0;border-radius:2px}.brand small{font-size:10px;color:var(--muted);letter-spacing:3px;border-left:1px solid var(--line);padding-left:17px}.header-actions{display:flex;gap:22px;align-items:center;pointer-events:auto}.night{font-size:10px;letter-spacing:2px;color:var(--muted)}.night:before{content:"";display:inline-block;width:5px;height:5px;background:#b9bb96;border-radius:50%;margin-right:9px}.list-toggle{font-size:12px;padding:10px 0;border-bottom:1px solid #60615a;letter-spacing:1px}.list-toggle span{margin-left:16px;color:var(--muted)}
+#intro{position:absolute;z-index:2;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(12,14,16,.97),rgba(12,14,16,.9) 24%,rgba(12,14,16,.12) 51%,transparent 68%)}.intro-copy{position:absolute;top:26%;left:8%;pointer-events:auto}.eyebrow{font-size:10px;letter-spacing:4px;color:var(--muted);display:flex;align-items:center;gap:12px}.eyebrow:before{content:"";width:24px;height:1px;background:var(--red)}h1{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:clamp(80px,9vw,136px);line-height:1;margin:30px 0 23px;letter-spacing:-6px}.poem{font-family:"Songti SC","STSong",serif;font-size:clamp(19px,2vw,26px);letter-spacing:4px;line-height:1.8;margin:0}.intro-note{color:var(--muted);font-size:12px;line-height:2.1;letter-spacing:1px;margin:22px 0 32px}.enter{padding:15px 23px;background:var(--paper);color:var(--ink);font-size:12px;letter-spacing:2px}.enter:hover{background:#fff5df;color:var(--ink)}.enter span{margin-left:36px}.start-hint{margin-top:19px;font-size:10px;color:#85877f;letter-spacing:1px}.intro-index{position:absolute;right:5%;bottom:106px;font-family:"Songti SC",serif;font-size:12px;letter-spacing:5px;writing-mode:vertical-rl;color:#acaa98}.intro-index span{color:var(--red);margin-top:22px}.edge-note{position:absolute;bottom:33px;left:4.5%;font-size:10px;letter-spacing:2px;color:#8d9086}.edge-note i{font-style:normal;color:var(--red);margin-right:15px}.coordinate{position:absolute;right:4.5%;bottom:33px;color:#7e827a;font-size:10px;letter-spacing:2px}.view-label{position:absolute;top:112px;left:4.5%;font-family:"Songti SC",serif;font-size:13px;letter-spacing:3px;color:#b4b3a6}.view-label small{display:block;font:9px/3 monospace;letter-spacing:2px;color:#797f75}
+#hud{pointer-events:none;position:absolute;inset:0}#card{pointer-events:auto;position:absolute;bottom:76px;left:50%;transform:translateX(-50%);width:min(440px,calc(100% - 40px));padding:19px 23px;background:rgba(17,21,22,.94);border:1px solid #41443b;display:flex;gap:17px;align-items:center;box-shadow:0 12px 50px #0003}.card-icon{font-family:"Songti SC",serif;color:#d37b60;border:1px solid #6e4938;display:grid;place-items:center;width:38px;height:42px;flex-shrink:0;font-size:19px}.card-copy{flex:1;min-width:0}#card-title{margin:0 0 5px;font-size:15px;font-weight:400;letter-spacing:1px}#card-desc{margin:0;font-size:11px;color:#a6aa9b;line-height:1.6}#visit{font-size:11px;white-space:nowrap;text-decoration:none;padding:12px 0 12px 9px;color:#e1b898}.key-help{position:absolute;bottom:34px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:1px;color:#94988b;white-space:nowrap}kbd{font:10px monospace;border:1px solid #45483f;padding:3px 5px;margin:0 2px;border-radius:3px}.districts{position:absolute;right:4.5%;top:112px;display:flex;gap:19px;font-size:11px;color:#a3a795;letter-spacing:2px}.districts span:before{content:"";display:inline-block;width:4px;height:4px;background:#bfa879;margin-right:7px}.districts span:nth-child(2):before{background:#95aa98}.districts span:nth-child(3):before{background:#bc7960}.districts span:nth-child(4):before{background:#aaa6bd}
+#joystick{display:none;position:absolute;left:max(24px,env(safe-area-inset-left));bottom:max(42px,env(safe-area-inset-bottom));width:106px;height:106px;border:1px solid #bdbb9f50;border-radius:50%;background:#1117148c;touch-action:none;pointer-events:auto}#joystick:before,#joystick:after{content:"";position:absolute;background:#d9d2b52a}#joystick:before{height:1px;width:70px;left:17px;top:52px}#joystick:after{width:1px;height:70px;top:17px;left:52px}#stick{position:absolute;top:33px;left:33px;width:38px;height:38px;border:1px solid #d5ccae80;border-radius:50%;background:#9b947440;z-index:1;pointer-events:none}
+#directory{max-width:1120px;margin:auto;padding:95px 40px 70px;border-top:1px solid var(--line)}.directory-head{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin-bottom:45px}.directory-head h2{font:32px "Songti SC","STSong",serif;letter-spacing:4px;margin:0 0 13px}.directory-head p{font-size:12px;color:var(--muted);letter-spacing:1px}.back{font-size:12px;padding:12px 0;border-bottom:1px solid #6b6e60}.link-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:46px 70px}.link-group h3{font-size:11px;color:#cd866c;font-weight:400;letter-spacing:4px;margin:0 0 17px}.link-group ul{list-style:none;margin:0;padding:0}.link-group a{display:flex;align-items:baseline;gap:15px;padding:14px 0;border-bottom:1px solid #e8e2d510;text-decoration:none;font-size:14px;line-height:1.7}.link-group a:hover{color:#eab297}.link-group a:after{content:"↗";font-size:12px;color:#8d8f80;margin-left:auto}.link-group a span{font-size:11px;color:#9b9f92}.directory-foot{margin-top:70px;padding-top:25px;border-top:1px solid var(--line);font-size:11px;color:var(--muted);letter-spacing:2px}.skip{position:fixed;left:20px;top:-80px;z-index:10;padding:14px;background:var(--paper);color:var(--ink)}.skip:focus{top:15px}body.list-mode #garden{height:115px;min-height:0}body.list-mode #world,body.list-mode #intro,body.list-mode #hud,body.list-mode .edge-note,body.list-mode .coordinate,body.list-mode .view-label{display:none}body.list-mode #directory{border:0;padding-top:40px}.noscript{padding:24px;color:var(--paper)}
+@media(pointer:coarse){#joystick{display:block}.key-help{display:none}}
+@media(max-width:700px){#garden{min-height:620px}header{top:24px;left:24px;right:24px}.brand{font-size:17px;gap:11px}.brand small{font-size:9px;padding-left:11px;letter-spacing:2px}.night{display:none}.list-toggle{font-size:11px}.list-toggle span{margin-left:7px}.intro-copy{left:29px;top:19%}h1{font-size:86px;margin:20px 0 15px}.poem{font-size:20px;letter-spacing:2px}.intro-note{font-size:11px;margin:15px 0 24px}.eyebrow{font-size:9px}.intro-index{right:25px;bottom:105px;font-size:10px}#intro{background:linear-gradient(180deg,rgba(12,14,16,.92),rgba(12,14,16,.8) 31%,transparent 63%)}.enter{padding:13px 19px}.start-hint{font-size:9px}.edge-note{left:25px;bottom:23px;font-size:9px;letter-spacing:1px}.coordinate{right:25px;bottom:23px;font-size:9px}.view-label{left:25px;top:95px;font-size:12px}.districts{right:25px;top:101px;gap:10px;font-size:9px;letter-spacing:1px}#card{bottom:175px;width:calc(100% - 48px);padding:15px 17px}#card-desc{font-size:10px}#card-title{font-size:14px}.key-help{bottom:80px;font-size:9px}#directory{padding:55px 26px}.link-grid{grid-template-columns:1fr;gap:35px}.directory-head h2{font-size:26px}.link-group a{font-size:13px}.link-group a span{font-size:10px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<a class="skip" href="#directory">跳过漫游，查看全部链接</a>
+<main>
+<section id="garden" aria-label="夜游小园">
+<canvas id="world" tabindex="0" aria-label="夜晚的等距园林。使用 WASD 或方向键移动灯笼，靠近建筑后按回车或空格打开链接。也可切换列表视图。">您的浏览器不支持 Canvas，请使用下方完整链接清单。</canvas>
+<header><div class="brand"><span class="seal" aria-hidden="true">廿</span><span>Lx050</span><small>数字园林</small></div><div class="header-actions"><span class="night">夜色正好</span><button class="list-toggle" id="list-toggle" aria-controls="directory" aria-expanded="false">列表视图 <span aria-hidden="true">☷</span></button></div></header>
+<div class="view-label" id="view-label" hidden>提灯，慢慢走。<small>一座小园 · 二十六处相逢</small></div>
+<div id="intro"><div class="intro-copy"><div class="eyebrow">一个人的数字栖居地</div><h1>Lx050<span style="color:var(--red)">.</span></h1><p class="poem">在数字之间，<br>留一点人间。</p><p class="intro-note">作品是屋，想法成林。<br>提一盏灯，来我的小园走走。</p><button class="enter" id="enter">入园漫游 <span aria-hidden="true">↗</span></button><p class="start-hint">WASD / 方向键行走 · 触屏拖动摇杆</p></div><div class="intro-index">夜游小园<span>二十六处 · 皆有回响</span></div></div>
+<div id="hud" hidden><div class="districts" aria-label="四个分区"><span>作品</span><span>服务</span><span>项目</span><span>连接</span></div><div id="card" aria-live="polite" aria-atomic="true"><span class="card-icon" id="card-icon" aria-hidden="true">灯</span><div class="card-copy"><h2 id="card-title">此间有光</h2><p id="card-desc">靠近一座小屋，读一段故事。</p></div><a id="visit" href="#directory" target="_blank" rel="noopener noreferrer" hidden>前往 ↗</a></div><div class="key-help"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / 方向键行走 <span style="margin:0 12px;color:#585d51">·</span> <kbd>Enter</kbd> 访问 <span style="margin:0 12px;color:#585d51">·</span> 点击名牌直达</div><div id="joystick" role="group" aria-label="触屏移动摇杆，按住并向行走方向拖动"><div id="stick"></div></div></div>
+<div class="edge-note"><i>●</i><span id="explored">不必赶路，自有相逢。</span></div><div class="coordinate">LX050 / <span id="place">夜游小园</span></div>
+</section>
+<noscript><p class="noscript">无需 JavaScript，也可以探访这座小园。全部 26 个入口都在下方。</p></noscript>
+<section id="directory" aria-labelledby="directory-title" tabindex="-1">
+<div class="directory-head"><div><h2 id="directory-title">小园索引</h2><p>二十六处入口，通往我在意的事物。</p></div><button class="back" id="back" hidden>返回小园 ↗</button></div>
+<div class="link-grid">
+<section class="link-group"><h3>01 / 作品 · 把想法做成日常</h3><ul>
+<li><a href="https://moxi.maniforld.com" target="_blank" rel="noopener noreferrer">墨息 <span>数字毛笔书写</span></a></li>
+<li><a href="https://huayun.maniforld.com" target="_blank" rel="noopener noreferrer">画韵新生 <span>AI古画修复</span></a></li>
+<li><a href="https://hyxs.art" target="_blank" rel="noopener noreferrer">画韵新生·旧址 <span>最初的画韵</span></a></li>
+<li><a href="https://mosheng.maniforld.com" target="_blank" rel="noopener noreferrer">墨生 <span>AI古画修复</span></a></li>
+<li><a href="https://nuanling.maniforld.com" target="_blank" rel="noopener noreferrer">暖聆 <span>家人守护台</span></a></li>
+<li><a href="https://nuanling.maniforld.com/app/" target="_blank" rel="noopener noreferrer">暖聆App <span>手机版</span></a></li>
+<li><a href="https://editor.maniforld.com" target="_blank" rel="noopener noreferrer">排版助手 <span>整理文字的秩序</span></a></li>
+<li><a href="https://patent.maniforld.com" target="_blank" rel="noopener noreferrer">金陵专利局 <span>线上入口</span></a></li>
+</ul></section>
+<section class="link-group"><h3>02 / 服务 · 安静运转的角落</h3><ul>
+<li><a href="https://rss.maniforld.com" target="_blank" rel="noopener noreferrer">RSS <span>订阅</span></a></li>
+<li><a href="https://vault.maniforld.com" target="_blank" rel="noopener noreferrer">Vaultwarden <span>密码库</span></a></li>
+<li><a href="https://api.maniforld.com" target="_blank" rel="noopener noreferrer">API <span>LLM网关</span></a></li>
+<li><a href="https://biaoshu.maniforld.com" target="_blank" rel="noopener noreferrer">标书 <span>智能标书</span></a></li>
+<li><a href="https://reme.maniforld.com" target="_blank" rel="noopener noreferrer">Reme <span>家中守护</span></a></li>
+</ul></section>
+<section class="link-group"><h3>03 / 项目 · 故事还在生长</h3><ul>
+<li><a href="https://ai-two-years.maniforld.com" target="_blank" rel="noopener noreferrer">AI两年 <span>时间与智能</span></a></li>
+<li><a href="https://biographies.maniforld.com" target="_blank" rel="noopener noreferrer">凝结核列传 <span>人的轮廓</span></a></li>
+<li><a href="https://causal-web.maniforld.com" target="_blank" rel="noopener noreferrer">从因到果 <span>沿着问题走</span></a></li>
+<li><a href="https://crying-city.maniforld.com" target="_blank" rel="noopener noreferrer">哭泣的城市 <span>听见城市</span></a></li>
+<li><a href="https://double-stars.maniforld.com" target="_blank" rel="noopener noreferrer">双星记 <span>交汇的轨迹</span></a></li>
+<li><a href="https://five-versions.maniforld.com" target="_blank" rel="noopener noreferrer">思想者的五个版本 <span>不同的切面</span></a></li>
+<li><a href="https://inside-qingmei.maniforld.com" target="_blank" rel="noopener noreferrer">置身青媒内 <span>身在其中</span></a></li>
+<li><a href="https://moon-snow.maniforld.com" target="_blank" rel="noopener noreferrer">月雪 <span>月下留白</span></a></li>
+<li><a href="https://qingyang-before-proof.maniforld.com" target="_blank" rel="noopener noreferrer">清样之前 <span>落笔的前夜</span></a></li>
+<li><a href="https://rubbing.maniforld.com" target="_blank" rel="noopener noreferrer">拓片 <span>留下印记</span></a></li>
+<li><a href="https://uncolored-butterfly.maniforld.com" target="_blank" rel="noopener noreferrer">未上色的蝴蝶 <span>未完成的可能</span></a></li>
+</ul></section>
+<section class="link-group"><h3>04 / 连接 · 小园之外，还有同路人</h3><ul>
+<li><a href="https://k.playe.top" target="_blank" rel="noopener noreferrer">MindCareAI <span>心理健康平台</span></a></li>
+<li><a href="https://github.com/Lx050" target="_blank" rel="noopener noreferrer">GitHub <span>@Lx050</span></a></li>
+</ul></section>
+</div><footer class="directory-foot">Lx050 · 在数字之间，留一点人间。</footer>
+</section>
+</main>
+<script>
+'use strict';
+(() => {
+const $ = id => document.getElementById(id);
+const canvas = $('world'), ctx = canvas.getContext('2d', {alpha:false});
+if (!ctx) { $('garden').hidden=true; return; }
+// Tile coordinates are the source of truth; projected X:Y has a 2:1 ratio.
+const TW=68, TH=34, HALF_W=TW/2, HALF_H=TH/2, N=18;
+const groups=['作品','服务','项目','连接'];
+const entries=[
+['墨息','让每一笔，都有呼吸。','https://moxi.maniforld.com',0,3,3],
+['画韵新生','用 AI，让古画重见光彩。','https://huayun.maniforld.com',0,5.7,2.8],
+['画韵新生·旧址','保留最初的笔触与来路。','https://hyxs.art',0,3,5.6],
+['墨生','旧画里的新生，正在发生。','https://mosheng.maniforld.com',0,5.8,5.6],
+['暖聆','为家人，留一份温柔的守护。','https://nuanling.maniforld.com',0,1.5,7.7],
+['暖聆App','把惦念，轻轻装进口袋。','https://nuanling.maniforld.com/app/',0,4,7.8],
+['排版助手','整理文字，也整理思绪。','https://editor.maniforld.com',0,7.7,2],
+['金陵专利局','为每一个新想法，留一扇门。','https://patent.maniforld.com',0,7.7,6.6],
+['RSS','让值得读的内容，自己来到身边。','https://rss.maniforld.com',1,11.1,2.8],
+['Vaultwarden','给重要的秘密，一个安稳的家。','https://vault.maniforld.com',1,14.1,3.4],
+['API','连接语言模型与新的可能。','https://api.maniforld.com',1,11.3,5.8],
+['标书','把繁复的标书，变得有条理。','https://biaoshu.maniforld.com',1,14.5,6.3],
+['Reme','家中的守护，日常的安心。','https://reme.maniforld.com',1,16.2,8.5],
+['AI两年','回望与 AI 一同走过的时间。','https://ai-two-years.maniforld.com',2,1.8,10.1],
+['凝结核列传','在一个个名字里，看见人的轮廓。','https://biographies.maniforld.com',2,4.5,10.2],
+['从因到果','顺着线索，寻找事物的关联。','https://causal-web.maniforld.com',2,7.3,10.6],
+['哭泣的城市','听一座城市，没有说完的话。','https://crying-city.maniforld.com',2,2.5,12.6],
+['双星记','两条轨迹，在文字里交汇。','https://double-stars.maniforld.com',2,5.3,12.8],
+['思想者的五个版本','换一个切面，重新看见思想。','https://five-versions.maniforld.com',2,8,13.2],
+['置身青媒内','走进现场，记录身在其中的时刻。','https://inside-qingmei.maniforld.com',2,4,15.2],
+['月雪','给月光与雪，留一点空白。','https://moon-snow.maniforld.com',2,6.7,15.7],
+['清样之前','在定稿之前，留下思考的痕迹。','https://qingyang-before-proof.maniforld.com',2,9.2,16.3],
+['拓片','拓下时光里，不易看见的纹理。','https://rubbing.maniforld.com',2,10.8,13.8],
+['未上色的蝴蝶','给尚未完成的事物，一种可能。','https://uncolored-butterfly.maniforld.com',2,12,16.1],
+['MindCareAI','让心理健康支持，更近一点。','https://k.playe.top',3,13.6,10.8],
+['GitHub','代码、实验，以及下一次出发。','https://github.com/Lx050',3,15,13.4]
+].map((d,i)=>({title:d[0],desc:d[1],url:d[2],group:d[3],x:d[4],y:d[5],id:i,w:i%4===0?1.05:.8,d:.8,h:d[3]===2?30+(i%3)*7:42+(i%3)*9}));
+const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+let calm=reduced.matches, width=0,height=0,dpr=1,scale=1,started=false,listMode=false,near=null,hover=null;
+let time=0,last=0,raf=0,hidden=false,joystickId=null,pointerStart=null;
+const keys=new Set(), visited=new Set(), joy={x:0,y:0};
+const player={x:9,y:9,vx:0,vy:0}, camera={x:0,y:0};
+const hitboxes=[],trees=[],particles=[];
+const project=(x,y)=>({x:(x-y)*HALF_W,y:(x+y-N)*HALF_H});
+const unproject=(x,y)=>({x:x/TW+y/TH+N/2,y:y/TH-x/TW+N/2});
+const rand=n=>{const k=Math.sin(n*127.1+311.7)*43758.5453;return k-Math.floor(k)};
+function onIsland(x,y,margin=0){return x>=margin&&y>=margin&&x<=N-margin&&y<=N-margin&&x+y>=3+margin&&x+y<=33-margin&&Math.abs(x-y)<=15-margin;}
+function canWalk(x,y){return onIsland(x,y,.22)&&!entries.some(b=>Math.abs(x-b.x)<b.w/2+.2&&Math.abs(y-b.y)<b.d/2+.2);}
+function poly(points,fill,stroke){ctx.beginPath();points.forEach((p,i)=>i?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]));ctx.closePath();ctx.fillStyle=fill;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=.65;ctx.stroke();}}
+function line(x,y,xx,yy,color,w=1){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(xx,yy);ctx.strokeStyle=color;ctx.lineWidth=w;ctx.stroke();}
+function ellipse(x,y,rx,ry,color){ctx.beginPath();ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();}
+function glow(x,y,r,alpha){const g=ctx.createRadialGradient(x,y,0,x,y,r);g.addColorStop(0,`rgba(241,190,109,${alpha})`);g.addColorStop(.35,`rgba(225,163,76,${alpha*.4})`);g.addColorStop(1,'rgba(225,163,76,0)');ctx.fillStyle=g;ctx.fillRect(x-r,y-r,r*2,r*2);}
+function box(x,y,w,d,h,colors,z=0){const pts=[[x-w/2,y-d/2],[x+w/2,y-d/2],[x+w/2,y+d/2],[x-w/2,y+d/2]].map(p=>project(...p));const top=pts.map(p=>[p.x,p.y-h-z]),bottom=pts.map(p=>[p.x,p.y-z]);poly([top[3],top[2],bottom[2],bottom[3]],colors[1]);poly([top[2],top[1],bottom[1],bottom[2]],colors[2]);poly(top,colors[0],'#e8e2d519');return {top,bottom};}
+for(let i=0;i<44;i++){const x=1+rand(i+2)*16,y=1+rand(i+100)*16;if(onIsland(x,y,1)&&Math.abs(x-9)>1.7&&Math.abs(y-9)>1.2&&!entries.some(b=>Math.hypot(x-b.x,y-b.y)<1.3))trees.push({x,y,h:26+rand(i+80)*29,seed:i});}
+for(let i=0;i<52;i++)particles.push({x:rand(i+20)*1100-550,y:rand(i+180)*540-270,p:rand(i+99)*Math.PI*2});
+// Cache the detailed, immutable ground into an offscreen canvas.
+const ground=document.createElement('canvas');ground.width=1400;ground.height=850;
+function paintGround(){
+ const gc=ground.getContext('2d');gc.translate(700,395);
+ const outline=[[3,0],[15,0],[18,3],[18,15],[15,18],[3,18],[0,15],[0,3]].map(p=>project(...p));
+ gc.fillStyle='#121b1c';gc.beginPath();outline.forEach((p,i)=>i?gc.lineTo(p.x*1.045,p.y*1.045+28):gc.moveTo(p.x*1.045,p.y*1.045+28));gc.closePath();gc.fill();
+ const drawPoly=(pts,color,stroke)=>{gc.beginPath();pts.forEach((p,i)=>i?gc.lineTo(p.x,p.y):gc.moveTo(p.x,p.y));gc.closePath();gc.fillStyle=color;gc.fill();if(stroke){gc.strokeStyle=stroke;gc.lineWidth=.65;gc.stroke();}};
+ for(let i=0;i<outline.length;i++){const a=outline[i],b=outline[(i+1)%outline.length];drawPoly([a,b,{x:b.x,y:b.y+27},{x:a.x,y:a.y+27}],i<4?'#3f4337':'#2a302a','#1b2422');}
+ for(let sum=0;sum<36;sum++)for(let x=0;x<N;x++){const y=sum-x;if(y<0||y>=N||!onIsland(x+.5,y+.5))continue;
+ const corners=[[x,y],[x+1,y],[x+1,y+1],[x,y+1]].map(p=>project(...p));
+ const road=x===8||x===9||y===8||y===9||((x===3||x===6||x===12||x===15)&&y>1&&y<17)||(y===4||y===12||y===15)&&x>1&&x<17;
+ const plaza=x>=7&&x<=10&&y>=7&&y<=10;
+ const variation=rand(x*19+y);const color=plaza?'#bbb49b':road?['#a39f89','#b1ac94','#bdb69d'][Math.floor(variation*3)]:['#343e32','#384133','#303a31','#3d4435'][Math.floor(variation*4)];
+ drawPoly(corners,color,road?'#6f756452':'#55604435');
+ if(road){const p=project(x+.12,y+.12),q=project(x+.88,y+.88);gc.beginPath();gc.moveTo(p.x,p.y);gc.lineTo(q.x,q.y);gc.strokeStyle='#d7ceb21b';gc.stroke();}
+ else {for(let j=0;j<4;j++){const p=project(x+rand(x*90+y*9+j),y+rand(y*80+x*8+j));gc.fillStyle='#afad7630';gc.fillRect(p.x,p.y,1.5,1);}}
+ }
+ // A quiet square pond in the eastern garden.
+ const pond=[[11.3,7.1],[13.6,7.1],[13.6,8.7],[11.3,8.7]].map(p=>project(...p));drawPoly(pond,'#182e2d','#76816b');
+ for(let i=0;i<7;i++){const p=project(11.6+rand(i+43)*1.7,7.3+rand(i+54)*1.1);gc.strokeStyle='#96b2a12b';gc.beginPath();gc.ellipse(p.x,p.y,9,3,0,0,Math.PI*2);gc.stroke();if(i%2===0){gc.fillStyle='#69795b';gc.beginPath();gc.ellipse(p.x,p.y,4,2,0,0,Math.PI*2);gc.fill();}}
+ // Central compass inlaid in stone.
+ const p=project(9,9);gc.strokeStyle='#716f59';gc.beginPath();gc.ellipse(p.x,p.y,42,21,0,0,Math.PI*2);gc.stroke();gc.beginPath();gc.ellipse(p.x,p.y,34,17,0,0,Math.PI*2);gc.stroke();
+ gc.font='10px "Songti SC",serif';gc.fillStyle='#5f6555';gc.textAlign='center';gc.fillText('灯 庭',p.x,p.y+4);
+}
+paintGround();
+function building(b){
+ const p=project(b.x,b.y), active=near===b||hover===b, pulse=calm?1:.88+Math.sin(time*1.2+b.id)*.12;
+ ellipse(p.x+8,p.y+8,32,12,'#050a0945');glow(p.x,p.y-4,active?85:51,(active?.24:.12)*pulse);
+ box(b.x,b.y,b.w+.17,b.d+.16,5,['#aaa58d','#696e59','#777a65']);
+ const palette=b.group===2?['#aaa78d','#646e59','#81866b']:['#e0d4b4','#8c9076','#b4b398'];
+ box(b.x,b.y,b.w,b.d,b.h,palette,5);
+ if(b.group===2){box(b.x,b.y,b.w+.12,b.d+.13,5,['#c3b591','#807859','#a09671'],b.h+5);line(p.x-6,p.y-b.h+11,p.x-6,p.y-8,'#596650',2);line(p.x+1,p.y-b.h+15,p.x+1,p.y-10,'#7a8066',1);}
+ else {const roof=b.group===1?['#667b68','#394f46','#465f50']:b.group===3?['#9a917a','#645e51','#7c7260']:['#ac684d','#6c4032','#8b4c38'];box(b.x,b.y,b.w+.28,b.d+.28,8,roof,b.h+5);box(b.x,b.y,.12,b.d+.34,4,[roof[0],roof[1],roof[2]],b.h+13);
+ const corner=project(b.x+b.w/2,b.y+b.d/2);poly([[corner.x-13,corner.y-27],[corner.x-5,corner.y-23],[corner.x-5,corner.y-10],[corner.x-13,corner.y-14]],`rgba(244,203,132,${.6*pulse})`);line(corner.x-9,corner.y-25,corner.x-9,corner.y-12,'#736a48');
+ const right=project(b.x+b.w/2,b.y-b.d/2+.1);poly([[right.x-2,right.y-25],[right.x-10,right.y-21],[right.x-10,right.y-10],[right.x-2,right.y-14]],'#d5bd80');
+ }
+ if(active){const q=project(b.x,b.y);ctx.strokeStyle='#e3b87c';ctx.lineWidth=1;ctx.beginPath();ctx.ellipse(q.x,q.y+4,39,19.5,0,0,Math.PI*2);ctx.stroke();}
+}
+function tree(t){const p=project(t.x,t.y);ellipse(p.x+5,p.y+4,20,7,'#080f0c40');line(p.x,p.y,p.x-1,p.y-t.h,'#656753',3);line(p.x,p.y-15,p.x-11,p.y-t.h+9,'#656753',2);const colors=['#344e40','#3d5743','#4b6348','#566c4d'];for(let j=0;j<9;j++){const a=j*2.399,r=8+rand(t.seed+j)*9;ellipse(p.x+Math.cos(a)*r,p.y-t.h+Math.sin(a)*r*.45,12+rand(j+t.seed)*8,7+rand(j+34)*5,colors[j%4]);}}
+function lantern(){const p=project(player.x,player.y),speed=Math.hypot(player.vx,player.vy);const bob=calm?0:Math.sin(time*(speed>1?10:2))*1.4;const yy=p.y-20+bob;
+ ellipse(p.x,p.y+2,11,5,'#05090880');glow(p.x,p.y-10,100,calm?.27:.28+Math.sin(time*8)*Math.min(speed/120,.05));
+ line(p.x,yy-14,p.x,yy-23,'#bb9b66',1);ctx.strokeStyle='#c7af7b';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(p.x,yy-12,5,Math.PI,0);ctx.stroke();
+ ctx.shadowColor='#ffc877';ctx.shadowBlur=calm?10:17;ellipse(p.x,yy,9,12,'#f3d396');ctx.shadowBlur=0;
+ for(let j=-1;j<=1;j++)line(p.x+j*4,yy-9,p.x+j*4,yy+9,'#b978454d');ellipse(p.x,yy-10,7,2,'#986041');ellipse(p.x,yy+10,6,2,'#a86e43');line(p.x,yy+12,p.x+Math.sin(time*5)*(calm?0:2),yy+19,'#c0563e',2);
+}
+function stoneLamp(x,y){const p=project(x,y);box(x,y,.3,.3,6,['#a5a68a','#626e58','#79816b']);box(x,y,.14,.14,17,['#b9b18d','#7f8264','#919777'],6);box(x,y,.4,.4,4,['#7e8a6d','#4c604e','#647760'],27);glow(p.x,p.y-22,38,.15);ellipse(p.x,p.y-23,3,5,'#e9c585');}
+function labels(){hitboxes.length=0;const occupied=[];ctx.textAlign='center';ctx.textBaseline='middle';const sorted=[...entries].sort((a,b)=>Number(b===near||b===hover)-Number(a===near||a===hover)||a.id-b.id);
+ for(const b of sorted){const p=project(b.x,b.y),s=screen(p.x,p.y-b.h-28);if(s.x<-160||s.x>width+160||s.y<-50||s.y>height+50)continue;const active=b===near||b===hover,fs=width<700?10:11;ctx.font=`${fs}px -apple-system,"PingFang SC",sans-serif`;const w=ctx.measureText(b.title).width+20,h=25;let y=s.y;
+ for(let k=0;k<5;k++){if(!occupied.some(r=>Math.abs(r.x-s.x)<(r.w+w)/2+3&&Math.abs(r.y-y)<26))break;y-=26;}
+ occupied.push({x:s.x,y,w});if(Math.abs(y-s.y)>3)line(s.x,y+12,s.x,s.y+12,'#b8b29740');
+ ctx.fillStyle=active?'#e8e2d5':started?'#131c18e8':'#121b17c9';ctx.fillRect(s.x-w/2,y-h/2,w,h);ctx.strokeStyle=active?'#e8e2d5':'#89957a55';ctx.lineWidth=.6;ctx.strokeRect(s.x-w/2,y-h/2,w,h);ctx.fillStyle=active?'#302d23':started?'#d1d0b6':'#b5b89f';ctx.fillText(b.title,s.x,y+.5);hitboxes.push({x:s.x-w/2,y:y-h/2,w,h,b,label:true});
+ const base=screen(p.x,p.y);hitboxes.push({x:base.x-27*scale,y:base.y-(b.h+21)*scale,w:54*scale,h:(b.h+31)*scale,b,label:false});
+ }
+ ctx.textBaseline='alphabetic';
+}
+function screen(x,y){return {x:(x-camera.x)*scale+width/2,y:(y-camera.y)*scale+height/2};}
+function miniMap(){if(!started||width<700)return;const ox=width-112,oy=height-100;ctx.save();ctx.translate(ox,oy);ctx.strokeStyle='#8e977455';ctx.beginPath();ctx.moveTo(0,-36);ctx.lineTo(72,0);ctx.lineTo(0,36);ctx.lineTo(-72,0);ctx.closePath();ctx.stroke();for(const b of entries){const p=project(b.x,b.y);ellipse(p.x*.11,p.y*.11,1.8,1.2,visited.has(b.id)?'#c68460':'#707d68');}const p=project(player.x,player.y);ellipse(p.x*.11,p.y*.11,3,2,'#f1d197');ctx.font='8px monospace';ctx.fillStyle='#8c9383';ctx.textAlign='center';ctx.fillText('小 园 · 18 × 18',0,54);ctx.restore();}
+function render(){ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#0c0e10';ctx.fillRect(0,0,width,height);
+ const ambient=ctx.createRadialGradient(width*.64,height*.55,20,width*.64,height*.55,width*.65);ambient.addColorStop(0,'#1b25204d');ambient.addColorStop(1,'#0c0e1000');ctx.fillStyle=ambient;ctx.fillRect(0,0,width,height);
+ ctx.save();ctx.translate(width/2,height/2);ctx.scale(scale,scale);ctx.translate(-camera.x,-camera.y);
+ // Still water rings, drawn without external textures.
+ for(let i=0;i<8;i++){ctx.beginPath();ctx.ellipse(0,35,660+i*40,320+i*21,0,0,Math.PI*2);ctx.strokeStyle=`rgba(102,127,118,${.05-i*.004})`;ctx.lineWidth=.7;ctx.stroke();}
+ ctx.drawImage(ground,-700,-395);
+ const objects=entries.map(b=>({depth:b.x+b.y,draw:()=>building(b)}));trees.forEach(t=>objects.push({depth:t.x+t.y,draw:()=>tree(t)}));
+ [[8,1],[10,4],[8,7],[10,11],[8,17],[1,9],[5,9],[13,9],[17,10],[13,14]].forEach(p=>objects.push({depth:p[0]+p[1],draw:()=>stoneLamp(...p)}));
+ objects.push({depth:player.x+player.y,draw:lantern});objects.sort((a,b)=>a.depth-b.depth).forEach(o=>o.draw());
+ if(!calm){const count=width<700?18:44;for(let i=0;i<count;i++){const f=particles[i],x=f.x+Math.sin(time*.24+f.p)*17,y=f.y+Math.cos(time*.3+f.p)*10;const a=.2+(Math.sin(time*1.5+f.p)+1)*.23;ellipse(x,y,1.3,1.3,`rgba(215,220,139,${a})`);}}
+ ctx.restore();labels();miniMap();
+}
+function resize(){const r=$('garden').getBoundingClientRect();width=r.width;height=r.height;dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);scale=started?(width<700?.95:Math.min(1.14,width/1180)):(width<700?Math.max(.42,width/830):Math.min(.9,width/1640));if(!started){camera.x=width<700?0:-width*.20/scale;camera.y=width<700?-height*.22/scale:0;}else{const p=project(player.x,player.y);camera.x=p.x;camera.y=p.y+35;}render();}
+function updateCard(b){if(near===b)return;near=b;$('card-title').textContent=b?b.title:'此间有光';$('card-desc').textContent=b?b.desc:'靠近一座小屋，读一段故事。';$('card-icon').textContent=b?groups[b.group].slice(0,1):'灯';$('visit').hidden=!b;if(b){$('visit').href=b.url;$('visit').setAttribute('aria-label','在新标签页访问'+b.title);visited.add(b.id);}$('place').textContent=b?groups[b.group]:'灯庭';$('explored').textContent=`已探访 ${String(visited.size).padStart(2,'0')} / 26 处`;}
+function update(dt){if(!started)return;let ix=Number(keys.has('d')||keys.has('ArrowRight'))-Number(keys.has('a')||keys.has('ArrowLeft'))+joy.x,iy=Number(keys.has('s')||keys.has('ArrowDown'))-Number(keys.has('w')||keys.has('ArrowUp'))+joy.y;const length=Math.hypot(ix,iy);if(length>1){ix/=length;iy/=length;}const smoothing=1-Math.exp(-dt*(length?10:15));player.vx+=(ix*130-player.vx)*smoothing;player.vy+=(iy*130-player.vy)*smoothing;
+ // Screen-space input -> inverse isometric projection, equal perceived speed.
+ const dx=(player.vx/TW+player.vy/TH)*dt,dy=(player.vy/TH-player.vx/TW)*dt;
+ if(canWalk(player.x+dx,player.y))player.x+=dx;if(canWalk(player.x,player.y+dy))player.y+=dy;
+ const p=project(player.x,player.y),f=calm?1:1-Math.exp(-dt*4.5);camera.x+=(p.x-camera.x)*f;camera.y+=(p.y+35-camera.y)*f;
+ let candidate=null,dist=1.85;for(const b of entries){const d=Math.hypot(b.x-player.x,b.y-player.y);if(d<dist){dist=d;candidate=b;}}updateCard(candidate);
+}
+function frame(ms){raf=0;if(listMode||hidden)return;const dt=Math.min((ms-last)/1000||.016,.033);last=ms;if(!calm)time+=dt;update(dt);render();raf=requestAnimationFrame(frame);}
+function run(){if(!raf&&!listMode&&!hidden){last=performance.now();raf=requestAnimationFrame(frame);}}
+function clearInput(){keys.clear();joy.x=joy.y=0;joystickId=null;player.vx=player.vy=0;$('stick').style.transform='translate(0,0)';}
+function start(){if(started)return;started=true;$('intro').hidden=true;$('hud').hidden=false;$('view-label').hidden=false;$('explored').textContent='已探访 00 / 26 处';resize();canvas.focus({preventScroll:true});run();}
+function toggleList(force){listMode=typeof force==='boolean'?force:!listMode;clearInput();document.body.classList.toggle('list-mode',listMode);$('list-toggle').innerHTML=listMode?'园林视图 <span aria-hidden="true">↗</span>':'列表视图 <span aria-hidden="true">☷</span>';$('list-toggle').setAttribute('aria-expanded',String(listMode));$('back').hidden=!listMode;if(listMode){cancelAnimationFrame(raf);raf=0;$('directory').focus({preventScroll:true});window.scrollTo(0,0);}else{window.scrollTo(0,0);resize();canvas.focus({preventScroll:true});run();}}
+function openEntry(b){if(b)window.open(b.url,'_blank','noopener,noreferrer');}
+function hit(x,y){return hitboxes.find(r=>r.label&&x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h)?.b||[...hitboxes].reverse().find(r=>!r.label&&x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h)?.b;}
+$('enter').addEventListener('click',start);$('list-toggle').addEventListener('click',()=>toggleList());$('back').addEventListener('click',()=>toggleList(false));document.querySelector('.skip').addEventListener('click',e=>{e.preventDefault();toggleList(true);});
+window.addEventListener('keydown',e=>{if(e.metaKey||e.ctrlKey||e.altKey||listMode)return;const tag=document.activeElement.tagName;if(['BUTTON','A','INPUT','TEXTAREA'].includes(tag))return;const key=e.key.length===1?e.key.toLowerCase():e.key;const movement=['w','a','s','d','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(key);const action=key==='Enter'||key===' ';if(!started&&(movement||action)){e.preventDefault();start();if(movement)keys.add(key);return;}if(!started)return;if(movement){e.preventDefault();keys.add(key);}if(action){e.preventDefault();if(!e.repeat)openEntry(near);}if(key==='Escape')toggleList(true);});
+window.addEventListener('keyup',e=>keys.delete(e.key.length===1?e.key.toLowerCase():e.key));window.addEventListener('blur',clearInput);
+canvas.addEventListener('pointermove',e=>{if(!started||e.pointerType==='touch')return;const r=canvas.getBoundingClientRect();hover=hit(e.clientX-r.left,e.clientY-r.top)||null;canvas.style.cursor=hover?'pointer':'default';});canvas.addEventListener('pointerleave',()=>{hover=null;canvas.style.cursor='default';});
+canvas.addEventListener('pointerdown',e=>{pointerStart={x:e.clientX,y:e.clientY,id:e.pointerId};});canvas.addEventListener('pointerup',e=>{if(!pointerStart||pointerStart.id!==e.pointerId)return;const distance=Math.hypot(e.clientX-pointerStart.x,e.clientY-pointerStart.y);pointerStart=null;if(distance>9)return;if(!started){start();return;}const r=canvas.getBoundingClientRect();openEntry(hit(e.clientX-r.left,e.clientY-r.top));});canvas.addEventListener('pointercancel',()=>pointerStart=null);
+const joystick=$('joystick');function moveJoystick(e){if(e.pointerId!==joystickId)return;const r=joystick.getBoundingClientRect();let x=e.clientX-r.left-r.width/2,y=e.clientY-r.top-r.height/2;const len=Math.hypot(x,y),max=35;if(len>max){x=x/len*max;y=y/len*max;}joy.x=Math.abs(x)<3?0:x/max;joy.y=Math.abs(y)<3?0:y/max;$('stick').style.transform=`translate(${x}px,${y}px)`;}
+joystick.addEventListener('pointerdown',e=>{if(joystickId!==null)return;e.preventDefault();joystickId=e.pointerId;joystick.setPointerCapture(e.pointerId);moveJoystick(e);});joystick.addEventListener('pointermove',moveJoystick);['pointerup','pointercancel','lostpointercapture'].forEach(event=>joystick.addEventListener(event,e=>{if(e.pointerId===joystickId)clearInput();}));
+window.addEventListener('resize',resize);reduced.addEventListener('change',e=>{calm=e.matches;time=0;render();});document.addEventListener('visibilitychange',()=>{hidden=document.hidden;clearInput();if(hidden){cancelAnimationFrame(raf);raf=0;}else run();});
+resize();run();
+})();
+</script>
+</body>
+</html>
