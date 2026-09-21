@@ -38,7 +38,17 @@ const TRACKS=[
 #bgm-button{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:28px;height:28px;padding:5px;border:1px solid var(--line);border-radius:5px;background:var(--ink);color:var(--paper)}
 #bgm-button[hidden]{display:none}#bgm-button:hover{border-color:var(--muted)}#bgm-button:focus-visible{outline:2px solid var(--paper);outline-offset:3px}
 #bgm-button svg{width:16px;height:16px}#bgm-button .bgm-waves{display:none}#bgm-button[aria-pressed="true"] .bgm-waves{display:inline}#bgm-button[aria-pressed="true"] .bgm-cross{display:none}
-@media(max-width:360px){#bgm-button{position:absolute;right:0;bottom:5px;width:22px;padding:2px}}
+@media(max-width:380px){#bgm-button{width:24px;height:24px;padding:3px}}
+/* 横屏低高度（手机横屏 / 矮窗口）：顶栏压成一行，曲名只留音符，避免与分区导航、视角盘重叠 */
+@media(orientation:landscape) and (max-height:540px){
+  .topbar{top:max(8px,env(safe-area-inset-top));left:16px;right:16px;gap:10px;flex-wrap:nowrap;align-items:center}
+  .identity{gap:9px}.identity .subtitle{display:none}.wordmark{font-size:19px}.seal{width:23px;height:27px;font-size:14px}
+  .districts{padding:3px;gap:0;order:0}.districts button{padding:5px 10px;font-size:11px}.districts span{font-size:9px;margin-left:4px}
+  .tools{gap:10px;font-size:10px}.tools button{padding:6px 0}
+  #bgm-button{position:static;width:26px;height:26px;padding:4px}
+  #track-button{width:26px;max-width:26px;height:26px;padding:0;justify-content:center;gap:0}
+  #track-button .tname{display:none}#track-button .note{margin:0}
+}
 #track-button{display:none;align-items:center;gap:6px;max-width:190px;height:28px;padding:0 10px;border:1px solid var(--line);border-radius:5px;background:var(--ink);color:var(--muted);font-size:11px;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #track-button.show{display:inline-flex}#track-button:hover{color:var(--paper);border-color:var(--muted)}#track-button:focus-visible{outline:2px solid var(--paper);outline-offset:3px}#track-button .note{color:var(--red);flex-shrink:0}#track-button .tname{overflow:hidden;text-overflow:ellipsis}
 @media(max-width:760px){#track-button{max-width:120px;font-size:10px;padding:0 8px}}
@@ -46,6 +56,8 @@ const TRACKS=[
 .music-credits h3{font-size:11px;color:var(--red);letter-spacing:4px;font-weight:400;margin:0 0 8px}
 .music-credits small{display:block;color:var(--muted);font-size:11px;line-height:1.9;font-size:11px}
 .music-credits .mc-note{margin-bottom:8px;opacity:.8}
+/* 极窄竖屏（≤380）：曲名收成音符，保证归庭/目录文字不被压成竖排（置于样式表末尾以覆盖 760 规则） */
+@media(max-width:380px){.tools{gap:9px}#track-button{width:26px;max-width:26px;height:26px;padding:0;justify-content:center;gap:0}#track-button .tname{display:none}#track-button .note{margin:0}}
 </style>
 </head>
 <body>
