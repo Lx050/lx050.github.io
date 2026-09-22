@@ -8,7 +8,7 @@
 <meta name="description" content="Lx050 的数字庭院。提一盏灯，走近作品、服务与故事。">
 <title>Lx050 · 夜游数字庭院</title>
 <script>
-// 夜间随机播放曲目（东方古曲/乐器 + 西方古典与夏夜氛围），本站自托管、按需加载；点右上角曲名切下一首。
+// 夜间随机播放曲目（东方古曲/乐器 + 西方古典与夏夜氛围），本站自托管、按需加载；播完自动随机下一首。
 const TRACKS=[
  {f:'guqin-zuiyu-changwan.mp3',n:'醉渔唱晚 · 古琴',a:'演奏 CharlieHuang',l:'CC BY-SA 3.0'},
  {f:'guqin-yangguan-sandie.mp3',n:'阳关三叠 · 古琴',a:'演奏 CharlieHuang',l:'CC BY-SA 3.0'},
@@ -39,25 +39,20 @@ const TRACKS=[
 #bgm-button[hidden]{display:none}#bgm-button:hover{border-color:var(--muted)}#bgm-button:focus-visible{outline:2px solid var(--paper);outline-offset:3px}
 #bgm-button svg{width:16px;height:16px}#bgm-button .bgm-waves{display:none}#bgm-button[aria-pressed="true"] .bgm-waves{display:inline}#bgm-button[aria-pressed="true"] .bgm-cross{display:none}
 @media(max-width:380px){#bgm-button{width:24px;height:24px;padding:3px}}
-/* 横屏低高度（手机横屏 / 矮窗口）：顶栏压成一行，曲名只留音符，避免与分区导航、视角盘重叠 */
+/* 横屏低高度（手机横屏 / 矮窗口）：顶栏压成一行，避免与分区导航、视角盘重叠 */
 @media(orientation:landscape) and (max-height:540px){
   .topbar{top:max(8px,env(safe-area-inset-top));left:16px;right:16px;gap:10px;flex-wrap:nowrap;align-items:center}
   .identity{gap:9px}.identity .subtitle{display:none}.wordmark{font-size:19px}.seal{width:23px;height:27px;font-size:14px}
   .districts{padding:3px;gap:0;order:0}.districts button{padding:5px 10px;font-size:11px}.districts span{font-size:9px;margin-left:4px}
   .tools{gap:10px;font-size:10px}.tools button{padding:6px 0}
   #bgm-button{position:static;width:26px;height:26px;padding:4px}
-  #track-button{width:26px;max-width:26px;height:26px;padding:0;justify-content:center;gap:0}
-  #track-button .tname{display:none}#track-button .note{margin:0}
 }
-#track-button{display:none;align-items:center;gap:6px;max-width:190px;height:28px;padding:0 10px;border:1px solid var(--line);border-radius:5px;background:var(--ink);color:var(--muted);font-size:11px;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#track-button.show{display:inline-flex}#track-button:hover{color:var(--paper);border-color:var(--muted)}#track-button:focus-visible{outline:2px solid var(--paper);outline-offset:3px}#track-button .note{color:var(--red);flex-shrink:0}#track-button .tname{overflow:hidden;text-overflow:ellipsis}
-@media(max-width:760px){#track-button{max-width:120px;font-size:10px;padding:0 8px}}
 .music-credits{grid-column:1/-1;margin-top:14px;padding-top:18px;border-top:1px solid #e8e2d50e}
 .music-credits h3{font-size:11px;color:var(--red);letter-spacing:4px;font-weight:400;margin:0 0 8px}
 .music-credits small{display:block;color:var(--muted);font-size:11px;line-height:1.9;font-size:11px}
 .music-credits .mc-note{margin-bottom:8px;opacity:.8}
-/* 极窄竖屏（≤380）：曲名收成音符，保证归庭/目录文字不被压成竖排（置于样式表末尾以覆盖 760 规则） */
-@media(max-width:380px){.tools{gap:9px}#track-button{width:26px;max-width:26px;height:26px;padding:0;justify-content:center;gap:0}#track-button .tname{display:none}#track-button .note{margin:0}}
+/* 极窄竖屏（≤380）：收紧工具组间距，保证归庭/目录文字不被压成竖排 */
+@media(max-width:380px){.tools{gap:9px}}
 </style>
 </head>
 <body>
@@ -69,7 +64,7 @@ const TRACKS=[
     <nav class="districts" aria-label="前往分区">
       <button data-zone="0" title="前往作品区">作品<span>08</span></button><button data-zone="1" title="前往服务区">服务<span>05</span></button><button data-zone="2" title="前往项目区">项目<span>11</span></button><button data-zone="3" title="前往连接区">连接<span>02</span></button>
     </nav>
-    <div class="tools"><span id="visited" title="已探访并点亮的入口" aria-live="polite">00 / 26</span><button id="home" title="返回庭心（R）">归庭</button><button id="list-button" aria-haspopup="dialog">目录 ↗</button><button id="bgm-button" type="button" aria-label="开启背景音乐" aria-pressed="false" title="开启背景音乐"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M11 4 6 8H3v8h3l5 4Z"/><g class="bgm-waves"><path d="M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14"/></g><path class="bgm-cross" d="m16 9 6 6m0-6-6 6"/></svg></button><button id="track-button" type="button" title="" aria-label="下一首"><span class="note">♪</span><span class="tname"></span></button></div>
+    <div class="tools"><span id="visited" title="已探访并点亮的入口" aria-live="polite">00 / 26</span><button id="home" title="返回庭心（R）">归庭</button><button id="list-button" aria-haspopup="dialog">目录 ↗</button><button id="bgm-button" type="button" aria-label="开启背景音乐" aria-pressed="false" title="开启背景音乐"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M11 4 6 8H3v8h3l5 4Z"/><g class="bgm-waves"><path d="M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14"/></g><path class="bgm-cross" d="m16 9 6 6m0-6-6 6"/></svg></button></div>
   </header>
   <div class="margin-note" aria-hidden="true"><i></i>灯火所及，皆是来处。</div>
   <div class="viewpad" id="viewpad" tabindex="0" role="group" aria-label="视角控制：拖动旋转视角，聚焦后使用方向键调整，Home 重置"><span class="arrows">↔</span><small>拖动视角</small></div>
@@ -138,7 +133,7 @@ const $ = id => document.getElementById(id);
 let started=false,ready=false,failed=false,nearest=null,previousFocus=null;
 // Audio owns its own clock: neither render quality nor tab visibility changes it.
 const bgm=(()=>{
-  const button=$('bgm-button'),trackButton=$('track-button'),storageKey='garden-bgm',volume=.22,prefix='assets/audio/tracks/';
+  const button=$('bgm-button'),storageKey='garden-bgm',volume=.22,prefix='assets/audio/tracks/';
   let audio,context,gain,unavailable=false,wanted=true,request=0,failures=0;
   let order=[],pos=0,current=-1;
   let envelope={from:0,to:0,start:0,end:0};
@@ -148,15 +143,8 @@ const bgm=(()=>{
     button.title=playing?'关闭背景音乐':'开启背景音乐';
     button.setAttribute('aria-label',button.title);
   }
-  function renderTrack(){
-    const t=TRACKS[current];if(!t)return;
-    trackButton.querySelector('.tname').textContent=t.n;
-    trackButton.title=`正在播放：${t.n} — ${t.a}（${t.l}）。点击切到下一首`;
-    trackButton.setAttribute('aria-label',`正在播放 ${t.n}，点击切到下一首`);
-    trackButton.classList.add('show');
-  }
   function disable(){
-    unavailable=true;request++;showPlaying(false);button.disabled=true;button.hidden=true;trackButton.classList.remove('show');
+    unavailable=true;request++;showPlaying(false);button.disabled=true;button.hidden=true;
     try{if(audio)audio.pause();}catch(error){/* Audio must never interrupt the garden. */}
     try{if(context)context.close().catch(()=>{});}catch(error){/* Already closed. */}
   }
@@ -173,7 +161,7 @@ const bgm=(()=>{
   function reshuffle(){order=TRACKS.map((_,i)=>i);for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}pos=0;}
   function pickNext(){if(!order.length||pos>=order.length)reshuffle();return order[pos++];}
   function loadTrack(i,fadeIn){
-    const ticket=request;current=i;failures=0;renderTrack();
+    const ticket=request;current=i;failures=0;
     try{audio.src=prefix+TRACKS[i].f;}catch(error){disable();return;}
     const playing=audio.play();
     if(playing&&playing.then)playing.then(()=>{if(ticket===request&&!unavailable)fadeTo(wanted?volume:0,fadeIn);}).catch(error=>{
@@ -208,7 +196,7 @@ const bgm=(()=>{
     audio=new Audio();audio.preload='none';
     audio.addEventListener('error',()=>{if(audio.src&&started&&audio.error)playbackFailure();});
     audio.addEventListener('ended',()=>{if(!wanted)return;fadeTo(0,.5);setTimeout(()=>{if(wanted&&!unavailable)nextTrack(1.4);},380);});
-    reshuffle();current=pickNext();audio.src=prefix+TRACKS[current].f;renderTrack();
+    reshuffle();current=pickNext();audio.src=prefix+TRACKS[current].f;
   }catch(error){disable();}
   button.addEventListener('click',()=>{
     if(unavailable||!started)return;
@@ -216,11 +204,6 @@ const bgm=(()=>{
     try{localStorage.setItem(storageKey,wanted?'on':'off');}catch(error){/* Keep the choice for this visit. */}
     if(wanted){request++;play(.5);}
     else{request++;try{fadeTo(0,.4);showPlaying(false);}catch(error){disable();}}
-  });
-  trackButton.addEventListener('click',()=>{
-    if(unavailable||!started)return;
-    wanted=true;try{localStorage.setItem(storageKey,'on');}catch(error){/* Keep the choice for this visit. */}
-    fadeTo(0,.3);setTimeout(()=>{request++;nextTrack(1.2);showPlaying(true);},260);
   });
   return {start:()=>play(2.5)};
 })();
@@ -243,7 +226,7 @@ ZONES.forEach((zone,index)=>{
     a.textContent=item.title;const hint=document.createElement('span');hint.textContent=new URL(item.url).hostname+' ↗';a.append(hint);section.append(a);
   });$('directory-grid').append(section);
 });
-$('music-credits').innerHTML='<h3>夜乐 · 背景音乐署名</h3><small class="mc-note">入庭后夜间随机播放，点击右上角曲名可切下一首。以下均为公有领域或 CC0 / CC-BY 授权的演奏录音。</small>'+TRACKS.map(t=>`<small>${t.n} — ${t.a}，${t.l}</small>`).join('');
+$('music-credits').innerHTML='<h3>夜乐 · 背景音乐署名</h3><small class="mc-note">入庭后夜间随机播放，一曲播罢自动接续下一首。以下均为公有领域或 CC0 / CC-BY 授权的演奏录音。</small>'+TRACKS.map(t=>`<small>${t.n} — ${t.a}，${t.l}</small>`).join('');
 function clearInput(){keys.clear();joy.x=joy.y=0;$('stick').style.transform='';}
 function showDirectory(){previousFocus=document.activeElement;clearInput();$('directory').hidden=false;$('hud').inert=true;$('intro').inert=true;$('close-directory').focus();}
 function closeDirectory(){$('directory').hidden=true;$('hud').inert=!started;$('intro').inert=started;previousFocus?.focus();}
