@@ -53,6 +53,17 @@ const TRACKS=[
 .music-credits .mc-note{margin-bottom:8px;opacity:.8}
 /* 极窄竖屏（≤380）：收紧工具组间距，保证归庭/目录文字不被压成竖排 */
 @media(max-width:380px){.tools{gap:9px}}
+/* Batch 8: 手机端极简 — music/time/counters off, nav collapses to one quiet top row. Desktop untouched. */
+@media(max-width:760px){
+  #bgm-button,#sky-button,#bridge-count,#visited,.wordmark,.subtitle,.districts span{display:none}
+  .topbar{flex-wrap:nowrap;gap:10px}
+  .identity{gap:0;flex-shrink:0}
+  .districts{order:initial;padding:3px;background:#0c0e1050;border-radius:24px;flex-shrink:0}
+  .districts button{padding:5px 9px;font-size:10px}
+  .tools{gap:12px;font-size:10px;flex-shrink:0}
+  .tools button{padding:6px 0;color:#807e76}
+  .hud::before{height:88px;background:linear-gradient(#0c0e10a6,transparent)}
+}
 </style>
 <style id="bridge-style">#bridge-count{font:11px monospace;letter-spacing:1px;color:var(--paper)}#bridge-count.done{color:var(--red)}#bridge-toast{position:absolute;left:50%;bottom:120px;transform:translateX(-50%);color:var(--paper);font:13px/1.8 var(--serif);letter-spacing:2px;background:#0c0e10d9;border:1px solid var(--line);border-radius:6px;padding:8px 18px;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}#bridge-toast.show{opacity:1}#euler-card{position:absolute;right:30px;bottom:210px;width:min(360px,calc(100% - 60px));border:1px solid #c0563e88;border-radius:8px;background:rgba(15,18,19,.94);padding:18px 20px;display:flex;align-items:center;gap:16px;box-shadow:0 12px 50px #0004}#euler-card[hidden]{display:none}#euler-card h2{font:18px/1.4 var(--serif);margin:3px 0 4px}#euler-card p{margin:0;font-size:11px;color:var(--muted)}#euler-action{flex-shrink:0;border-left:1px solid var(--line);padding:10px 0 10px 16px;color:var(--paper);letter-spacing:2px;font-size:12px}#euler-action[hidden]{display:none}</style>
 </head>
