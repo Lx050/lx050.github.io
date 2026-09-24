@@ -65,7 +65,7 @@ const TRACKS=[
     <nav class="districts" aria-label="前往分区">
       <button data-zone="0" title="前往作品区">作品<span>08</span></button><button data-zone="1" title="前往服务区">服务<span>05</span></button><button data-zone="2" title="前往项目区">项目<span>11</span></button><button data-zone="3" title="前往连接区">连接<span>02</span></button>
     </nav>
-    <div class="tools"><span id="bridge-count" title="七桥挑战:每桥恰走一次" aria-live="polite">七桥 0/7</span><span id="visited" title="已探访并点亮的入口" aria-live="polite">00 / 26</span><button id="home" title="返回庭心（R）">归庭</button><button id="list-button" aria-haspopup="dialog">目录 ↗</button><button id="bgm-button" type="button" aria-label="开启背景音乐" aria-pressed="false" title="开启背景音乐"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M11 4 6 8H3v8h3l5 4Z"/><g class="bgm-waves"><path d="M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14"/></g><path class="bgm-cross" d="m16 9 6 6m0-6-6 6"/></svg></button></div>
+    <div class="tools"><button id="sky-button" type="button" title="天时流转 · 点击拨到下一时相">天时 · 夜</button><span id="bridge-count" title="七桥挑战:每桥恰走一次" aria-live="polite">七桥 0/7</span><span id="visited" title="已探访并点亮的入口" aria-live="polite">00 / 26</span><button id="home" title="返回庭心（R）">归庭</button><button id="list-button" aria-haspopup="dialog">目录 ↗</button><button id="bgm-button" type="button" aria-label="开启背景音乐" aria-pressed="false" title="开启背景音乐"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M11 4 6 8H3v8h3l5 4Z"/><g class="bgm-waves"><path d="M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14"/></g><path class="bgm-cross" d="m16 9 6 6m0-6-6 6"/></svg></button></div>
   </header>
   <div class="margin-note" aria-hidden="true"><i></i>灯火所及，皆是来处。</div>
   <div class="viewpad" id="viewpad" tabindex="0" role="group" aria-label="视角控制：拖动旋转视角，聚焦后使用方向键调整，Home 重置"><span class="arrows">↔</span><small>拖动视角</small></div>
@@ -286,12 +286,17 @@ const finalPass=new THREE.ShaderPass({
 finalPass.material.toneMapped=false;composer.addPass(finalPass);
 $('world').append(renderer.domElement);
 renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();fail('三维画面暂时中断，请刷新页面重新点灯。目录中的全部入口仍然可用。');});
-scene.add(new THREE.HemisphereLight(0xe8e2d5,0x303a3e,.85));
+const hemi=new THREE.HemisphereLight(0xe8e2d5,0x303a3e,.85);scene.add(hemi);
 const moon=new THREE.DirectionalLight(0xc6dcf2,1.35);moon.position.set(20,42,-45);scene.add(moon);
 renderer.shadowMap.enabled=!lightQuality;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 moon.castShadow=!lightQuality;moon.shadow.mapSize.set(2048,2048);
 Object.assign(moon.shadow.camera,{left:-37,right:37,top:37,bottom:-37,near:12,far:110});
 moon.shadow.camera.updateProjectionMatrix();moon.shadow.bias=-.0005;moon.shadow.normalBias=.12;moon.shadow.radius=2;
+// Batch 7: sun key light — shadows trade off between sun and moon as the dominant body rises.
+const sun=new THREE.DirectionalLight(0xffc890,0);sun.position.set(30,40,50);scene.add(sun);
+sun.castShadow=false;sun.shadow.mapSize.set(2048,2048);
+Object.assign(sun.shadow.camera,{left:-37,right:37,top:37,bottom:-37,near:12,far:110});
+sun.shadow.camera.updateProjectionMatrix();sun.shadow.bias=-.0005;sun.shadow.normalBias=.12;sun.shadow.radius=2;
 const fakeShadows=[];
 const fill=new THREE.DirectionalLight(0x819baf,.35);fill.position.set(20,12,-20);scene.add(fill);
 const G={box:new THREE.BoxGeometry(1,1,1),cylinder:new THREE.CylinderGeometry(1,1,1,8),cone:new THREE.ConeGeometry(1,1,4),sphere:new THREE.IcosahedronGeometry(1,0),circle:new THREE.CircleGeometry(1,32),ring:new THREE.RingGeometry(.987,1,64)};
@@ -325,17 +330,17 @@ ring(scene,0,0,32.25,0x8b8271,.23,.02);
 // Water surrounds the suspended island; low quality swaps this shader for a flat blue disc.
 const simpleWater=new THREE.MeshBasicMaterial({color:new THREE.Color(0x142938).convertSRGBToLinear(),transparent:true,opacity:.84,depthWrite:false});
 const waterMaterial=new THREE.ShaderMaterial({
-  transparent:true,depthWrite:false,uniforms:{time:{value:0}},
+  transparent:true,depthWrite:false,uniforms:{time:{value:0},keyDir:{value:new THREE.Vector3(20,42,-45)},uDeep:{value:new THREE.Color(.007,.017,.027)},uGlint:{value:new THREE.Color(.13,.19,.24)},uHor:{value:new THREE.Color(.0056,.011,.019)}},
   vertexShader:`varying vec3 vWorld; void main(){vec4 world=modelMatrix*vec4(position,1.0);vWorld=world.xyz;gl_Position=projectionMatrix*viewMatrix*world;}`,
-  fragmentShader:`uniform float time;varying vec3 vWorld;
+  fragmentShader:`uniform float time;uniform vec3 keyDir,uDeep,uGlint,uHor;varying vec3 vWorld;
     void main(){
       vec2 p=vWorld.xz;float ripple=sin(p.x*.72+p.y*.32+time*.38)*.55+sin(p.y*1.5-p.x*.27-time*.25)*.3;
       vec3 normal=normalize(vec3(-.045*cos(p.x*.72+p.y*.32+time*.38),1.0,-.06*cos(p.y*1.5-p.x*.27-time*.25)));
-      vec3 viewDir=normalize(cameraPosition-vWorld);vec3 moonDir=normalize(vec3(20.0,42.0,-45.0));
-      float reflected=pow(max(dot(reflect(-moonDir,normal),viewDir),0.0),95.0);
+      vec3 viewDir=normalize(cameraPosition-vWorld);vec3 keyLight=normalize(keyDir);
+      float reflected=pow(max(dot(reflect(-keyLight,normal),viewDir),0.0),95.0);
       float ribbon=pow(max(0.0,sin(p.y*2.4+ripple*2.0)),12.0);
-      vec3 color=vec3(.007,.017,.027)+ripple*.0018+vec3(.13,.19,.24)*reflected*(.35+.65*ribbon);
-      float haze=smoothstep(40.0,150.0,length(p));color=mix(color,vec3(.0056,.011,.019),haze);
+      vec3 color=uDeep+ripple*.0018+uGlint*reflected*(.35+.65*ribbon);
+      float haze=smoothstep(40.0,150.0,length(p));color=mix(color,uHor,haze);
       gl_FragColor=vec4(color,.88);
     }`
 });
@@ -391,9 +396,9 @@ function halo(parent,x,y,z,size,opacity=.3){const s=new THREE.Sprite(new THREE.S
 const starCount=lightQuality?65:360,starPositions=new Float32Array(starCount*3),starPhases=new Float32Array(starCount);
 for(let i=0;i<starCount;i++){const a=random()*Math.PI*2,y=10+random()*50,r=Math.sqrt(70*70-y*y);starPositions.set([Math.cos(a)*r,y,Math.sin(a)*r],i*3);starPhases[i]=random()*6.28;}
 const starGeometry=new THREE.BufferGeometry();starGeometry.setAttribute('position',new THREE.BufferAttribute(starPositions,3));starGeometry.setAttribute('phase',new THREE.BufferAttribute(starPhases,1));
-const starMaterial=new THREE.ShaderMaterial({transparent:true,depthWrite:false,uniforms:{time:{value:0},motion:{value:reduced?0:1},pixelRatio:{value:renderer.getPixelRatio()}},
+const starMaterial=new THREE.ShaderMaterial({transparent:true,depthWrite:false,uniforms:{time:{value:0},motion:{value:reduced?0:1},pixelRatio:{value:renderer.getPixelRatio()},fade:{value:1}},
   vertexShader:`attribute float phase; uniform float time,motion,pixelRatio;varying float vLight;void main(){vLight=.5+motion*.17*sin(time*.45+phase);gl_PointSize=(1.0+fract(phase)*1.1)*pixelRatio;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
-  fragmentShader:`varying float vLight;void main(){float a=1.0-smoothstep(.1,.5,length(gl_PointCoord-.5));gl_FragColor=vec4(.65,.8,1.0,a*vLight);}`
+  fragmentShader:`uniform float fade;varying float vLight;void main(){float a=1.0-smoothstep(.1,.5,length(gl_PointCoord-.5));gl_FragColor=vec4(.65,.8,1.0,a*vLight*fade);}`
 });
 const stars=new THREE.Points(starGeometry,starMaterial);scene.add(stars);
 const moonOrb=mesh(new THREE.SphereGeometry(2.2,24,16),new THREE.MeshBasicMaterial({color:new THREE.Color(1.65,1.85,2.1),fog:false}),scene,20,18,-45);
@@ -403,6 +408,62 @@ for(let i=0;i<8;i++){const x=35+i*26,y=44+Math.sin(i*2)*10;const g=cloudContext.
 const cloudTexture=new THREE.CanvasTexture(cloudCanvas);cloudTexture.encoding=THREE.sRGBEncoding;
 const clouds=[];
 for(let i=0;i<(lightQuality?1:3);i++){const cloud=new THREE.Sprite(new THREE.SpriteMaterial({map:cloudTexture,transparent:true,opacity:.28,depthWrite:false,fog:false}));cloud.position.set(-40+i*34,12+i*4,-48-i*5);cloud.scale.set(65,18,1);cloud.userData.baseX=cloud.position.x;scene.add(cloud);clouds.push(cloud);}
+// ===== Batch 7: 天时流转 — 日升/白天/黄昏/蓝调/夜/月落/清晨, one ~260s loop. The 夜 stop reproduces the original night look exactly. =====
+const SKY=[
+  {name:'日升',t:0,top:0x243548,hor:0xe09a58,fog:0x55494a,hemiS:0xd8c8b8,hemiG:0x2c3438,hemiI:.6,sunEl:4,sunAz:95,sunI:1.2,sunC:0xffc890,moonEl:-4,moonAz:272,moonI:.15,star:.05,fire:.15,warm:1},
+  {name:'白天',t:.1,top:0x5f7d95,hor:0xbcccd0,fog:0x93a3a8,hemiS:0xe8eef0,hemiG:0x3a4244,hemiI:.95,sunEl:52,sunAz:155,sunI:1.5,sunC:0xfff3e0,moonEl:-6,moonAz:285,moonI:0,star:0,fire:0,warm:.35},
+  {name:'黄昏',t:.3,top:0x333552,hor:0xd96f3f,fog:0x5a4a4c,hemiS:0xc8a8a0,hemiG:0x2a2e32,hemiI:.55,sunEl:3,sunAz:262,sunI:1.05,sunC:0xffa060,moonEl:10,moonAz:85,moonI:.35,star:.12,fire:.35,warm:1},
+  {name:'蓝调',t:.42,top:0x182846,hor:0x4a6a8a,fog:0x243448,hemiS:0x8aa0b8,hemiG:0x222a30,hemiI:.42,sunEl:-5,sunAz:275,sunI:0,sunC:0xffa060,moonEl:18,moonAz:78,moonI:.7,star:.4,fire:.65,warm:.45},
+  {name:'夜',t:.55,top:0x0c141d,hor:0x172532,fog:0x172532,hemiS:0xe8e2d5,hemiG:0x303a3e,hemiI:.85,sunEl:-8,sunAz:280,sunI:0,sunC:0xffc890,moonEl:21,moonAz:156,moonI:1.35,star:1,fire:1,warm:0},
+  {name:'月落',t:.73,top:0x0e1826,hor:0x243243,fog:0x1c2a38,hemiS:0xbfc8cf,hemiG:0x2a3236,hemiI:.6,sunEl:-6,sunAz:285,sunI:0,sunC:0xffc890,moonEl:2,moonAz:188,moonI:.8,star:.75,fire:.85,warm:.15},
+  {name:'清晨',t:.86,top:0x20364d,hor:0x7a8fa0,fog:0x44566a,hemiS:0xb8c4cc,hemiG:0x2c3438,hemiI:.55,sunEl:-2,sunAz:88,sunI:.15,sunC:0xffb37a,moonEl:-4,moonAz:200,moonI:0,star:.15,fire:.1,warm:.6}
+];
+const skyDomeMat=new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,fog:false,uniforms:{uTop:{value:new THREE.Color()},uHor:{value:new THREE.Color()}},
+  vertexShader:`varying vec3 vP;void main(){vP=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}`,
+  fragmentShader:`uniform vec3 uTop,uHor;varying vec3 vP;void main(){float h=normalize(vP).y;gl_FragColor=vec4(mix(uHor,uTop,smoothstep(-.12,.42,h)),1.0);}`});
+const skyDome=new THREE.Mesh(new THREE.SphereGeometry(340,24,16),skyDomeMat);skyDome.renderOrder=-1000;skyDome.frustumCulled=false;scene.add(skyDome);
+const sunOrb=mesh(new THREE.SphereGeometry(2.6,24,16),new THREE.MeshBasicMaterial({color:new THREE.Color(2.1,1.35,.7),fog:false}),scene,0,-80,0);
+const sunHalo=halo(scene,0,-80,0,22,.2);sunHalo.material.color.setHex(0xffb37a);
+const LIN=h=>new THREE.Color(h).convertSRGBToLinear(),RAW=h=>new THREE.Color(h);
+const SKY_LIN={top:SKY.map(s=>LIN(s.top)),hor:SKY.map(s=>LIN(s.hor)),fog:SKY.map(s=>LIN(s.fog))};
+const SKY_RAW={hemiS:SKY.map(s=>RAW(s.hemiS)),hemiG:SKY.map(s=>RAW(s.hemiG)),sunC:SKY.map(s=>RAW(s.sunC))};
+const nightGlint=new THREE.Color(.13,.19,.24),warmGlint=new THREE.Color(.42,.26,.13),nightDeep=new THREE.Color(.007,.017,.027),dayDeep=new THREE.Color(.045,.085,.1),nightHor=new THREE.Color(.0056,.011,.019),dayHor=new THREE.Color(.06,.09,.1),cloudTintW=new THREE.Color(1.3,.85,.65);
+const simpNight=LIN(0x142938),simpDay=LIN(0x3a5a6a);
+const mixC=(arr,i,v,out)=>out.copy(arr[i]).lerp(arr[(i+1)%SKY.length],v);
+const dirPos=(el,az,R,out)=>{const e=el*Math.PI/180,a=az*Math.PI/180;out.set(Math.cos(e)*Math.sin(a)*R,Math.sin(e)*R,Math.cos(e)*Math.cos(a)*R);};
+let skyT=.55,skyTarget=null,lastSkyName='',fireLevel=1;const skyState={};
+const skyTmp=new THREE.Vector3();
+function skyTick(dt){
+  if(skyTarget!==null){let d=skyTarget-skyT;if(d<0)d+=1;skyT=(skyT+Math.min(d,dt*.4))%1;if(d<.004)skyTarget=null;}
+  else skyT=(skyT+dt/260)%1;
+  let i=SKY.findIndex((s,idx)=>{const nt=idx===SKY.length-1?1:SKY[idx+1].t;return skyT>=s.t&&skyT<nt;});if(i<0)i=0;
+  const a=SKY[i],b=SKY[(i+1)%SKY.length],bt=b.t===0?1:b.t,v=Math.max(0,Math.min(1,(skyT-a.t)/(bt-a.t))),L=(x,y)=>x+(y-x)*v;
+  const sunEl=L(a.sunEl,b.sunEl),sunAz=L(a.sunAz,b.sunAz),moonEl=L(a.moonEl,b.moonEl),moonAz=L(a.moonAz,b.moonAz);
+  const sunI=Math.max(0,L(a.sunI,b.sunI)),moonI=Math.max(0,L(a.moonI,b.moonI)),warm=L(a.warm,b.warm),star=L(a.star,b.star),dayF=Math.min(1,sunI/1.3);
+  fireLevel=L(a.fire,b.fire);
+  mixC(SKY_LIN.top,i,v,scene.background);mixC(SKY_LIN.hor,i,v,skyDomeMat.uniforms.uHor.value);mixC(SKY_LIN.top,i,v,skyDomeMat.uniforms.uTop.value);
+  mixC(SKY_LIN.fog,i,v,scene.fog.color);scene.fog.density=.0085-.002*dayF;
+  mixC(SKY_RAW.hemiS,i,v,hemi.color);mixC(SKY_RAW.hemiG,i,v,hemi.groundColor);hemi.intensity=L(a.hemiI,b.hemiI);
+  mixC(SKY_RAW.sunC,i,v,sun.color);sun.intensity=sunI;moon.intensity=moonI;
+  dirPos(sunEl,sunAz,64,sun.position);dirPos(moonEl,moonAz,64,moon.position);
+  dirPos(sunEl,sunAz,56,sunOrb.position);sunHalo.position.copy(sunOrb.position);
+  dirPos(moonEl,moonAz,52,moonOrb.position);moonHalo.position.copy(moonOrb.position);
+  const sunUp=sunEl>-1.5,moonUp=moonEl>-1.5;
+  sunOrb.visible=sunHalo.visible=sunUp;moonOrb.visible=moonHalo.visible=moonUp;
+  sunHalo.material.opacity=.16*Math.min(1,sunI);moonHalo.material.opacity=.12*moonI;
+  if(!lightQuality&&!qualityReduced){const dom=sunI>moonI+.08;if(sun.castShadow!==dom){sun.castShadow=dom;moon.castShadow=!dom;}}
+  starMaterial.uniforms.fade.value=star;stars.visible=star>.02;
+  particles.material.opacity=.7*fireLevel;
+  waterMaterial.uniforms.keyDir.value.copy(sunI>=moonI&&sunUp?sun.position:moon.position);
+  waterMaterial.uniforms.uGlint.value.copy(nightGlint).lerp(warmGlint,warm);
+  waterMaterial.uniforms.uDeep.value.copy(nightDeep).lerp(dayDeep,dayF*.85);
+  waterMaterial.uniforms.uHor.value.copy(nightHor).lerp(dayHor,dayF*.8);
+  simpleWater.color.copy(simpNight).lerp(simpDay,dayF);
+  clouds.forEach(cl=>cl.material.color.setRGB(1+warm*cloudTintW.r*.22,1-warm*.06,1-warm*.12));
+  Object.assign(skyState,{sunEl:+sunEl.toFixed(1),moonEl:+moonEl.toFixed(1),sunI:+sunI.toFixed(2),moonI:+moonI.toFixed(2)});
+  if(a.name!==lastSkyName){lastSkyName=a.name;$('sky-button').textContent='天时 · '+a.name;}
+}
+$('sky-button').onclick=()=>{const nx=b=>b.t===0?.0001:b.t;skyTarget=nx(SKY[(SKY.findIndex(s=>s.name===lastSkyName)+1)%SKY.length]);};
 for(let i=0;i<12;i++){
   const a=i/12*Math.PI*2,r=31.5,x=Math.cos(a)*r,z=Math.sin(a)*r;
   const post=mesh(G.cylinder,M.dark,garden,x,.3,z,.28,.6,.28),chamber=mesh(G.box,M.glow,garden,x,.7,z,.25,.35,.25);halo(garden,x,.8,z,1.8,.2);
@@ -749,7 +810,7 @@ bindLook(renderer.domElement,true);bindLook($('viewpad'),false);
 $('viewpad').addEventListener('keydown',e=>{if(!e.key.startsWith('Arrow')&&e.key!=='Home')return;e.preventDefault();e.stopPropagation();lastLookAt=elapsed;if(e.key==='ArrowLeft')cameraState.yaw+=.14;if(e.key==='ArrowRight')cameraState.yaw-=.14;if(e.key==='ArrowUp')cameraState.pitch=Math.min(1.12,cameraState.pitch+.08);if(e.key==='ArrowDown')cameraState.pitch=Math.max(.22,cameraState.pitch-.08);if(e.key==='Home'){cameraState.yaw=0;cameraState.pitch=.78;}});
 function reduceQuality(){
   if(!lightQuality){lightQuality=true;if(bloom){bloom.enabled=false;composer.removePass(bloom);bloom.dispose();bloom=null;}
-    renderer.shadowMap.enabled=false;moon.castShadow=false;if(moon.shadow.map){moon.shadow.map.dispose();moon.shadow.map=null;}
+    renderer.shadowMap.enabled=false;moon.castShadow=false;sun.castShadow=false;if(moon.shadow.map){moon.shadow.map.dispose();moon.shadow.map=null;}
     scene.traverse(object=>{if(object.material)object.material.needsUpdate=true;});
   }
   fakeShadows.forEach(shadow=>shadow.visible=true);starGeometry.setDrawRange(0,Math.min(65,starCount));particleGeometry.setDrawRange(0,Math.min(16,particleCount));
@@ -838,9 +899,10 @@ function updateCamera(dt){
 function frame(now){
   requestAnimationFrame(frame);if(failed||document.hidden){lastTime=0;return;}
   const raw=lastTime?(now-lastTime)/1000:1/60,dt=Math.min(raw,.035);lastTime=now;elapsed+=dt;
+  skyTick(dt);
   if(started&&$('directory').hidden)move(dt);
   updateLandmarks(dt);updateCamera(dt);
-  particles.visible=!reduced;starMaterial.uniforms.motion.value=reduced?0:1;
+  particles.visible=!reduced&&fireLevel>.02;starMaterial.uniforms.motion.value=reduced?0:1;
   if(!reduced){for(let i=0;i<(lightQuality?Math.min(16,particleCount):particleCount);i++){const b=particleBase[i];particlePositions[i*3]=b[0]+Math.sin(elapsed*.25+b[3])*.3;particlePositions[i*3+1]=b[1]+Math.sin(elapsed*.6+b[3])*.35;}particleGeometry.attributes.position.needsUpdate=true;}
   mapElapsed+=dt;if(mapElapsed>.08){drawMap();mapElapsed=0;}
   if(!reduced){starMaterial.uniforms.time.value=elapsed;if(!lightQuality)waterMaterial.uniforms.time.value=elapsed;clouds.forEach((cloud,i)=>{if(cloud.visible)cloud.position.x=cloud.userData.baseX+Math.sin(elapsed*.025+i)*4;});}
@@ -850,7 +912,7 @@ function frame(now){
   if(!qualityReduced&&elapsed>3){slowFrames=raw>.029?slowFrames+1:Math.max(0,slowFrames-2);if(slowFrames>90){qualityReduced=true;reduceQuality();}}
 }
 // Read-mostly handle for automated smoke tests (batch 5 seven-bridge verification).
-window.__garden={walkable,teleport,start,player,cameraState,BRIDGES,MATH_ISLES,bridgesWalked,get bridge8Open(){return bridge8Open;}};
+window.__garden={walkable,teleport,start,player,cameraState,BRIDGES,MATH_ISLES,bridgesWalked,get bridge8Open(){return bridge8Open;},setSky(v){skyT=((v%1)+1)%1;skyTarget=null;},skyInfo(){return {t:+skyT.toFixed(3),name:lastSkyName,...skyState};}};
 ready=true;$('start').disabled=false;$('start').innerHTML='提灯入庭<span class="arrow">↗</span>';
 drawMap();requestAnimationFrame(frame);
 })();
