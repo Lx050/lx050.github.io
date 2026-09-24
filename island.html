@@ -343,10 +343,19 @@ const water=disc(scene,0,0,155,lightQuality?simpleWater:waterMaterial,-15);water
 const garden=new THREE.Group();scene.add(garden);
 disc(garden,0,0,4.2,M.dark,.015);ring(garden,0,0,4.25,0xaaa18e,.38);
 ring(garden,0,0,3.75,0xc0563e,.32);
-for(let i=-10;i<=10;i++){
-  if(Math.abs(i)<2)continue;
-  mesh(G.box,M.path,garden,0,.025,i*2.9,1.65,.07,1.15);
-  mesh(G.box,M.path,garden,i*2.9,.025,0,1.15,.07,1.65);
+// Batch 6: 曲径通幽 — the straight slab cross becomes meandering flagstone runs (visual only; walkable unchanged).
+const jitter=n=>{const s=Math.sin(n*127.1+311.7)*43758.5453;return s-Math.floor(s);};
+for(const [ux,uz] of [[0,1],[0,-1],[1,0],[-1,0]]){
+  const px=-uz,pz=ux,face=Math.atan2(ux,uz),phase=jitter(ux*3+uz*7+1)*6.28;
+  for(let t=4.6;t<29.6;t+=1.42){
+    const j1=jitter(t*5.3+phase),j2=jitter(t*9.1+phase),off=Math.sin(t*.23+phase)*.7,tilt=Math.cos(t*.23+phase)*.15;
+    const slab=mesh(G.box,j2>.32?M.path:M.stone,garden,ux*t+px*off,.03,uz*t+pz*off,1.3+j1*.45,.07,1+j2*.28);
+    slab.rotation.y=face+(j1-.5)*.2+tilt;slab.castShadow=false;
+    if(t%4.24<1.5){
+      const side=j1>.5?1:-1,ox=ux*(t+.6)+px*(off+side*(1.15+j2*.5)),oz=uz*(t+.6)+pz*(off+side*(1.15+j2*.5));
+      const rock=mesh(G.sphere,j2>.55?M.leaf:M.stone,garden,ox,.05,oz,.13+j1*.13,.07+j2*.06,.1+j1*.11);rock.rotation.y=j1*6.28;rock.castShadow=false;
+    }
+  }
 }
 ZONES.forEach(zone=>{
   ring(garden,zone.x,zone.z,zone.name==='连接'?8.6:11.7,zone.color,.16);
@@ -490,14 +499,55 @@ MATH_ISLES.forEach(is=>{
   const s=label(is.name+' · '+is.note);s.position.set(is.x,.3,is.z+is.r+3);s.scale.multiplyScalar(1.1);s.material.opacity=.55;scene.add(s);
   colliders.push({x:is.x,z:is.z,r:2.1});
 });
+// Batch 6: 玉带式石拱桥 — cambered slab deck, voussoir arch over a flattened opening, spandrel
+// masonry, 望柱+栏板 (midspan left open, 让月), approach steps and corner stone lanterns.
+function bridgeDeckY(x,L,rise){const half=L/2,c=Math.cos(Math.max(-1,Math.min(1,x/half))*Math.PI/2);return .055+rise*c;}
 function buildBridge(b){
   const g=new THREE.Group();scene.add(g);
   const dx=b.x2-b.x1,dz=b.z2-b.z1,len=Math.hypot(dx,dz),ang=-Math.atan2(dz,dx);
+  const L=len+1.6,half=L/2,rise=Math.min(.62,len*.09),archA=Math.min(half-1.05,2.35),archB=Math.max(.34,rise-.06);
   g.position.set((b.x1+b.x2)/2,0,(b.z1+b.z2)/2);g.rotation.y=ang;
-  mesh(G.box,M.path,g,0,.07,0,len+1.6,.14,2.2);
-  for(const s of [-1,1])mesh(G.box,M.ivory,g,0,.3,s*1.02,len+1.6,.3,.09);
-  for(const e of [-1,1])for(const s of [-1,1]){const px=e*(len/2+.5);
-    mesh(G.cylinder,M.dark,g,px,.3,s*1.15,.05,.05,.6);mesh(G.sphere,M.glow,g,px,.66,s*1.15,.09,.09,.09);halo(g,px,.66,s*1.15,1.1,.3);}
+  // Cambered deck: stone slabs riding the arc, alternating path/stone, tilted to the tangent.
+  for(let i=0;i<9;i++){
+    const lx=-half+(i+.5)*(L/9),y=bridgeDeckY(lx,L,rise);
+    const slope=(bridgeDeckY(lx+.05,L,rise)-bridgeDeckY(lx-.05,L,rise))/.1;
+    const slab=mesh(G.box,i%3===1?M.stone:M.path,g,lx,y-.06,0,L/9*1.05,.12,2.14);
+    slab.rotation.z=Math.atan(slope);slab.castShadow=i===4;
+  }
+  // Spandrel masonry closing the triangle between arch legs and bridge feet.
+  for(const s of [-1,1]){
+    const x0=s*(archA-.15),x1=s*(half+.28),mid=(x0+x1)/2,w=Math.abs(x1-x0),top=bridgeDeckY(Math.max(-half,Math.min(half,mid)),L,rise)-.11;
+    mesh(G.box,M.stone,g,mid,(top+.02)/2,0,w,Math.max(.12,top),2).castShadow=true;
+  }
+  // Voussoir arch ring along a flattened half-ellipse; joints dressed in dark roof stone.
+  for(let i=0;i<7;i++){
+    const th=(i+.5)/7*Math.PI;
+    const vs=mesh(G.box,i%3===2?M.roof:M.stone,g,archA*Math.cos(th),.02+archB*Math.sin(th),0,archA/7*1.22,.15,1.9);
+    vs.rotation.z=Math.atan2(archB*Math.cos(th),-archA*Math.sin(th));vs.castShadow=false;
+  }
+  // Approach steps down to each shore.
+  for(const e of [-1,1])for(let k=0;k<2;k++)mesh(G.box,M.stone,g,e*(half+.3+k*.4),.065-k*.02,0,.52,.11-k*.025,2-k*.14).castShadow=false;
+  // 望柱 + 栏板 per side; the midspan panel is left open (让月).
+  const postXs=[-half*.96,-half*.32,half*.32,half*.96];
+  for(const s of [-1,1]){
+    for(const lx of postXs){
+      const y=bridgeDeckY(lx,L,rise);
+      mesh(G.box,M.ivory,g,lx,y+.24,s,.085,.42,.085).castShadow=false;
+      mesh(G.sphere,M.ivory,g,lx,y+.47,s,.075,.07,.075).castShadow=false;
+    }
+    for(const seg of [[-half*.96,-half*.32],[half*.32,half*.96]]){
+      const mid=(seg[0]+seg[1])/2,y=bridgeDeckY(mid,L,rise);
+      mesh(G.box,M.ivory,g,mid,y+.24,s,seg[1]-seg[0]-.1,.3,.055).castShadow=false;
+    }
+  }
+  // Corner stone lanterns: shaft, glowing chamber, pagoda roof.
+  for(const e of [-1,1])for(const s of [-1,1]){
+    const lx=e*(half-.3),lz=s*1.28,y=bridgeDeckY(lx,L,rise);
+    mesh(G.cylinder,M.stone,g,lx,y+.2,lz,.05,.4,.05).castShadow=false;
+    mesh(G.box,M.glow,g,lx,y+.5,lz,.15,.16,.15).castShadow=false;
+    mesh(G.cone,M.roof,g,lx,y+.64,lz,.16,.13,.16).castShadow=false;
+    halo(g,lx,y+.5,lz,1,.24);
+  }
   g.visible=!b.bonus;b.mesh=g;return g;
 }
 BRIDGES.forEach(buildBridge);
@@ -742,11 +792,14 @@ function move(dt){
   for(const c of colliders){const dx=player.position.x-c.x,dz=player.position.z-c.z,d=Math.hypot(dx,dz),r=c.r+.38;if(d<r){const nx=d>1e-5?dx/d:1,nz=d>1e-5?dz/d:0;player.position.x=c.x+nx*r;player.position.z=c.z+nz*r;const inward=velocity.x*nx+velocity.y*nz;if(inward<0){velocity.x-=nx*inward;velocity.y-=nz*inward;}}}
   // Walkable = mainland ∪ bridge decks ∪ isle disks (batch 5); outside that is water — roll back.
   if(!walkable(player.position.x,player.position.z)){player.position.x=oldX;player.position.z=oldZ;velocity.multiplyScalar(0);}
+  // Batch 6: ride the cambered deck (visual height only; walkable logic untouched).
+  let ty=0;for(const bb of BRIDGES){if(bb.bonus&&!bridge8Open)continue;const bdx=bb.x2-bb.x1,bdz=bb.z2-bb.z1,bl2=bdx*bdx+bdz*bdz;const bt=((player.position.x-bb.x1)*bdx+(player.position.z-bb.z1)*bdz)/bl2;if(bt>=0&&bt<=1&&onBridgeSeg(player.position.x,player.position.z,bb,1.35)){const bl=Math.sqrt(bl2);ty=bridgeDeckY((bt-.5)*bl,bl+1.6,Math.min(.62,bl*.09));break;}}
+  player.position.y+=(ty-player.position.y)*(reduced?1:1-Math.exp(-10*dt));
   const speed=velocity.length();if(speed>.05){const target=Math.atan2(velocity.x,velocity.y);let diff=target-body.rotation.y;diff=Math.atan2(Math.sin(diff),Math.cos(diff));body.rotation.y+=diff*(reduced?1:1-Math.exp(-16*dt));}
   walkPhase+=speed*dt*2.5;body.position.y=reduced?0:Math.abs(Math.sin(walkPhase))*.065*Math.min(speed,1);legL.rotation.x=reduced?0:Math.sin(walkPhase)*.45*Math.min(speed,1);legR.rotation.x=-legL.rotation.x;
   lanternSwing.rotation.z=reduced?0:Math.sin(walkPhase+.65)*.13*Math.min(speed/3,1);lanternSwing.rotation.x=reduced?0:Math.cos(walkPhase*.5)*.06*Math.min(speed,1);
   dustElapsed+=dt;
-  if(!reduced&&!lightQuality&&speed>1&&dustElapsed>.46){dustElapsed=0;const count=random()>.7?2:1;for(let i=0;i<count;i++){const puff=dustPool[dustCursor++%dustPool.length];puff.position.set(player.position.x+(random()-.5)*.3,.09,player.position.z+(random()-.5)*.3);puff.userData.life=.65;puff.visible=true;}}
+  if(!reduced&&!lightQuality&&speed>1&&dustElapsed>.46){dustElapsed=0;const count=random()>.7?2:1;for(let i=0;i<count;i++){const puff=dustPool[dustCursor++%dustPool.length];puff.position.set(player.position.x+(random()-.5)*.3,player.position.y+.09,player.position.z+(random()-.5)*.3);puff.userData.life=.65;puff.visible=true;}}
   bridgeTick();
 }
 function updateLandmarks(dt){
