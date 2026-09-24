@@ -115,6 +115,7 @@ const WORLD=Object.freeze({PLAYER_HEIGHT:1.7,ISLAND_RADIUS:150,INNER_RING:70,OUT
   LANTERN_HEIGHT:2.4,TORII_HEIGHT:13,TORII_Z:37,WATER_Y:-18,WATER_RADIUS:1500,
   SKY_RADIUS:1800,CELESTIAL_RADIUS:1100,FOG_NIGHT:.0024,FOG_DAY:.0018,
   CAMERA_FOV:40,CAMERA_FAR:2400,CAMERA_DISTANCE:6.5,CAMERA_PITCH:.2,
+  CAMERA_CLEARANCE:1.0,VIEW_K:.5,VIEW_K_PORTRAIT:.62,BLOOM_THRESHOLD:2.8,BLOOM_STRENGTH:.18,
   CAMERA_MIN_PITCH:-.5,CAMERA_MAX_PITCH:.62,SHADOW_RADIUS:70,SHADOW_MOBILE_RADIUS:40,
   MATH_SCALE:150/31.5,INTERACT_DISTANCE:9,LABEL_DISTANCE:100,LOD_DESKTOP:210,LOD_MOBILE:115});
 // Every destination owns one physical landmark, a Sprite label, and a directory link.
@@ -325,7 +326,7 @@ const composer=new THREE.EffectComposer(renderer,target);
 composer.setPixelRatio(renderer.getPixelRatio());composer.addPass(new THREE.RenderPass(scene,camera));
 let bloom=null;
 if(!lightQuality){
-  bloom=new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),.58,.5,1.45);
+  bloom=new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),WORLD.BLOOM_STRENGTH,.35,WORLD.BLOOM_THRESHOLD);
   // The bundled r128 bloom defaults to byte targets; keep highlights in HDR through its blur chain.
   [bloom.renderTargetBright,...bloom.renderTargetsHorizontal,...bloom.renderTargetsVertical].forEach(rt=>{rt.texture.type=THREE.HalfFloatType;});
   composer.addPass(bloom);
@@ -412,10 +413,12 @@ mesh(new THREE.CylinderGeometry(WORLD.ISLAND_RADIUS*.9533333333,WORLD.ISLAND_RAD
 ring(scene,0,0,WORLD.ISLAND_RADIUS,0x8b8271,.23,.025);
 const distantLand=[];
 const distantMaterial=new THREE.MeshBasicMaterial({color:0x24333c});
+// These cones are painted scenery beyond the playable world, never foreground occluders.
+const backdropMaterial=distantMaterial.clone();backdropMaterial.color=distantMaterial.color;backdropMaterial.depthWrite=false;
 for(let i=0;i<42;i++){
   const a=i/42*Math.PI*2,r=WORLD.ISLAND_RADIUS*(2.2+(i%4)*.7),h=38+(i*37%113);
-  const peak=mesh(new THREE.ConeGeometry(1,1,5),distantMaterial,scene,Math.sin(a)*r,h*.5-24,Math.cos(a)*r,48+i%5*13,h,30+i%7*8);
-  peak.rotation.y=a;peak.castShadow=peak.receiveShadow=false;distantLand.push(peak);
+  const peak=mesh(new THREE.ConeGeometry(1,1,5),backdropMaterial,scene,Math.sin(a)*r,h*.5-24,Math.cos(a)*r,48+i%5*13,h,30+i%7*8);
+  peak.rotation.y=a;peak.renderOrder=-900;peak.castShadow=peak.receiveShadow=false;distantLand.push(peak);
 }
 
 // Water surrounds the suspended island; low quality swaps this shader for a flat blue disc.
@@ -529,7 +532,7 @@ const SKY=[
   {name:'白天',t:.1,top:0x5f7d95,mid:0x93a8b2,hor:0xbcccd0,fog:0x93a3a8,hemiS:0xe8eef0,hemiG:0x3a4244,hemiI:.95,sunEl:52,sunAz:155,sunI:1.5,sunC:0xfff3e0,moonEl:-6,moonAz:285,moonI:0,star:0,fire:0,warm:.35},
   {name:'黄昏',t:.3,top:0x333552,mid:0x7a5a5e,hor:0xd96f3f,fog:0x5a4a4c,hemiS:0xc8a8a0,hemiG:0x2a2e32,hemiI:.55,sunEl:3,sunAz:262,sunI:1.05,sunC:0xffa060,moonEl:10,moonAz:85,moonI:.35,star:.12,fire:.35,warm:1},
   {name:'蓝调',t:.42,top:0x182846,mid:0x2c4460,hor:0x4a6a8a,fog:0x243448,hemiS:0x8aa0b8,hemiG:0x222a30,hemiI:.42,sunEl:-5,sunAz:275,sunI:0,sunC:0xffa060,moonEl:18,moonAz:78,moonI:.7,star:.4,fire:.65,warm:.45},
-  {name:'夜',t:.55,top:0x0c141d,mid:0x111c27,hor:0x172532,fog:0x172532,hemiS:0xe8e2d5,hemiG:0x303a3e,hemiI:.85,sunEl:-8,sunAz:280,sunI:0,sunC:0xffc890,moonEl:21,moonAz:156,moonI:1.35,star:1,fire:1,warm:0},
+  {name:'夜',t:.55,top:0x0c141d,mid:0x111c27,hor:0x172532,fog:0x172532,hemiS:0xe8e2d5,hemiG:0x303a3e,hemiI:.48,sunEl:-8,sunAz:280,sunI:0,sunC:0xffc890,moonEl:21,moonAz:156,moonI:1.05,star:1,fire:1,warm:0},
   {name:'月落',t:.73,top:0x0e1826,mid:0x1a2836,hor:0x243243,fog:0x1c2a38,hemiS:0xbfc8cf,hemiG:0x2a3236,hemiI:.6,sunEl:-6,sunAz:285,sunI:0,sunC:0xffc890,moonEl:2,moonAz:188,moonI:.8,star:.75,fire:.85,warm:.15},
   {name:'清晨',t:.86,top:0x20364d,mid:0x4e6478,hor:0x7a8fa0,fog:0x44566a,hemiS:0xb8c4cc,hemiG:0x2c3438,hemiI:.55,sunEl:-2,sunAz:88,sunI:.15,sunC:0xffb37a,moonEl:-4,moonAz:200,moonI:0,star:.15,fire:.1,warm:.6}
 ];
@@ -613,6 +616,75 @@ function label(text){
   const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,color:0xe8e2d5,transparent:true,depthWrite:false,depthTest:true,toneMapped:false}));
   sprite.scale.set(width/80*1.08,1.08,1);sprite.userData.baseWidth=sprite.scale.x;return sprite;
 }
+// Architectural trim follows actual coplanar mesh faces, including inclined walls.
+// It never replaces a sculpture with a bounding-box cage. All dimensions below are metres.
+const dressingMaterial=material(0x303d3d),dressingBase=material(0x222b2c);
+function monumentFaces(root){
+  const faces=[];root.updateWorldMatrix(true,true);
+  root.traverse(o=>{if(!o.isMesh||o.isInstancedMesh)return;
+    const p=o.geometry.attributes.position,idx=o.geometry.index,planes=new Map();
+    for(let i=0;i<(idx?idx.count:p.count);i+=3){
+      const v=[0,1,2].map(k=>new THREE.Vector3().fromBufferAttribute(p,idx?idx.getX(i+k):i+k).applyMatrix4(o.matrixWorld));
+      const n=new THREE.Vector3().subVectors(v[1],v[0]).cross(new THREE.Vector3().subVectors(v[2],v[0]));if(n.lengthSq()<1e-10)continue;n.normalize();
+      const d=n.dot(v[0]),key=[n.x,n.y,n.z,d].map(x=>x.toFixed(3)).join('/');
+      let f=planes.get(key);if(!f){const up=Math.abs(n.y)<.95?new THREE.Vector3(0,1,0):new THREE.Vector3(0,0,1),u=new THREE.Vector3().crossVectors(up,n).normalize(),vv=new THREE.Vector3().crossVectors(n,u);f={n,u,v:vv,d,points:[],source:o.uuid};planes.set(key,f);}f.points.push(...v);
+    }
+    for(const f of planes.values()){f.minU=f.minV=Infinity;f.maxU=f.maxV=-Infinity;for(const p of f.points){const u=p.dot(f.u),v=p.dot(f.v);f.minU=Math.min(f.minU,u);f.maxU=Math.max(f.maxU,u);f.minV=Math.min(f.minV,v);f.maxV=Math.max(f.maxV,v);}faces.push(f);}
+  });return faces;
+}
+function dressMonument(wrap){
+  const host=wrap.parent,layer=new THREE.Group();layer.name='monument-dressing';host.add(layer);
+  const worldToLocal=new THREE.Matrix4().copy(host.matrixWorld).invert(),rows=[];
+  for(const f of monumentFaces(wrap)){
+    const w=f.maxU-f.minU,h=f.maxV-f.minV;if(w<6||h<6)continue;
+    const basis=new THREE.Matrix4().makeBasis(f.u,f.v,f.n),q=new THREE.Quaternion().setFromRotationMatrix(basis);
+    // Clip each rail to the actual polygon at its centreline (triangular roofs keep their outline).
+    function rail(axis,t,thickness){
+      const spans=[];
+      for(let i=0;i<f.points.length;i+=3){
+        const hits=[];
+        for(let j=0;j<3;j++){
+          const a=f.points[i+j],b=f.points[i+(j+1)%3],av=a.dot(axis==='u'?f.u:f.v),bv=b.dot(axis==='u'?f.u:f.v);
+          if((t-av)*(t-bv)<=0&&Math.abs(bv-av)>1e-7){const at=a.clone().lerp(b,(t-av)/(bv-av));hits.push(at.dot(axis==='u'?f.v:f.u));}
+        }
+        if(hits.length>1)spans.push([Math.min(...hits),Math.max(...hits)]);
+      }
+      // Union triangle intervals rather than bridging holes in coplanar rings/arches.
+      spans.sort((a,b)=>a[0]-b[0]);const joined=[];
+      for(const span of spans){const previous=joined[joined.length-1];if(previous&&span[0]<=previous[1]+.001)previous[1]=Math.max(previous[1],span[1]);else joined.push(span);}
+      for(const [low,high] of joined){
+        if(high-low<.4)continue;
+        const u=axis==='u'?t:(low+high)/2,v=axis==='v'?t:(low+high)/2;
+        const position=f.u.clone().multiplyScalar(u).addScaledVector(f.v,v).addScaledVector(f.n,f.d+.055);
+        const scale=new THREE.Vector3(axis==='u'?thickness:high-low,axis==='v'?thickness:high-low,.14);
+        rows.push(new THREE.Matrix4().compose(position,q,scale).premultiply(worldToLocal));
+      }
+    }
+    rail('v',f.minV+.22,.42);rail('v',f.maxV-.22,.42);
+    const belts=Math.min(3,Math.floor(h/10));for(let j=1;j<=belts;j++)rail('v',f.minV+h*j/(belts+1),.18);
+    if(w>12&&h>12){const modules=Math.ceil(w/3.5);for(let j=1;j<modules;j++)rail('u',f.minU+w*j/modules,.16);}
+  }
+  if(rows.length){const im=new THREE.InstancedMesh(G.box,dressingMaterial,rows.length);rows.forEach((m,i)=>im.setMatrixAt(i,m));im.name='face-trim';im.receiveShadow=true;im.castShadow=false;layer.add(im);}
+  const box=new THREE.Box3().setFromObject(wrap),footprints=[];
+  // Footings belong to real grounded supports. A single AABB-wide slab would seal
+  // the void under MindCare's arch and other open monuments when seen from below.
+  wrap.traverse(o=>{if(!o.isMesh)return;if(!o.geometry.boundingBox)o.geometry.computeBoundingBox();const part=o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld);if(part.min.y-box.min.y<(box.max.y-box.min.y)*.05)footprints.push(part);});
+  const base=new THREE.InstancedMesh(G.box,dressingBase,footprints.length);
+  footprints.forEach((part,i)=>{const size=part.getSize(new THREE.Vector3()),c=part.getCenter(new THREE.Vector3()).sub(host.position),m=new THREE.Matrix4().makeScale(size.x+.12,.38,size.z+.12);m.setPosition(c.x,box.min.y-host.position.y+.19,c.z);base.setMatrixAt(i,m);});
+  base.name='dark-footing';base.receiveShadow=true;layer.add(base);
+  layer.updateWorldMatrix(true,true);wrap.userData.dressing=layer;
+  // r128 Box3.setFromObject ignores instanceMatrix: explicitly union every instance.
+  const bounds=new THREE.Box3().setFromObject(wrap);
+  layer.traverse(o=>{if(!o.isInstancedMesh)return;o.geometry.computeBoundingBox();for(let i=0;i<o.count;i++){const matrix=new THREE.Matrix4();o.getMatrixAt(i,matrix);matrix.premultiply(o.matrixWorld);bounds.union(o.geometry.boundingBox.clone().applyMatrix4(matrix));}});
+  wrap.userData.bounds=bounds;
+}
+const lodWarm=new THREE.MeshBasicMaterial({color:new THREE.Color(.32,.17,.045)});
+function monumentLOD(group,size){
+  const lod=new THREE.Group();group.add(lod);
+  const mass=mesh(G.box,distantMaterial,lod,0,size.y/2,0,size.x*.65,size.y,size.z*.65);mass.castShadow=mass.receiveShadow=false;
+  const tip=mesh(G.sphere,lodWarm,lod,0,size.y+.25,0,.28,.28,.28);tip.castShadow=tip.receiveShadow=false;
+  lod.visible=false;return lod;
+}
 // Normalise from world bounds, including nested GLB transforms; never assume its authored origin.
 function placeMonument(glb,group,{targetHeight,tier}){
   const wrap=new THREE.Group();wrap.add(glb);group.add(wrap);group.updateWorldMatrix(true,true);
@@ -622,7 +694,18 @@ function placeMonument(glb,group,{targetHeight,tier}){
   const centre=box.getCenter(new THREE.Vector3()),base=group.getWorldPosition(new THREE.Vector3());
   // All monument parents have identity rotation/scale, so world deltas equal local metre deltas.
   wrap.position.add(new THREE.Vector3(base.x-centre.x,base.y-box.min.y,base.z-centre.z));
-  wrap.updateWorldMatrix(true,true);wrap.userData.tier=tier;return wrap;
+  wrap.updateWorldMatrix(true,true);wrap.userData.tier=tier;
+  if(tier!=='threshold'){
+    const materials=new Map(),scale=targetHeight/h;
+    wrap.traverse(o=>{if(!o.isMesh)return;o.material=(Array.isArray(o.material)?o.material:[o.material]).map(original=>{
+      if(!materials.has(original)){const m=original.clone();const glowing=m.emissive&&m.emissive.getHex()>0;
+        m.color.multiplyScalar(glowing?.28:.34);if(glowing)m.emissiveIntensity=Math.min(.3,(m.emissiveIntensity||1)*.36/Math.sqrt(Math.max(1,scale)));
+        m.userData.monument=true;m.userData.baseEmission=m.emissiveIntensity;materials.set(original,m);}
+      return materials.get(original);
+    });if(o.material.length===1)o.material=o.material[0];});
+    dressMonument(wrap);
+  }
+  return wrap;
 }
 function buildTerrace(lm){
   const t=lm.site,angle=Math.atan2(t.ux,t.uz),point=(d,side=0)=>[t.x+t.ux*d-t.uz*side,t.z+t.uz*d+t.ux*side];
@@ -689,10 +772,10 @@ LINKS.forEach((entry,index)=>{
   const lm={entry,group,name,glow,lightHalo,marker,beacon,index,zproc,activation:0,site:terraceSites[index],targetHeight};landmarks.push(lm);
   const fallback=new THREE.Group();zproc.forEach(m=>fallback.add(m));
   lm.fallback=placeMonument(fallback,group,{targetHeight,tier:'fallback'});
-  lm.fallbackBox=new THREE.Box3().setFromObject(lm.fallback);
+  lm.fallbackBox=lm.fallback.userData.bounds;lm.bounds=lm.fallbackBox;
   lm.bboxHeight=targetHeight;lm.groundY=lm.site.groundY;
-  name.position.y=targetHeight+2.8;name.scale.multiplyScalar(3);name.userData.baseWidth=name.scale.x;
-  beacon.position.y=targetHeight+1;beacon.scale.setScalar(3);lightHalo.position.y=targetHeight*.65;lightHalo.scale.set(12,12,1);
+  name.position.set(-lm.site.ux*2,targetHeight+5,-lm.site.uz*2);name.scale.multiplyScalar(3);name.userData.baseWidth=name.scale.x;
+  beacon.position.set(lm.site.uz*2,targetHeight+1,-lm.site.ux*2);beacon.scale.setScalar(1.5);lightHalo.position.y=targetHeight*.65;lightHalo.scale.set(12,12,1);
   marker.scale.set(15,15,1);
   buildTerrace(lm);
   group.traverse(child=>{if(child.isMesh){child.userData.landmark=lm;pickables.push(child);}});
@@ -732,7 +815,7 @@ let bridge8Open=false;
 MATH_ISLES.forEach(is=>{
   mesh(new THREE.CylinderGeometry(is.r+1.2,is.r,1.2,56),M.ground,scene,is.x,-.6,is.z);
   const rim=mesh(new THREE.CylinderGeometry(is.r+1.3,is.r+1.05,.3,56),M.edge,scene,is.x,-.16,is.z);rim.castShadow=false;
-  const s=label(is.name+' · '+is.note);s.position.set(is.x,is.key==='K'?70:42,is.z);s.scale.multiplyScalar(3);s.material.opacity=.55;scene.add(s);
+  const s=label(is.name+' · '+is.note);is.label=s;s.position.set(is.x,is.key==='K'?70:42,is.z);s.scale.multiplyScalar(3);s.material.opacity=.55;scene.add(s);
   const len=Math.hypot(is.x,is.z),site={index:26+MATH_ISLES.indexOf(is),x:is.x,z:is.z,ux:is.x/len,uz:is.z/len,radius:15,steps:20,rise:3,baseY:0,groundY:3};
   is.site=site;terraceSites.push(site);buildTerrace({site,index:site.index});
 });
@@ -784,8 +867,8 @@ Promise.resolve().then(()=>MATH_ISLES.forEach((is,i)=>{
   const targetHeight=i===0?64:36;
   const fb=new THREE.Group();mesh(G.cone,M.stone,fb,0,.5,0,.35,1,.35);
   const fallback=placeMonument(fb,group,{targetHeight,tier:'math-fallback'});
-  const record={index:26+i,title:is.name,group,bboxHeight:targetHeight,groundY:is.site.groundY,platformY:is.site.groundY,x:is.x,z:is.z};mathMonuments.push(record);
-  glbLoad(is.glb).then(g=>{fallback.visible=false;record.model=placeMonument(glbRefine((g.getObjectByName(is.root)||g).clone(true)),group,{targetHeight,tier:'math'});const size=new THREE.Box3().setFromObject(record.model).getSize(new THREE.Vector3());record.lod=mesh(G.box,distantMaterial,group,0,size.y/2,0,size.x*.7,size.y,size.z*.7);record.lod.visible=false;})
+  const record={index:26+i,title:is.name,site:is.site,name:is.label,group,fallback,bounds:fallback.userData.bounds,bboxHeight:targetHeight,groundY:is.site.groundY,platformY:is.site.groundY,x:is.x,z:is.z};mathMonuments.push(record);
+  glbLoad(is.glb).then(g=>{fallback.visible=false;fallback.userData.dressing.visible=false;record.model=placeMonument(glbRefine((g.getObjectByName(is.root)||g).clone(true)),group,{targetHeight,tier:'math'});record.bounds=record.model.userData.bounds;const size=new THREE.Box3().setFromObject(record.model).getSize(new THREE.Vector3());record.lod=monumentLOD(group,size);})
     .catch(e=>console.warn(is.glb+' 未加载',e));
 }));
 
@@ -819,6 +902,8 @@ const lanternSwing=new THREE.Group();lanternSwing.position.set(.69,1.1,0);body.a
 glbVisitorProc.push(mesh(G.box,M.wood,lanternSwing,0,-.25,0,.025,.55,.025));
 glbVisitorProc.push(mesh(G.cylinder,M.glow,lanternSwing,0,-.55,0,.18,.33,.18));
 halo(lanternSwing,0,-.55,0,2.1,.44);
+// A tiny exposed wick supplies HDR bloom while the paper lantern retains its ribs.
+mesh(G.sphere,new THREE.MeshBasicMaterial({color:new THREE.Color(6,3.5,1.2)}),lanternSwing,0,-.38,.17,.035,.055,.035);
 const playerLight=new THREE.PointLight(0xf0bd7e,1.25,6,2);playerLight.position.set(0,-.4,0);lanternSwing.add(playerLight);
 disc(player,0,0,.65,M.shadow);
 ring(player,0,0,.85,0xe8e2d5,.15);
@@ -834,8 +919,8 @@ function glbRefine(root,glowOverride){
 }
 const modelLoads={loaded:[],failed:[]};
 function glbLoad(url){return new Promise((resolve,reject)=>gltfLoader.load(url,g=>{modelLoads.loaded.push(url);resolve(g.scene);},undefined,e=>{modelLoads.failed.push(url);reject(e);}));}
-function instancePrototype(proto,placements,heightOf){
-  const root=glbRefine(proto.clone(true));root.updateWorldMatrix(true,true);
+function instancePrototype(proto,placements,heightOf,refine=glbRefine){
+  const root=refine(proto.clone(true));root.updateWorldMatrix(true,true);
   const box=new THREE.Box3().setFromObject(root),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
   const byGeometry=new Map();
   root.traverse(o=>{if(!o.isMesh)return;const key=o.geometry.uuid+o.material.uuid;if(!byGeometry.has(key))byGeometry.set(key,{geo:o.geometry,mat:o.material,parts:[]});byGeometry.get(key).parts.push(o.matrixWorld.clone());});
@@ -862,8 +947,30 @@ glbLoad('assets/models/Torii.glb').then(g=>{
   toriiFallback.visible=false;const group=new THREE.Group();group.position.set(0,terrainHeight(0,WORLD.TORII_Z),WORLD.TORII_Z);garden.add(group);
   placeMonument(glbRefine(g),group,{targetHeight:WORLD.TORII_HEIGHT,tier:'threshold'});
 }).catch(e=>console.warn('Torii.glb 未加载',e));
-glbLoad('assets/models/StoneLantern.glb').then(g=>instancePrototype(g,glbRingLanterns,()=>WORLD.LANTERN_HEIGHT)).catch(e=>{
-  glbRingLanterns.forEach(p=>{instance(G.cylinder,M.stone,p.x,p.y+.8,p.z,.18,1.6,.18);instance(G.box,M.glow,p.x,p.y+1.9,p.z,.55,.6,.55);instance(G.cone,M.roof,p.x,p.y+2.3,p.z,.5,.2,.5);});flushInstances();console.warn('StoneLantern fallback',e);
+// Distance falloff applies in world metres to both instanced fire rooms and small wicks.
+function pathLightMaterial(intensity){
+  const mat=material(0x634521,{emissive:0xffb45b,emissiveIntensity:intensity});
+  mat.onBeforeCompile=shader=>{
+    shader.vertexShader='varying vec3 vLampWorld;\n'+shader.vertexShader;
+    shader.vertexShader=shader.vertexShader.replace('#include <project_vertex>',`#include <project_vertex>
+      vec4 lampP=vec4(transformed,1.0);
+      #ifdef USE_INSTANCING
+      lampP=instanceMatrix*lampP;
+      #endif
+      vLampWorld=(modelMatrix*lampP).xyz;`);
+    shader.fragmentShader='varying vec3 vLampWorld;\n'+shader.fragmentShader;
+    shader.fragmentShader=shader.fragmentShader.replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\n totalEmissiveRadiance*=mix(.18,1.0,exp(-distance(cameraPosition,vLampWorld)/38.0));');
+  };return mat;
+}
+const pathRoom=pathLightMaterial(.24),pathWick=pathLightMaterial(2.9);
+BRIDGES.forEach(b=>b.mesh.traverse(o=>{if(o.isInstancedMesh&&o.material===M.glow)o.material=pathRoom;}));
+function lanternPrototype(g){
+  const root=glbRefine(g,pathRoom),fire=root.getObjectByName('FireGlow');
+  if(fire){for(const axis of ['x','z'])for(const sign of [-1,1]){const wick=fire.clone();wick.material=pathWick;wick.scale.multiply(new THREE.Vector3(.12,.32,.12));wick.position[axis]+=sign*.25;fire.parent.add(wick);}}
+  return root;
+}
+glbLoad('assets/models/StoneLantern.glb').then(g=>instancePrototype(g,glbRingLanterns,()=>WORLD.LANTERN_HEIGHT,lanternPrototype)).catch(e=>{
+  glbRingLanterns.forEach(p=>{instance(G.cylinder,M.stone,p.x,p.y+.8,p.z,.14,1.6,.14);instance(G.box,pathRoom,p.x,p.y+1.9,p.z,.4,.6,.4);instance(G.box,pathWick,p.x,p.y+1.9,p.z,.06,.25,.41);instance(G.cone,M.roof,p.x,p.y+2.3,p.z,.5,.2,.5);});flushInstances();console.warn('StoneLantern fallback',e);
 });
 flushInstances();
 
@@ -896,12 +1003,12 @@ Object.keys(glbPerEntry).forEach(k=>{
   if(!lm||!lm.zproc.length)return;
   glbLoad(spec[0]).then(g=>{
     const proto=(g.getObjectByName(spec[1])||g).clone(true);if(lm.index===15||lm.index===23)proto.rotation.y+=Math.PI/2; // Wide forms face their free corridor.
-    lm.fallback.visible=false;
+    lm.fallback.visible=false;lm.fallback.userData.dressing.visible=false;
     const wrap=placeMonument(glbRefine(proto.clone(true),lm.glow),lm.group,{targetHeight:lm.targetHeight,tier:lm.targetHeight>=48?'major':'standard'});
     lm.model=wrap;wrap.updateWorldMatrix(true,true);const box=new THREE.Box3().setFromObject(wrap);
-    lm.bboxHeight=box.max.y-box.min.y;lm.groundY=box.min.y;lm.bounds=box;
+    lm.bboxHeight=box.max.y-box.min.y;lm.groundY=box.min.y;lm.bounds=wrap.userData.bounds;
     // A single simplified mass is used beyond LOD distance, with hysteresis in updateLandmarks.
-    const size=box.getSize(new THREE.Vector3());lm.lod=mesh(G.box,distantMaterial,lm.group,0,size.y/2,0,size.x*.65,size.y,size.z*.65);lm.lod.visible=false;lm.lod.castShadow=false;
+    const size=box.getSize(new THREE.Vector3());lm.lod=monumentLOD(lm.group,size);
     lm.entryPoint={x:lm.entry.x-lm.site.ux*(lm.site.radius-2),z:lm.entry.z-lm.site.uz*(lm.site.radius-2)};
     wrap.traverse(c=>{if(c.isMesh){c.userData.landmark=lm;pickables.push(c);}});
   }).catch(e=>console.warn(spec[0]+' 未加载',e));
@@ -946,7 +1053,7 @@ function start(){
   bgm.start();
 }
 $('intro').addEventListener('click',start);
-function teleport(x,z){clearInput();velocity.set(0,0);if(!walkable(x,z))return false;player.position.set(x,surfaceHeight(x,z),z);setNear(null);cameraState.yaw=0;cameraState.pitch=WORLD.CAMERA_PITCH;cameraState.framing=0;camera.position.set(x,surfaceHeight(x,z+cameraState.distance)+2.1,z+cameraState.distance);cameraLook.set(x,player.position.y+1.6,z);if(started)$('world').focus({preventScroll:true});}
+function teleport(x,z){clearInput();velocity.set(0,0);if(!walkable(x,z))return false;player.position.set(x,surfaceHeight(x,z),z);setNear(null);cameraState.yaw=0;cameraState.pitch=WORLD.CAMERA_PITCH;cameraState.framing=0;viewCache=null;camera.position.set(x,surfaceHeight(x,z+cameraState.distance)+2.1,z+cameraState.distance);cameraLook.set(x,player.position.y+1.6,z);if(started)$('world').focus({preventScroll:true});}
 $('home').onclick=()=>teleport(0,3);
 document.querySelectorAll('[data-zone]').forEach(button=>button.onclick=()=>{const zone=ZONES[Number(button.dataset.zone)];teleport(...zone.spawn);});
 const moveKeys=['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'];
@@ -1053,20 +1160,99 @@ function updateLandmarks(dt){
     lm.activation+=(Number(active)-lm.activation)*(reduced?1:1-Math.exp(-7*dt));
     // Keep the measured model base immovable; activation belongs to light, never to foundations.
     if(lm.model){const limit=lightQuality?WORLD.LOD_MOBILE:WORLD.LOD_DESKTOP;
-      const far=d>limit+(lm.model.visible?12:-12);lm.model.visible=!far;lm.lod.visible=far;
+      const far=d>limit+(lm.model.visible?12:-12);lm.model.visible=!far;lm.model.userData.dressing.visible=!far;lm.lod.visible=far;
     }
     const lit=visited.has(lm.index),breath=reduced?0:Math.sin(elapsed*1.2+lm.index*.7)*.045;
-    lm.glow.emissiveIntensity=(lit?2.8:2.3)+lm.activation*.65+breath;
-    lm.lightHalo.material.opacity=(lit?.36:.24)+lm.activation*.15+breath*.2;lm.marker.material.opacity=active?.7:lit?.4:.16;
+    const body=lm.model||lm.fallback;body.traverse(o=>{if(o.isMesh){for(const mat of (Array.isArray(o.material)?o.material:[o.material]))if(mat.userData.baseEmission)mat.emissiveIntensity=mat.userData.baseEmission*(lit?1.08:1);}});
+    lm.lightHalo.material.opacity=(lit?.065:.04)+lm.activation*.015+breath*.1;lm.marker.material.opacity=active?.7:lit?.4:.16;
     lm.beacon.visible=lit;
     // Blob shadows stay on the ground while the building lifts.
     lm.group.children.forEach(child=>{if(child.material===M.shadow)child.position.y=.025;});
   }
-  for(const m of mathMonuments)if(m.model){const d=Math.hypot(player.position.x-m.x,player.position.z-m.z),limit=lightQuality?WORLD.LOD_MOBILE:WORLD.LOD_DESKTOP,far=d>limit+(m.model.visible?12:-12);m.model.visible=!far;m.lod.visible=far;}
+  for(const m of mathMonuments)if(m.model){const d=Math.hypot(player.position.x-m.x,player.position.z-m.z),limit=lightQuality?WORLD.LOD_MOBILE:WORLD.LOD_DESKTOP,far=!(viewCache?.lm===m&&cameraState.framing>.01)&&d>limit+(m.model.visible?12:-12);m.model.visible=!far;m.model.userData.dressing.visible=!far;m.lod.visible=far;}
   let zone=-1,min=80;ZONES.forEach((item,i)=>{const d=Math.hypot(player.position.x-item.x,player.position.z-item.z);if(d<min){zone=i;min=d;}});
   const inIsle=MATH_ISLES.find(is=>Math.hypot(player.position.x-is.x,player.position.z-is.z)<is.r+2.5);
   const uiKey=inIsle?'isle:'+inIsle.key:zone;
   if(uiKey!==lastUIZone){lastUIZone=uiKey;$('location').textContent=inIsle?inIsle.note:zone<0?'庭心':ZONES[zone].note;document.querySelectorAll('[data-zone]').forEach((button,i)=>{const on=!inIsle&&i===zone;button.classList.toggle('active',on);button.setAttribute('aria-pressed',String(on));});}
+}
+// AABBs include actual face trim and footing, independent of visual LOD.
+function subjectBounds(){return [...landmarks,...mathMonuments].map(l=>l.bounds).filter(Boolean);}
+const cameraRay=new THREE.Ray(),rayPoint=new THREE.Vector3();
+function segmentHit(a,b,box,margin=0){
+  const expanded=margin?box.clone().expandByScalar(margin):box,direction=new THREE.Vector3().subVectors(b,a),length=direction.length();
+  if(length<1e-6)return null;cameraRay.set(a,direction.divideScalar(length));
+  const hit=cameraRay.intersectBox(expanded,rayPoint);return hit&&hit.distanceTo(a)<length-1e-5?hit.clone():null;
+}
+function clearCamera(position,target){
+  const boxes=subjectBounds(),pad=WORLD.CAMERA_CLEARANCE;
+  position.y=surfaceHeight(position.x,position.z)+2.1;
+  // Retract the boom along target -> camera when an obstacle lies between them.
+  for(const box of boxes){if(box.clone().expandByScalar(pad).containsPoint(target))continue;const hit=segmentHit(target,position,box,pad);if(hit){const dir=position.clone().sub(target).normalize();position.copy(hit).addScaledVector(dir,-.05);}}
+  for(let pass=0;pass<boxes.length;pass++){
+    let moved=false;
+    for(const box of boxes){const expanded=box.clone().expandByScalar(pad);if(!expanded.containsPoint(position))continue;
+      const choices=[[Math.abs(position.x-expanded.min.x),'x',expanded.min.x-.01],[Math.abs(position.x-expanded.max.x),'x',expanded.max.x+.01],[Math.abs(position.z-expanded.min.z),'z',expanded.min.z-.01],[Math.abs(position.z-expanded.max.z),'z',expanded.max.z+.01]].sort((a,b)=>a[0]-b[0]);
+      position[choices[0][1]]=choices[0][2];position.y=surfaceHeight(position.x,position.z)+2.1;moved=true;
+    }if(!moved)break;
+  }
+  position.y=surfaceHeight(position.x,position.z)+2.1;
+  // When the player stands inside a conservative AABB, gaze stops just before the facade.
+  for(const box of boxes){const hit=segmentHit(position,target,box,.12);if(hit)target.copy(hit).addScaledVector(position.clone().sub(hit).normalize(),.15);}
+}
+let viewCache=null;
+function monumentView(lm){
+  if(viewCache&&viewCache.lm===lm&&viewCache.aspect===camera.aspect&&viewCache.box===lm.bounds)return viewCache;
+  const box=lm.bounds,size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
+  const k=camera.aspect<1?WORLD.VIEW_K_PORTRAIT:WORLD.VIEW_K;
+  const minDistance=Math.max(k*size.y,Math.hypot(size.x,size.z)*.5+2);
+  const preview=camera.clone(),corners=[];
+  for(const x of [box.min.x,box.max.x])for(const y of [box.min.y,box.max.y])for(const z of [box.min.z,box.max.z])corners.push(new THREE.Vector3(x,y,z));
+  const base=Math.atan2(-lm.site.ux,-lm.site.uz),boxes=subjectBounds();let chosen=null,bestScore=Infinity;
+  // Centre-axis first; only step sideways when another monument obstructs that sightline.
+  for(let ring=0;ring<3&&!chosen;ring++)for(let step=0;step<49;step++){
+    const angle=base+(step?Math.ceil(step/2)*(step%2?1:-1)*Math.PI/24:0),dir=new THREE.Vector3(Math.sin(angle),0,Math.cos(angle));
+    let distance=Math.max(minDistance,size.y*(1.12+ring*.35));
+    for(let attempt=0;attempt<24;attempt++,distance*=1.08){
+      const position=center.clone().addScaledVector(dir,distance);position.y=surfaceHeight(position.x,position.z)+2.1;
+      const focus=center.clone();focus.y=box.min.y+size.y*.42;
+      // Target ends in free space, immediately outside this building's facing surface.
+      cameraRay.set(position,focus.clone().sub(position).normalize());const hit=cameraRay.intersectBox(box,rayPoint);
+      const target=hit?hit.clone().addScaledVector(position.clone().sub(hit).normalize(),1.3):focus;
+      preview.position.copy(position);preview.lookAt(target);preview.updateMatrixWorld(true);
+      const fits=corners.every(c=>{const n=c.clone().project(preview);return n.z<1&&Math.abs(n.x)<.87&&n.y<.82&&n.y>-.90;});
+      if(!fits)continue;
+      if(boxes.some(b=>b.clone().expandByScalar(1).containsPoint(position)||segmentHit(position,target,b,1)))break;
+      const occluded=corners.filter(c=>boxes.some(b=>b!==box&&segmentHit(position,c,b,1))).length;
+      const turn=Math.ceil(step/2)*Math.PI/24;
+      // Architecture favours its processional front; distant islands favour an open panorama.
+      const score=turn+occluded*(lm.index>=26?1:.16)+(lm.index<26?Math.max(0,turn-.6)*3:0);
+      if(score<bestScore){chosen={position,target,distance,k};bestScore=score;}break;
+    }
+  }
+  if(!chosen){const position=center.clone().add(new THREE.Vector3(-lm.site.ux*size.y*2,0,-lm.site.uz*size.y*2));position.y=surfaceHeight(position.x,position.z)+2.1;const target=center.clone();clearCamera(position,target);chosen={position,target,distance:position.distanceTo(center),k};}
+  viewCache={...chosen,lm,box,aspect:camera.aspect};return viewCache;
+}
+const framingRay=new THREE.Raycaster();
+function framingSubject(){
+  if(nearest)return nearest;
+  const forward=new THREE.Vector3(-Math.sin(cameraState.yaw),0,-Math.cos(cameraState.yaw));
+  let chosen=null,best=Infinity;
+  for(const lm of landmarks){const delta=new THREE.Vector3(lm.entry.x-player.position.x,0,lm.entry.z-player.position.z),distance=delta.length();
+    if(distance<best&&Math.hypot(player.position.x-lm.entryPoint.x,player.position.z-lm.entryPoint.z)<WORLD.APPROACH_LENGTH+WORLD.INTERACT_DISTANCE&&delta.normalize().dot(forward)>.65){
+      // An open arch keeps the close, ceremonial approach; a solid facade releases
+      // early so it cannot become a wall-filling view before the interaction radius.
+      const eye=player.position.clone();eye.y+=1.6;const aim=new THREE.Vector3(lm.entry.x,lm.groundY+lm.bboxHeight*.25,lm.entry.z),ray=aim.sub(eye);
+      framingRay.set(eye,ray.clone().normalize());framingRay.far=ray.length();
+      if(framingRay.intersectObject(lm.model||lm.fallback,true).length){chosen=lm;best=distance;}
+    }}
+  if(chosen)return chosen;
+  // At an obstructed shore-side boom, release toward the forward distant monument
+  // instead of shrinking the camera into the visitor's back. User look still wins.
+  const eye=player.position.clone();eye.y+=1.6;const boom=player.position.clone().addScaledVector(forward,-cameraState.distance);boom.y=surfaceHeight(boom.x,boom.z)+2.1;
+  if(subjectBounds().some(b=>b.clone().expandByScalar(1).containsPoint(boom)||segmentHit(eye,boom,b,1))){
+    for(const lm of [...landmarks,...mathMonuments]){const center=lm.bounds.getCenter(new THREE.Vector3()),delta=center.sub(player.position);delta.y=0;const distance=delta.length();if(distance<180&&distance<best&&delta.normalize().dot(forward)>.8){chosen=lm;best=distance;}}
+  }
+  return chosen;
 }
 function updateCamera(dt){
   if(!started){
@@ -1074,22 +1260,37 @@ function updateCamera(dt){
     camTarget.set(0,10,-75);camera.position.copy(camPosition);cameraLook.copy(camTarget);camera.lookAt(camTarget);return;
   }
   const d=cameraState.distance,yaw=cameraState.yaw;
-  const auto=nearest&&!lookActive&&elapsed-lastLookAt>2.5;
-  const damping=reduced?1:1-Math.exp(-3.5*dt);
+  const subject=framingSubject(),auto=subject&&!lookActive&&elapsed-lastLookAt>2.5,damping=reduced?1:1-Math.exp(-3.5*dt);
   cameraState.framing+=((auto?1:0)-cameraState.framing)*damping;
-  if(lookActive||elapsed-lastLookAt<.15)cameraState.framing=0; // immediately yield on pointer/keyboard input
+  if(lookActive||elapsed-lastLookAt<2.5)cameraState.framing=0;
   const f=cameraState.framing,p=THREE.MathUtils.lerp(cameraState.pitch,-.35,f);cameraState.framedPitch=p;
   camPosition.set(player.position.x+Math.sin(yaw)*d,0,player.position.z+Math.cos(yaw)*d);
-  const floor=surfaceHeight(camPosition.x,camPosition.z);
-  camPosition.y=floor+THREE.MathUtils.clamp(1.6+Math.sin(p)*2.5,1.4,4);
-  // Looking up moves the gaze, not the camera below ground.
-  camTarget.set(player.position.x,player.position.y+1.6+Math.max(0,-Math.sin(p)*d),player.position.z);
-  if(nearest&&f>0){camTarget.lerp(new THREE.Vector3(nearest.entry.x,nearest.groundY+nearest.bboxHeight*.42,nearest.entry.z),f);}
+  camPosition.y=surfaceHeight(camPosition.x,camPosition.z)+2.1;
+  camTarget.set(player.position.x,player.position.y+1.6+(Math.sin(WORLD.CAMERA_PITCH)-Math.sin(p))*d,player.position.z);
+  if(subject&&f>0){const view=monumentView(subject);camPosition.lerp(view.position,f);camTarget.lerp(view.target,f);}
   camera.position.lerp(camPosition,damping);
-  // Never lerp through cliffs or keep an aerial camera after teleporting.
-  camera.position.y=THREE.MathUtils.clamp(camera.position.y,surfaceHeight(camera.position.x,camera.position.z)+1.4,surfaceHeight(camera.position.x,camera.position.z)+4);
   if(lookActive||elapsed-lastLookAt<.15)cameraLook.copy(camTarget);else cameraLook.lerp(camTarget,damping);
+  clearCamera(camera.position,cameraLook);
   camera.lookAt(cameraLook);
+}
+
+const labelWorld=new THREE.Vector3();
+function layoutLabels(){
+  const occupied=[];camera.updateMatrixWorld(true);
+  for(const m of mathMonuments)m.name.visible=started;
+  for(const lm of [nearest,...landmarks.filter(l=>l!==nearest),...mathMonuments]){
+    if(!lm||!lm.name.visible)continue;
+    // Above the camera-facing top edge: a deep roof cannot cut through the text.
+    const b=lm.bounds,c=b.getCenter(new THREE.Vector3()),dx=camera.position.x-c.x,dz=camera.position.z-c.z;
+    const reach=Math.min((b.max.x-b.min.x)/2/Math.max(Math.abs(dx),1e-6),(b.max.z-b.min.z)/2/Math.max(Math.abs(dz),1e-6));
+    labelWorld.set(c.x+dx*reach,b.max.y+5,c.z+dz*reach);lm.name.parent.worldToLocal(labelWorld);lm.name.position.copy(labelWorld);
+    lm.name.getWorldPosition(labelWorld);labelWorld.project(camera);
+    const distance=camera.position.distanceTo(lm.name.getWorldPosition(new THREE.Vector3())),unit=innerHeight/(2*Math.tan(camera.fov*Math.PI/360)*Math.max(distance,.1));
+    const w=lm.name.scale.x*unit,h=lm.name.scale.y*unit,x=(labelWorld.x+1)*innerWidth/2,y=(1-labelWorld.y)*innerHeight/2;
+    const rect={x0:x-w/2-6,x1:x+w/2+6,y0:y-h/2-4,y1:y+h/2+4};
+    if(labelWorld.z>1||rect.y0<(innerWidth<760?80:95)||rect.x0<12||rect.x1>innerWidth-12||rect.y1>innerHeight-120||occupied.some(r=>rect.x0<r.x1&&rect.x1>r.x0&&rect.y0<r.y1&&rect.y1>r.y0)){lm.name.visible=false;continue;}
+    occupied.push(rect);
+  }
 }
 
 function frame(now){
@@ -1097,7 +1298,7 @@ function frame(now){
   const raw=lastTime?(now-lastTime)/1000:1/60,dt=Math.min(raw,.035);lastTime=now;elapsed+=dt;
   skyTick(dt);
   if(started&&$('directory').hidden)move(dt);
-  updateLandmarks(dt);updateCamera(dt);
+  updateLandmarks(dt);updateCamera(dt);layoutLabels();
   particles.visible=!reduced&&fireLevel>.02;starMaterial.uniforms.motion.value=reduced?0:1;
   if(!reduced){for(let i=0;i<(lightQuality?Math.min(16,particleCount):particleCount);i++){const b=particleBase[i];particlePositions[i*3]=b[0]+Math.sin(elapsed*.25+b[3])*.3;particlePositions[i*3+1]=b[1]+Math.sin(elapsed*.6+b[3])*.35;}particleGeometry.attributes.position.needsUpdate=true;}
   mapElapsed+=dt;if(mapElapsed>.08){drawMap();mapElapsed=0;}
@@ -1108,10 +1309,11 @@ function frame(now){
   if(!qualityReduced&&elapsed>3){slowFrames=raw>.029?slowFrames+1:Math.max(0,slowFrames-2);if(slowFrames>90){qualityReduced=true;reduceQuality();}}
 }
 // Read-mostly handle for automated smoke tests (batch 5 seven-bridge verification).
-window.__garden={WORLD,scene,renderer,camera,walkable,surfaceHeight,terrainHeight,teleport,start,player,cameraState,modelLoads,
-  get landmarks(){return landmarks.map(lm=>({index:lm.index,title:lm.entry.title,bboxHeight:lm.bboxHeight,groundY:lm.groundY,x:lm.entry.x,z:lm.entry.z,platformY:lm.site.groundY,targetHeight:lm.targetHeight,entryPoint:lm.entryPoint,site:lm.site,labelY:lm.group.position.y+lm.name.position.y}));},
-  get mathMonuments(){return mathMonuments.map(({group,model,lod,...r})=>r);},
+window.__garden={WORLD,scene,renderer,camera,composer,cameraLook,subjectBounds,monumentFaces,walkable,surfaceHeight,terrainHeight,teleport,start,player,cameraState,modelLoads,
+  get landmarks(){return landmarks.map(lm=>({index:lm.index,title:lm.entry.title,bboxHeight:lm.bboxHeight,groundY:lm.groundY,x:lm.entry.x,z:lm.entry.z,bounds:lm.bounds,platformY:lm.site.groundY,targetHeight:lm.targetHeight,entryPoint:lm.entryPoint,site:lm.site,labelY:lm.group.position.y+lm.name.position.y}));},
+  get mathMonuments(){return mathMonuments.map(({group,model,lod,fallback,bounds,site,name,...r})=>r);},
   get quality(){return {lightQuality,qualityReduced,pixelRatio:renderer.getPixelRatio(),drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles};},
+  get observation(){return viewCache?{position:viewCache.position,target:viewCache.target,k:viewCache.k}:null;},
   get nearest(){return nearest?.index??null;},get cameraHeight(){return camera.position.y-surfaceHeight(camera.position.x,camera.position.z);},BRIDGES,MATH_ISLES,bridgesWalked,get bridge8Open(){return bridge8Open;},setSky(v){skyT=((v%1)+1)%1;skyTarget=null;},skyInfo(){return {t:+skyT.toFixed(3),name:lastSkyName,...skyState};}};
 ready=true;$('start').disabled=false;$('start').innerHTML='提灯入庭<span class="arrow">↗</span>';
 drawMap();requestAnimationFrame(frame);
