@@ -435,11 +435,11 @@ LINKS.forEach((entry,index)=>{
     zproc.push(mesh(G.box,M.red,group,.4,.55,.41,.23,.25,.025));
     zproc.push(mesh(G.box,M.stone,group,0,.28,0,2.1,.3,1.3));
   }else{
-    height=4;for(const x of [-1,1])mesh(G.box,M.ivory,group,x,1.75,0,.5,3.2,.65);
-    mesh(G.box,M.ivory,group,0,3.4,0,2.8,.4,.8);
-    mesh(G.box,M.roof,group,0,3.7,0,3.2,.22,1.15);
-    mesh(G.cylinder,glow,group,0,2.5,0,.4,.8,.4);
-    mesh(G.box,M.wood,group,0,3,0,.05,.4,.05);
+    height=4;for(const x of [-1,1])zproc.push(mesh(G.box,M.ivory,group,x,1.75,0,.5,3.2,.65));
+    zproc.push(mesh(G.box,M.ivory,group,0,3.4,0,2.8,.4,.8));
+    zproc.push(mesh(G.box,M.roof,group,0,3.7,0,3.2,.22,1.15));
+    zproc.push(mesh(G.cylinder,glow,group,0,2.5,0,.4,.8,.4));
+    zproc.push(mesh(G.box,M.wood,group,0,3,0,.05,.4,.05));
   }
   const lightHalo=halo(group,0,entry.zone===1?2.8:1.6,.5,3,.28);
   const marker=ring(group,0,0,1.85,tint,.2);
@@ -519,7 +519,7 @@ glbLoad('assets/models/Visitor.glb').then(g=>{
   if(nr){legR=nr;if(fr)nr.attach(fr);}
   if(pivot)lanternSwing.attach(pivot);
 }).catch(e=>console.warn('Visitor.glb 未加载',e));
-// Per-entry landmark models (batch 1: zone 0, entries 0-7; batch 2: zone 1, entries 8-12; batch 3: zone 2, entries 13-23). Falls back to procedural meshes on failure.
+// Per-entry landmark models (batch 1: zone 0, entries 0-7; batch 2: zone 1, entries 8-12; batch 3: zone 2, entries 13-23; batch 4: zone 3, entries 24-25). Falls back to procedural meshes on failure.
 const glbPerEntry={0:['assets/models/LM01_Moxi.glb','Moxi',1],1:['assets/models/LM02_Huayun.glb','Huayun',1],
   2:['assets/models/LM03_HuayunOld.glb','HuayunOld',1],3:['assets/models/LM04_Mosheng.glb','Mosheng',1],
   4:['assets/models/LM05_Nuanling.glb','Nuanling',1],5:['assets/models/LM06_NuanlingApp.glb','NuanlingApp',1],
@@ -531,7 +531,8 @@ const glbPerEntry={0:['assets/models/LM01_Moxi.glb','Moxi',1],1:['assets/models/
   16:['assets/models/LM17_CryingCity.glb','CryingCity',1],17:['assets/models/LM18_DoubleStars.glb','DoubleStars',1],
   18:['assets/models/LM19_FiveLayers.glb','FiveLayers',1],19:['assets/models/LM20_Newsroom.glb','Newsroom',1],
   20:['assets/models/LM21_MoonSnow.glb','MoonSnow',1],21:['assets/models/LM22_ProofDesk.glb','ProofDesk',1],
-  22:['assets/models/LM23_Rubbing.glb','Rubbing',1],23:['assets/models/LM24_Butterfly.glb','Butterfly',1]};
+  22:['assets/models/LM23_Rubbing.glb','Rubbing',1],23:['assets/models/LM24_Butterfly.glb','Butterfly',1],
+  24:['assets/models/LM25_MindCareAI.glb','MindCare',1],25:['assets/models/LM26_GitHub.glb','GitHub',1]};
 Object.keys(glbPerEntry).forEach(k=>{
   const lm=landmarks[Number(k)],spec=glbPerEntry[k];
   if(!lm||!lm.zproc.length)return;
