@@ -54,6 +54,7 @@ const TRACKS=[
 /* 极窄竖屏（≤380）：收紧工具组间距，保证归庭/目录文字不被压成竖排 */
 @media(max-width:380px){.tools{gap:9px}}
 </style>
+<style id="bridge-style">#bridge-count{font:11px monospace;letter-spacing:1px;color:var(--paper)}#bridge-count.done{color:var(--red)}#bridge-toast{position:absolute;left:50%;bottom:120px;transform:translateX(-50%);color:var(--paper);font:13px/1.8 var(--serif);letter-spacing:2px;background:#0c0e10d9;border:1px solid var(--line);border-radius:6px;padding:8px 18px;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}#bridge-toast.show{opacity:1}#euler-card{position:absolute;right:30px;bottom:210px;width:min(360px,calc(100% - 60px));border:1px solid #c0563e88;border-radius:8px;background:rgba(15,18,19,.94);padding:18px 20px;display:flex;align-items:center;gap:16px;box-shadow:0 12px 50px #0004}#euler-card[hidden]{display:none}#euler-card h2{font:18px/1.4 var(--serif);margin:3px 0 4px}#euler-card p{margin:0;font-size:11px;color:var(--muted)}#euler-action{flex-shrink:0;border-left:1px solid var(--line);padding:10px 0 10px 16px;color:var(--paper);letter-spacing:2px;font-size:12px}#euler-action[hidden]{display:none}</style>
 </head>
 <body>
 <main id="world" tabindex="-1" aria-label="可探索的三维数字庭院。使用 WASD 或方向键行走；靠近建筑后按回车访问。"></main>
@@ -64,7 +65,7 @@ const TRACKS=[
     <nav class="districts" aria-label="前往分区">
       <button data-zone="0" title="前往作品区">作品<span>08</span></button><button data-zone="1" title="前往服务区">服务<span>05</span></button><button data-zone="2" title="前往项目区">项目<span>11</span></button><button data-zone="3" title="前往连接区">连接<span>02</span></button>
     </nav>
-    <div class="tools"><span id="visited" title="已探访并点亮的入口" aria-live="polite">00 / 26</span><button id="home" title="返回庭心（R）">归庭</button><button id="list-button" aria-haspopup="dialog">目录 ↗</button><button id="bgm-button" type="button" aria-label="开启背景音乐" aria-pressed="false" title="开启背景音乐"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M11 4 6 8H3v8h3l5 4Z"/><g class="bgm-waves"><path d="M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14"/></g><path class="bgm-cross" d="m16 9 6 6m0-6-6 6"/></svg></button></div>
+    <div class="tools"><span id="bridge-count" title="七桥挑战:每桥恰走一次" aria-live="polite">七桥 0/7</span><span id="visited" title="已探访并点亮的入口" aria-live="polite">00 / 26</span><button id="home" title="返回庭心（R）">归庭</button><button id="list-button" aria-haspopup="dialog">目录 ↗</button><button id="bgm-button" type="button" aria-label="开启背景音乐" aria-pressed="false" title="开启背景音乐"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M11 4 6 8H3v8h3l5 4Z"/><g class="bgm-waves"><path d="M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14"/></g><path class="bgm-cross" d="m16 9 6 6m0-6-6 6"/></svg></button></div>
   </header>
   <div class="margin-note" aria-hidden="true"><i></i>灯火所及，皆是来处。</div>
   <div class="viewpad" id="viewpad" tabindex="0" role="group" aria-label="视角控制：拖动旋转视角，聚焦后使用方向键调整，Home 重置"><span class="arrows">↔</span><small>拖动视角</small></div>
@@ -76,6 +77,8 @@ const TRACKS=[
     <div class="entry-copy" aria-live="polite"><div class="eyebrow" id="entry-zone"></div><h2 id="entry-title"></h2><p id="entry-desc"></p></div>
     <a id="enter-link" target="_blank" rel="noopener noreferrer">访问 ↗<span>ENTER / 空格</span></a>
   </section>
+  <div id="bridge-toast" aria-live="polite"></div>
+  <section id="euler-card" aria-label="七桥挑战" hidden><div class="entry-copy"><div class="eyebrow">1736 · 柯尼斯堡</div><h2 id="euler-title">七桥 · 欧拉的判定</h2><p id="euler-text"></p></div><button id="euler-action">架设新桥 ↗</button></section>
 </div>
 <section id="intro" aria-label="进入数字庭院">
   <div class="intro-inner"><div class="intro-kicker">A SMALL ISLAND OF THOUGHTS</div><h1>Lx050<span style="color:var(--red)">.</span></h1><div class="intro-poem">在数字之间，留一点人间</div><div class="intro-line"></div><p class="intro-description">一些作品，一些故事，一些仍在生长的念头。<br>借一盏灯，随意走走。</p><button class="start" id="start" disabled>正在点灯<span class="arrow">↗</span></button><div class="intro-controls" id="intro-controls">WASD / 方向键行走 · 拖动环顾 · 回车访问<br>点击或按任意键，开始夜游</div></div>
@@ -455,6 +458,81 @@ LINKS.forEach((entry,index)=>{
 });
 ZONES.forEach(zone=>{const s=label(zone.name+' · '+zone.note);s.position.set(zone.x,.3,zone.z+12);s.scale.multiplyScalar(1.1);s.material.opacity=.55;scene.add(s);});
 const centerLabel=label('庭 心');centerLabel.position.set(0,.45,-1);centerLabel.material.opacity=.55;scene.add(centerLabel);
+// ===== Batch 5: Konigsberg seven-bridge archipelago (Euler 1736). Main island + 3 math isles = 4 land masses, degrees (5,3,3,3): no Euler trail until the 8th bridge. =====
+const MATH_ISLES=[
+  {key:'K',name:'柯尼斯堡洲',note:'七桥之问 · 1736',x:52,z:-2,r:12,glb:'assets/models/LM27_Konigsberg.glb',root:'Konigsberg'},
+  {key:'L',name:'叙拉古洲',note:'圆柱容球 · 阿基米德',x:58,z:-26,r:6,glb:'assets/models/LM28_Syracuse.glb',root:'Syracuse'},
+  {key:'S',name:'图卢兹洲',note:'页边批注 · 费马',x:36,z:-32,r:9,glb:'assets/models/LM29_Toulouse.glb',root:'Toulouse'}
+];
+const MAINLAND={x:0,z:0,r:31.55};
+function bridgeSpan(a,b){
+  const dx=b.x-a.x,dz=b.z-a.z,d=Math.hypot(dx,dz),ux=dx/d,uz=dz/d;
+  return {x1:a.x+ux*a.r,z1:a.z+uz*a.r,x2:b.x-ux*b.r,z2:b.z-uz*b.r};
+}
+function mkBridge(id,a,b,off,name,bonus){
+  const s=bridgeSpan(a,b),nx=-(s.z2-s.z1),nz=(s.x2-s.x1),nl=Math.hypot(nx,nz)||1;
+  return {id,name,bonus:!!bonus,x1:s.x1+nx/nl*off,z1:s.z1+nz/nl*off,x2:s.x2+nx/nl*off,z2:s.z2+nz/nl*off};
+}
+const BRIDGES=[
+  mkBridge(1,MAINLAND,MATH_ISLES[0],-2.7,'森林桥'),
+  mkBridge(2,MAINLAND,MATH_ISLES[0],2.7,'市民桥'),
+  mkBridge(3,MATH_ISLES[2],MATH_ISLES[0],-1.25,'铁匠桥'),
+  mkBridge(4,MATH_ISLES[2],MATH_ISLES[0],1.25,'人行桥'),
+  mkBridge(5,MATH_ISLES[0],MATH_ISLES[1],0,'高桥'),
+  mkBridge(6,MAINLAND,MATH_ISLES[1],0,'绿桥'),
+  mkBridge(7,MATH_ISLES[2],MATH_ISLES[1],0,'木桥'),
+  mkBridge(8,MAINLAND,MATH_ISLES[2],0,'新桥',true)
+];
+let bridge8Open=false;
+MATH_ISLES.forEach(is=>{
+  mesh(new THREE.CylinderGeometry(is.r+1.2,is.r,1.2,56),M.ground,scene,is.x,-.6,is.z);
+  const rim=mesh(new THREE.CylinderGeometry(is.r+1.3,is.r+1.05,.3,56),M.edge,scene,is.x,-.02,is.z);rim.castShadow=false;
+  const s=label(is.name+' · '+is.note);s.position.set(is.x,.3,is.z+is.r+3);s.scale.multiplyScalar(1.1);s.material.opacity=.55;scene.add(s);
+  colliders.push({x:is.x,z:is.z,r:2.1});
+});
+function buildBridge(b){
+  const g=new THREE.Group();scene.add(g);
+  const dx=b.x2-b.x1,dz=b.z2-b.z1,len=Math.hypot(dx,dz),ang=-Math.atan2(dz,dx);
+  g.position.set((b.x1+b.x2)/2,0,(b.z1+b.z2)/2);g.rotation.y=ang;
+  mesh(G.box,M.path,g,0,.07,0,len+1.6,.14,2.2);
+  for(const s of [-1,1])mesh(G.box,M.ivory,g,0,.3,s*1.02,len+1.6,.3,.09);
+  for(const e of [-1,1])for(const s of [-1,1]){const px=e*(len/2+.5);
+    mesh(G.cylinder,M.dark,g,px,.3,s*1.15,.05,.05,.6);mesh(G.sphere,M.glow,g,px,.66,s*1.15,.09,.09,.09);halo(g,px,.66,s*1.15,1.1,.3);}
+  g.visible=!b.bonus;b.mesh=g;return g;
+}
+BRIDGES.forEach(buildBridge);
+function onBridgeSeg(x,z,b,half){
+  const dx=b.x2-b.x1,dz=b.z2-b.z1,l2=dx*dx+dz*dz;let t=((x-b.x1)*dx+(z-b.z1)*dz)/l2;t=Math.max(0,Math.min(1,t));
+  return Math.hypot(x-(b.x1+dx*t),z-(b.z1+dz*t))<half;
+}
+function walkable(x,z){
+  if(Math.hypot(x,z)<=MAINLAND.r)return true;
+  for(const b of BRIDGES){if(b.bonus&&!bridge8Open)continue;if(onBridgeSeg(x,z,b,1.5))return true;}
+  for(const is of MATH_ISLES){if(Math.hypot(x-is.x,z-is.z)<=is.r-.3)return true;}
+  return false;
+}
+// Deferred one microtask: gltfLoader (const below) is still in TDZ during synchronous IIFE execution.
+Promise.resolve().then(()=>MATH_ISLES.forEach(is=>{
+  glbLoad(is.glb).then(g=>{glbPlace(g.getObjectByName(is.root)||g,scene,is.x,.3,is.z,1.15,0);colliders.push({x:is.x,z:is.z,r:1.9});})
+    .catch(e=>console.warn(is.glb+' 未加载',e));
+}));
+// Seven-bridge challenge: cross each bridge exactly once. Euler 1736: 4 odd vertices make it impossible.
+const bridgesWalked=new Set();let currentBridge=0,toastTimer=0;
+function bridgeToast(text){const el=$('bridge-toast');el.textContent=text;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2600);}
+function updateBridgeCount(){const el=$('bridge-count');el.textContent=bridgesWalked.size>=7?'七桥 7/7':'七桥 '+bridgesWalked.size+'/7';if(bridgesWalked.size>=7)el.classList.add('done');}
+function showEuler(){$('euler-text').textContent='七桥走遍，重逢难免。欧拉 1736 年证明：四块陆地皆奇点，每桥恰走一次的路线并不存在——图论由此而生。';$('euler-card').hidden=false;}
+$('euler-action').onclick=()=>{bridge8Open=true;BRIDGES[7].mesh.visible=true;$('euler-text').textContent='新桥落成（柯尼斯堡后来真的这样做了）：奇点只剩两个——从任意奇点出发，八桥可以一笔画。';$('euler-action').hidden=true;bridgeToast('新桥落成 · 八桥可一笔画');};
+function bridgeTick(){
+  const bb=BRIDGES.find(b=>(!b.bonus||bridge8Open)&&onBridgeSeg(player.position.x,player.position.z,b,1.6));
+  const bid=bb?bb.id:0;
+  if(bid&&bid!==currentBridge){
+    if(!bridgesWalked.has(bid)){
+      bridgesWalked.add(bid);if(!bb.bonus){updateBridgeCount();bridgeToast('渡 '+bb.name+' · 七桥 '+bridgesWalked.size+'/7');if(bridgesWalked.size>=7)showEuler();}
+      else bridgeToast('渡 '+bb.name);
+    }else if(!bb.bonus)bridgeToast(bb.name+' · 此桥已渡');
+  }
+  currentBridge=bid;
+}
 // The visitor: a little paper-coloured figure carrying a warm, faceted lantern.
 const player=new THREE.Group();player.position.set(0,0,3);scene.add(player);
 const body=new THREE.Group();player.add(body);
@@ -638,11 +716,17 @@ function resize(){
 window.addEventListener('resize',resize);resize();
 const mapContext=$('map').getContext('2d');
 function drawMap(){
-  const ctx=mapContext;ctx.clearRect(0,0,288,288);ctx.save();ctx.translate(144,144);const scale=3.6;
+  const ctx=mapContext;ctx.clearRect(0,0,288,288);ctx.save();ctx.translate(144,144);const scale=1.85;
   ctx.fillStyle='rgba(12,14,16,.55)';ctx.strokeStyle='rgba(232,226,213,.18)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(0,0,33*scale,0,Math.PI*2);ctx.fill();ctx.stroke();
-  ctx.strokeStyle='rgba(232,226,213,.09)';ctx.beginPath();ctx.moveTo(-110,0);ctx.lineTo(110,0);ctx.moveTo(0,-110);ctx.lineTo(0,110);ctx.stroke();
+  ctx.strokeStyle='rgba(232,226,213,.09)';ctx.beginPath();ctx.moveTo(-132,0);ctx.lineTo(132,0);ctx.moveTo(0,-132);ctx.lineTo(0,132);ctx.stroke();
+  for(const is of MATH_ISLES){ctx.fillStyle='rgba(12,14,16,.55)';ctx.strokeStyle='rgba(232,226,213,.18)';ctx.beginPath();ctx.arc(is.x*scale,is.z*scale,is.r*scale,0,Math.PI*2);ctx.fill();ctx.stroke();}
+  ctx.strokeStyle='rgba(180,157,117,.55)';ctx.lineWidth=2;ctx.beginPath();
+  for(const b of BRIDGES){if(b.bonus&&!bridge8Open)continue;ctx.moveTo(b.x1*scale,b.z1*scale);ctx.lineTo(b.x2*scale,b.z2*scale);}
+  ctx.stroke();ctx.lineWidth=1;
+  ctx.font='13px "PingFang SC",sans-serif';ctx.textAlign='center';ctx.fillStyle='#aaa69b';
+  const isleShort={K:'柯洲',L:'叙洲',S:'图洲'};for(const is of MATH_ISLES)ctx.fillText(isleShort[is.key],is.x*scale,is.z*scale-is.r*scale-5);
   for(const lm of landmarks){ctx.fillStyle=nearest===lm?'#e8e2d5':visited.has(lm.index)?'#b49d75':'#616762';ctx.fillRect(lm.entry.x*scale-2,lm.entry.z*scale-2,4,4);}
-  ctx.font='16px "PingFang SC",sans-serif';ctx.textAlign='center';ctx.fillStyle='#aaa69b';ctx.fillText('作',-57,-94);ctx.fillText('项',57,-94);ctx.fillText('服',-62,91);ctx.fillText('连',61,91);
+  ctx.font='16px "PingFang SC",sans-serif';ctx.textAlign='center';ctx.fillStyle='#aaa69b';ctx.fillText('作',-29,-48);ctx.fillText('项',29,-48);ctx.fillText('服',-31,47);ctx.fillText('连',32,47);
   ctx.translate(player.position.x*scale,player.position.z*scale);ctx.rotate(-cameraState.yaw);ctx.fillStyle='rgba(192,86,62,.18)';ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-13,-24);ctx.lineTo(13,-24);ctx.closePath();ctx.fill();ctx.fillStyle='#c0563e';ctx.beginPath();ctx.arc(0,0,5,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#e8e2d5';ctx.stroke();ctx.restore();
 }
 function move(dt){
@@ -653,14 +737,17 @@ function move(dt){
   desired.set(x*cos+z*sin,-x*sin+z*cos).multiplyScalar(6.3);
   // Exponential acceleration and stronger braking: responsive on both keys and touch.
   velocity.lerp(desired,1-Math.exp(-(desired.lengthSq()?12:22)*dt));if(velocity.lengthSq()<.0005)velocity.set(0,0);
+  const oldX=player.position.x,oldZ=player.position.z;
   player.position.x+=velocity.x*dt;player.position.z+=velocity.y*dt;
   for(const c of colliders){const dx=player.position.x-c.x,dz=player.position.z-c.z,d=Math.hypot(dx,dz),r=c.r+.38;if(d<r){const nx=d>1e-5?dx/d:1,nz=d>1e-5?dz/d:0;player.position.x=c.x+nx*r;player.position.z=c.z+nz*r;const inward=velocity.x*nx+velocity.y*nz;if(inward<0){velocity.x-=nx*inward;velocity.y-=nz*inward;}}}
-  const distance=Math.hypot(player.position.x,player.position.z);if(distance>31.55){const nx=player.position.x/distance,nz=player.position.z/distance;player.position.x=nx*31.55;player.position.z=nz*31.55;const outward=velocity.x*nx+velocity.y*nz;if(outward>0){velocity.x-=nx*outward;velocity.y-=nz*outward;}}
+  // Walkable = mainland ∪ bridge decks ∪ isle disks (batch 5); outside that is water — roll back.
+  if(!walkable(player.position.x,player.position.z)){player.position.x=oldX;player.position.z=oldZ;velocity.multiplyScalar(0);}
   const speed=velocity.length();if(speed>.05){const target=Math.atan2(velocity.x,velocity.y);let diff=target-body.rotation.y;diff=Math.atan2(Math.sin(diff),Math.cos(diff));body.rotation.y+=diff*(reduced?1:1-Math.exp(-16*dt));}
   walkPhase+=speed*dt*2.5;body.position.y=reduced?0:Math.abs(Math.sin(walkPhase))*.065*Math.min(speed,1);legL.rotation.x=reduced?0:Math.sin(walkPhase)*.45*Math.min(speed,1);legR.rotation.x=-legL.rotation.x;
   lanternSwing.rotation.z=reduced?0:Math.sin(walkPhase+.65)*.13*Math.min(speed/3,1);lanternSwing.rotation.x=reduced?0:Math.cos(walkPhase*.5)*.06*Math.min(speed,1);
   dustElapsed+=dt;
   if(!reduced&&!lightQuality&&speed>1&&dustElapsed>.46){dustElapsed=0;const count=random()>.7?2:1;for(let i=0;i<count;i++){const puff=dustPool[dustCursor++%dustPool.length];puff.position.set(player.position.x+(random()-.5)*.3,.09,player.position.z+(random()-.5)*.3);puff.userData.life=.65;puff.visible=true;}}
+  bridgeTick();
 }
 function updateLandmarks(dt){
   let closest=null,best=3.9;
@@ -680,7 +767,9 @@ function updateLandmarks(dt){
     lm.group.children.forEach(child=>{if(child.material===M.shadow)child.position.y=.025-lm.group.position.y;});
   }
   let zone=-1,min=12;ZONES.forEach((item,i)=>{const d=Math.hypot(player.position.x-item.x,player.position.z-item.z);if(d<min){zone=i;min=d;}});
-  if(zone!==lastUIZone){lastUIZone=zone;$('location').textContent=zone<0?'庭心':ZONES[zone].note;document.querySelectorAll('[data-zone]').forEach((button,i)=>{button.classList.toggle('active',i===zone);button.setAttribute('aria-pressed',String(i===zone));});}
+  const inIsle=MATH_ISLES.find(is=>Math.hypot(player.position.x-is.x,player.position.z-is.z)<is.r+2.5);
+  const uiKey=inIsle?'isle:'+inIsle.key:zone;
+  if(uiKey!==lastUIZone){lastUIZone=uiKey;$('location').textContent=inIsle?inIsle.note:zone<0?'庭心':ZONES[zone].note;document.querySelectorAll('[data-zone]').forEach((button,i)=>{const on=!inIsle&&i===zone;button.classList.toggle('active',on);button.setAttribute('aria-pressed',String(on));});}
 }
 function updateCamera(dt){
   if(!started){const wide=innerWidth<760?87:71;camTarget.set(0,0,0);camPosition.set(32,wide*.7,wide*.72);camera.position.copy(camPosition);cameraLook.copy(camTarget);camera.lookAt(camTarget);return;}
@@ -707,6 +796,8 @@ function frame(now){
   // Ignore tab resumes and one-off stalls. Sustained slow frames downgrade the entire effect budget.
   if(!qualityReduced&&elapsed>3){slowFrames=raw>.029?slowFrames+1:Math.max(0,slowFrames-2);if(slowFrames>90){qualityReduced=true;reduceQuality();}}
 }
+// Read-mostly handle for automated smoke tests (batch 5 seven-bridge verification).
+window.__garden={walkable,teleport,start,player,cameraState,BRIDGES,MATH_ISLES,bridgesWalked,get bridge8Open(){return bridge8Open;}};
 ready=true;$('start').disabled=false;$('start').innerHTML='提灯入庭<span class="arrow">↗</span>';
 drawMap();requestAnimationFrame(frame);
 })();
