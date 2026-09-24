@@ -414,13 +414,13 @@ LINKS.forEach((entry,index)=>{
   mesh(G.box,M.dark,group,0,.12,0,2.8,.24,2.4);
   let height=3.1;const zproc=[];
   if(entry.zone===0){
-    height=3.4;mesh(G.box,M.ivory,group,0,1.2,0,2.15,2,1.65);
-    const roof=mesh(G.cone,index%3===0?M.red:M.roof,group,0,2.65,0,1.9,1.15,1.6);roof.rotation.y=Math.PI/4;
-    mesh(G.box,M.wood,group,-.4,.78,.84,.48,1.35,.05);
-    mesh(G.box,glow,group,.54,1.37,.85,.62,.7,.06);
-    mesh(G.box,M.wood,group,.54,1.37,.91,.045,.75,.06);
-    mesh(G.box,M.wood,group,.54,1.37,.91,.66,.04,.06);
-    mesh(G.box,M.stone,group,0,.19,1.4,1.2,.18,.55);
+    height=3.4;zproc.push(mesh(G.box,M.ivory,group,0,1.2,0,2.15,2,1.65));
+    const zroof=mesh(G.cone,index%3===0?M.red:M.roof,group,0,2.65,0,1.9,1.15,1.6);zroof.rotation.y=Math.PI/4;zproc.push(zroof);
+    zproc.push(mesh(G.box,M.wood,group,-.4,.78,.84,.48,1.35,.05));
+    zproc.push(mesh(G.box,glow,group,.54,1.37,.85,.62,.7,.06));
+    zproc.push(mesh(G.box,M.wood,group,.54,1.37,.91,.045,.75,.06));
+    zproc.push(mesh(G.box,M.wood,group,.54,1.37,.91,.66,.04,.06));
+    zproc.push(mesh(G.box,M.stone,group,0,.19,1.4,1.2,.18,.55));
   }else if(entry.zone===1){
     height=3.8;zproc.push(mesh(G.cylinder,M.stone,group,0,.35,0,.85,.4,.85));
     zproc.push(mesh(G.box,M.ivory,group,0,1.5,0,.62,2.4,.62));
@@ -519,6 +519,21 @@ glbLoad('assets/models/Visitor.glb').then(g=>{
   if(nr){legR=nr;if(fr)nr.attach(fr);}
   if(pivot)lanternSwing.attach(pivot);
 }).catch(e=>console.warn('Visitor.glb 未加载',e));
+// Per-entry landmark models (batch 1: zone 0, entries 0-7). Falls back to procedural meshes on failure.
+const glbPerEntry={0:['assets/models/LM01_Moxi.glb','Moxi',1],1:['assets/models/LM02_Huayun.glb','Huayun',1],
+  2:['assets/models/LM03_HuayunOld.glb','HuayunOld',1],3:['assets/models/LM04_Mosheng.glb','Mosheng',1],
+  4:['assets/models/LM05_Nuanling.glb','Nuanling',1],5:['assets/models/LM06_NuanlingApp.glb','NuanlingApp',1],
+  6:['assets/models/LM07_Paiban.glb','Paiban',1],7:['assets/models/LM08_Patent.glb','Patent',1]};
+Object.keys(glbPerEntry).forEach(k=>{
+  const lm=landmarks[Number(k)],spec=glbPerEntry[k];
+  if(!lm||!lm.zproc.length)return;
+  glbLoad(spec[0]).then(g=>{
+    const proto=g.getObjectByName(spec[1])||g;
+    lm.zproc.forEach(m=>m.visible=false);
+    const wrap=glbPlace(proto,lm.group,0,.24,0,spec[2],0,lm.glow);
+    wrap.traverse(c=>{if(c.isMesh){c.userData.landmark=lm;pickables.push(c);}});
+  }).catch(e=>console.warn(spec[0]+' 未加载',e));
+});
 const particleCount=lightQuality?16:80,particlePositions=new Float32Array(particleCount*3),particleBase=[];
 for(let i=0;i<particleCount;i++){const a=random()*Math.PI*2,r=Math.sqrt(random())*31;particleBase.push([Math.cos(a)*r,.7+random()*4,Math.sin(a)*r,random()*6]);particlePositions.set(particleBase[i].slice(0,3),i*3);}
 const particleGeometry=new THREE.BufferGeometry();particleGeometry.setAttribute('position',new THREE.BufferAttribute(particlePositions,3));
