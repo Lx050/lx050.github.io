@@ -85,6 +85,7 @@ const TRACKS=[
 <div id="error" role="alert" hidden><h2 style="font-family:var(--serif);font-weight:400">灯还没有亮起来</h2><p id="error-message">三维场景暂时无法加载，请刷新重试。也可以从目录直接访问全部入口。</p><button id="fallback-list">打开庭院目录 ↗</button></div>
 <noscript>请启用 JavaScript，来这座小岛走走。</noscript>
 <script src="vendor/three.min.js"></script>
+<script src="vendor/three/GLTFLoader.js"></script>
 <script src="vendor/three/CopyShader.js"></script>
 <script src="vendor/three/LuminosityHighPassShader.js"></script>
 <script src="vendor/three/EffectComposer.js"></script>
@@ -349,12 +350,15 @@ ZONES.forEach(zone=>{
   ring(garden,zone.x,zone.z,zone.name==='连接'?8.2:11.3,zone.color,.055);
 });
 let seed=504;function random(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;}
+// GLB 精建模型的占位登记:加载成功后按登记表替换,失败则保留程序化几何。
+const glbTrees=[],glbStoneRows=[],glbToriiProc=[],glbRingLanterns=[],glbVisitorProc=[];
 function tree(x,z,size){
   const group=new THREE.Group();group.position.set(x,0,z);scene.add(group);
-  mesh(G.cylinder,M.wood,group,0,size*.6,0,.14,size*1.2,.14);
+  const trunk=mesh(G.cylinder,M.wood,group,0,size*.6,0,.14,size*1.2,.14);
   const crown=mesh(G.sphere,M.leaf,group,0,size*1.35,0,size*.8,size*.65,size*.72);crown.rotation.y=random()*6;
-  mesh(G.sphere,M.leaf,group,size*.4,size*1.1,0,size*.55,size*.4,size*.5);
-  disc(group,.2,0,size,M.shadow);
+  const tuft=mesh(G.sphere,M.leaf,group,size*.4,size*1.1,0,size*.55,size*.4,size*.5);
+  const shadow=disc(group,.2,0,size,M.shadow);
+  glbTrees.push({x,z,size,rot:crown.rotation.y,parts:[trunk,crown,tuft],shadow});
 }
 for(let i=0;i<28;i++){
   const angle=i/28*Math.PI*2;const radius=30+random()*.7;const x=Math.sin(angle)*radius,z=Math.cos(angle)*radius;
@@ -364,9 +368,9 @@ for(let i=0;i<28;i++){
 // Small pools, stepping stones, and a quiet torii-like gate at the southern approach.
 disc(garden,12,21,4.2,material(0x14272b,{roughness:.35,metalness:.35}),.03);
 ring(garden,12,21,4.25,0x78928b,.2,.04);
-for(let i=0;i<5;i++)mesh(G.cylinder,M.stone,garden,9+i*1.4,.1,21+Math.sin(i)*.5,.45,.15,.35);
-for(const x of [-2.1,2.1])mesh(G.box,M.red,garden,x,2.1,26,.26,4.2,.3);
-mesh(G.box,M.wood,garden,0,4.25,26,5.4,.35,.6);mesh(G.box,M.red,garden,0,3.6,26,4.7,.17,.3);
+for(let i=0;i<5;i++)glbStoneRows.push(mesh(G.cylinder,M.stone,garden,9+i*1.4,.1,21+Math.sin(i)*.5,.45,.15,.35));
+for(const x of [-2.1,2.1])glbToriiProc.push(mesh(G.box,M.red,garden,x,2.1,26,.26,4.2,.3));
+glbToriiProc.push(mesh(G.box,M.wood,garden,0,4.25,26,5.4,.35,.6));glbToriiProc.push(mesh(G.box,M.red,garden,0,3.6,26,4.7,.17,.3));
 const glowCanvas=document.createElement('canvas');glowCanvas.width=glowCanvas.height=64;
 const glowContext=glowCanvas.getContext('2d');const gradient=glowContext.createRadialGradient(32,32,0,32,32,32);gradient.addColorStop(0,'rgba(244,207,146,.65)');gradient.addColorStop(.3,'rgba(215,161,98,.2)');gradient.addColorStop(1,'rgba(215,161,98,0)');glowContext.fillStyle=gradient;glowContext.fillRect(0,0,64,64);
 const glowTexture=new THREE.CanvasTexture(glowCanvas);glowTexture.encoding=THREE.sRGBEncoding;
@@ -389,7 +393,8 @@ const clouds=[];
 for(let i=0;i<(lightQuality?1:3);i++){const cloud=new THREE.Sprite(new THREE.SpriteMaterial({map:cloudTexture,transparent:true,opacity:.28,depthWrite:false,fog:false}));cloud.position.set(-40+i*34,12+i*4,-48-i*5);cloud.scale.set(65,18,1);cloud.userData.baseX=cloud.position.x;scene.add(cloud);clouds.push(cloud);}
 for(let i=0;i<12;i++){
   const a=i/12*Math.PI*2,r=31.5,x=Math.cos(a)*r,z=Math.sin(a)*r;
-  mesh(G.cylinder,M.dark,garden,x,.3,z,.28,.6,.28);mesh(G.box,M.glow,garden,x,.7,z,.25,.35,.25);halo(garden,x,.8,z,1.8,.2);
+  const post=mesh(G.cylinder,M.dark,garden,x,.3,z,.28,.6,.28),chamber=mesh(G.box,M.glow,garden,x,.7,z,.25,.35,.25);halo(garden,x,.8,z,1.8,.2);
+  glbRingLanterns.push({x,z,parts:[post,chamber]});
 }
 function label(text){
   const canvas=document.createElement('canvas');const ctx=canvas.getContext('2d');
@@ -407,7 +412,7 @@ LINKS.forEach((entry,index)=>{
   const tint=ZONES[entry.zone].color;const glow=material(0xc9a672,{emissive:0xffbf72,emissiveIntensity:2.3});
   disc(group,.3,.25,1.9,M.shadow);
   mesh(G.box,M.dark,group,0,.12,0,2.8,.24,2.4);
-  let height=3.1;
+  let height=3.1;const zproc=[];
   if(entry.zone===0){
     height=3.4;mesh(G.box,M.ivory,group,0,1.2,0,2.15,2,1.65);
     const roof=mesh(G.cone,index%3===0?M.red:M.roof,group,0,2.65,0,1.9,1.15,1.6);roof.rotation.y=Math.PI/4;
@@ -417,12 +422,12 @@ LINKS.forEach((entry,index)=>{
     mesh(G.box,M.wood,group,.54,1.37,.91,.66,.04,.06);
     mesh(G.box,M.stone,group,0,.19,1.4,1.2,.18,.55);
   }else if(entry.zone===1){
-    height=3.8;mesh(G.cylinder,M.stone,group,0,.35,0,.85,.4,.85);
-    mesh(G.box,M.ivory,group,0,1.5,0,.62,2.4,.62);
-    mesh(G.box,glow,group,0,2.7,0,1.04,1.1,1.04);
-    for(const x of [-.56,.56])for(const z of [-.56,.56])mesh(G.box,M.wood,group,x,2.7,z,.09,1.2,.09);
-    mesh(G.box,M.roof,group,0,3.33,0,1.5,.2,1.5);
-    mesh(G.cone,M.roof,group,0,3.6,0,.95,.45,.95).rotation.y=Math.PI/4;
+    height=3.8;zproc.push(mesh(G.cylinder,M.stone,group,0,.35,0,.85,.4,.85));
+    zproc.push(mesh(G.box,M.ivory,group,0,1.5,0,.62,2.4,.62));
+    zproc.push(mesh(G.box,glow,group,0,2.7,0,1.04,1.1,1.04));
+    for(const x of [-.56,.56])for(const z of [-.56,.56])zproc.push(mesh(G.box,M.wood,group,x,2.7,z,.09,1.2,.09));
+    zproc.push(mesh(G.box,M.roof,group,0,3.33,0,1.5,.2,1.5));
+    const zroof=mesh(G.cone,M.roof,group,0,3.6,0,.95,.45,.95);zroof.rotation.y=Math.PI/4;zproc.push(zroof);
   }else if(entry.zone===2){
     height=3.1+(index%3)*.22;const slab=mesh(G.box,M.ivory,group,0,height/2-.1,0,1.55,height-.4,.7);slab.rotation.z=(index%2?1:-1)*.035;
     mesh(G.box,glow,group,-.56,height/2,.38,.07,height-.9,.04);
@@ -443,7 +448,7 @@ LINKS.forEach((entry,index)=>{
   mesh(G.cylinder,M.wood,beacon,0,0,0,.07,.27,.07);
   mesh(G.sphere,M.glow,beacon,0,.2,0,.11,.16,.11);halo(beacon,0,.2,0,1.35,.4);
   // An emissive miniature lantern avoids adding 26 expensive PointLights.
-  const lm={entry,group,name,glow,lightHalo,marker,beacon,index,activation:0};landmarks.push(lm);
+  const lm={entry,group,name,glow,lightHalo,marker,beacon,index,zproc,activation:0};landmarks.push(lm);
   group.traverse(child=>{if(child.isMesh){child.userData.landmark=lm;pickables.push(child);}});
   name.userData.landmark=lm;pickables.push(name);
   colliders.push({x:entry.x,z:entry.z,r:entry.zone===3?1.75:1.5});
@@ -453,18 +458,67 @@ const centerLabel=label('庭 心');centerLabel.position.set(0,.45,-1);centerLabe
 // The visitor: a little paper-coloured figure carrying a warm, faceted lantern.
 const player=new THREE.Group();player.position.set(0,0,3);scene.add(player);
 const body=new THREE.Group();player.add(body);
-mesh(G.cylinder,M.red,body,0,.78,0,.34,.8,.3);
-mesh(G.sphere,M.ivory,body,0,1.48,0,.29,.32,.28);
-mesh(G.cylinder,M.dark,body,0,1.69,0,.35,.1,.34);
-const legL=mesh(G.box,M.dark,body,-.15,.22,0,.16,.46,.19),legR=mesh(G.box,M.dark,body,.15,.22,0,.16,.46,.19);
-mesh(G.box,M.ivory,body,.43,.93,0,.48,.15,.15).rotation.z=-.2;
+glbVisitorProc.push(mesh(G.cylinder,M.red,body,0,.78,0,.34,.8,.3));
+glbVisitorProc.push(mesh(G.sphere,M.ivory,body,0,1.48,0,.29,.32,.28));
+glbVisitorProc.push(mesh(G.cylinder,M.dark,body,0,1.69,0,.35,.1,.34));
+let legL=mesh(G.box,M.dark,body,-.15,.22,0,.16,.46,.19),legR=mesh(G.box,M.dark,body,.15,.22,0,.16,.46,.19);
+glbVisitorProc.push(legL,legR);
+const arm=mesh(G.box,M.ivory,body,.43,.93,0,.48,.15,.15);arm.rotation.z=-.2;glbVisitorProc.push(arm);
 const lanternSwing=new THREE.Group();lanternSwing.position.set(.69,1.1,0);body.add(lanternSwing);
-mesh(G.box,M.wood,lanternSwing,0,-.25,0,.025,.55,.025);
-mesh(G.cylinder,M.glow,lanternSwing,0,-.55,0,.18,.33,.18);
+glbVisitorProc.push(mesh(G.box,M.wood,lanternSwing,0,-.25,0,.025,.55,.025));
+glbVisitorProc.push(mesh(G.cylinder,M.glow,lanternSwing,0,-.55,0,.18,.33,.18));
 halo(lanternSwing,0,-.55,0,2.1,.44);
 const playerLight=new THREE.PointLight(0xf0bd7e,1.25,6,2);playerLight.position.set(0,-.4,0);lanternSwing.add(playerLight);
 disc(player,0,0,.65,M.shadow);
 ring(player,0,0,.85,0xe8e2d5,.15);
+// ===== GLB 精建模型:加载成功即替换占位基元,失败则静默保留程序化版本 =====
+const gltfLoader=new THREE.GLTFLoader();
+function glbRefine(root,glowOverride){
+  root.traverse(o=>{if(o.isMesh){
+    const base=(o.material&&o.material.name||'').replace(/\.\d+$/,'');
+    o.material=(base==='glow'&&glowOverride)?glowOverride:(M[base]||M.stone);
+    o.castShadow=true;o.receiveShadow=true;
+  }});
+  return root;
+}
+function glbLoad(url){return new Promise((resolve,reject)=>gltfLoader.load(url,g=>resolve(g.scene),undefined,reject));}
+function glbPlace(proto,parent,x,y,z,s,rotY,glowOverride){
+  const wrap=new THREE.Group();wrap.position.set(x,y,z);wrap.scale.setScalar(s);if(rotY)wrap.rotation.y=rotY;
+  wrap.add(glbRefine(proto.clone(true),glowOverride));(parent||scene).add(wrap);return wrap;
+}
+glbLoad('assets/models/Tree.glb').then(g=>{
+  const proto=g.getObjectByName('Tree')||g;
+  glbTrees.forEach(t=>{t.parts.forEach(m=>m.visible=false);t.shadow.scale.set(t.size*.55,t.size*.55,1);glbPlace(proto,scene,t.x,0,t.z,t.size*2/4.125,t.rot);});
+}).catch(e=>console.warn('Tree.glb 未加载,保留程序化树',e));
+glbLoad('assets/models/SteppingStone.glb').then(g=>{
+  const proto=g.getObjectByName('SteppingStone')||g;
+  glbStoneRows.forEach(m=>{m.visible=false;glbPlace(proto,scene,m.position.x,.03,m.position.z,.82);});
+}).catch(e=>console.warn('SteppingStone.glb 未加载',e));
+glbLoad('assets/models/Torii.glb').then(g=>{
+  const proto=g.getObjectByName('Torii')||g;
+  glbToriiProc.forEach(m=>m.visible=false);
+  glbPlace(proto,garden,0,0,26,1,0);
+}).catch(e=>console.warn('Torii.glb 未加载',e));
+glbLoad('assets/models/StoneLantern.glb').then(g=>{
+  const proto=g.getObjectByName('StoneLantern')||g;
+  glbRingLanterns.forEach(l=>{l.parts.forEach(m=>m.visible=false);glbPlace(proto,scene,l.x,.02,l.z,.5);});
+  landmarks.forEach(lm=>{
+    if(lm.entry.zone!==1||!lm.zproc.length)return;
+    lm.zproc.forEach(m=>m.visible=false);
+    const wrap=glbPlace(proto,lm.group,0,0,0,2.05,0,lm.glow);
+    wrap.traverse(c=>{if(c.isMesh){c.userData.landmark=lm;pickables.push(c);}});
+  });
+}).catch(e=>console.warn('StoneLantern.glb 未加载',e));
+glbLoad('assets/models/Visitor.glb').then(g=>{
+  const proto=g.getObjectByName('Visitor')||g;
+  const wrap=glbPlace(proto,body,0,0,0,1,0);
+  glbVisitorProc.forEach(m=>m.visible=false);
+  const nl=wrap.getObjectByName('LegL'),nr=wrap.getObjectByName('LegR'),pivot=wrap.getObjectByName('LanternPivot');
+  const fl=wrap.getObjectByName('FootL'),fr=wrap.getObjectByName('FootR');
+  if(nl){legL=nl;if(fl)nl.attach(fl);}
+  if(nr){legR=nr;if(fr)nr.attach(fr);}
+  if(pivot)lanternSwing.attach(pivot);
+}).catch(e=>console.warn('Visitor.glb 未加载',e));
 const particleCount=lightQuality?16:80,particlePositions=new Float32Array(particleCount*3),particleBase=[];
 for(let i=0;i<particleCount;i++){const a=random()*Math.PI*2,r=Math.sqrt(random())*31;particleBase.push([Math.cos(a)*r,.7+random()*4,Math.sin(a)*r,random()*6]);particlePositions.set(particleBase[i].slice(0,3),i*3);}
 const particleGeometry=new THREE.BufferGeometry();particleGeometry.setAttribute('position',new THREE.BufferAttribute(particlePositions,3));
