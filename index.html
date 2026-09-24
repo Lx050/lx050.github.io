@@ -109,6 +109,14 @@ const TRACKS=[
 <script>
 (() => {
 'use strict';
+// Wave 1 · metres. Human geometry is deliberately never scaled with the world.
+const WORLD=Object.freeze({PLAYER_HEIGHT:1.7,ISLAND_RADIUS:150,INNER_RING:70,OUTER_RING:124,
+  TERRACE_RADIUS:15,PATH_WIDTH:3,APPROACH_LENGTH:21,STEP_HEIGHT:.15,STEP_DEPTH:.4,
+  LANTERN_HEIGHT:2.4,TORII_HEIGHT:13,TORII_Z:37,WATER_Y:-18,WATER_RADIUS:1500,
+  SKY_RADIUS:1800,CELESTIAL_RADIUS:1100,FOG_NIGHT:.0024,FOG_DAY:.0018,
+  CAMERA_FOV:40,CAMERA_FAR:2400,CAMERA_DISTANCE:6.5,CAMERA_PITCH:.2,
+  CAMERA_MIN_PITCH:-.5,CAMERA_MAX_PITCH:.62,SHADOW_RADIUS:70,SHADOW_MOBILE_RADIUS:40,
+  MATH_SCALE:150/31.5,INTERACT_DISTANCE:9,LABEL_DISTANCE:100,LOD_DESKTOP:210,LOD_MOBILE:115});
 // Every destination owns one physical landmark, a Sprite label, and a directory link.
 const LINKS = [
   {zone:0,title:'墨息',desc:'数字毛笔书写，让落笔重新有温度。',url:'https://moxi.maniforld.com',x:-20,z:-19},
@@ -144,6 +152,45 @@ const ZONES = [
   {name:'项目',note:'未完之书',x:13,z:-12,color:0x78928b,spawn:[3,-7]},
   {name:'连接',note:'彼此之桥',x:14,z:12,color:0xad8d72,spawn:[14,8]}
 ];
+// Four sectors, two rings, no random positions. Larger project sector fits eleven monuments.
+const sectorBounds=[[176,272],[272,352],[60,176],[-8,60]],innerCounts=[3,2,4,1];
+ZONES.forEach((zone,zi)=>{
+  const entries=LINKS.filter(e=>e.zone===zi),[a,b]=sectorBounds[zi],ni=innerCounts[zi];
+  entries.forEach((e,j)=>{
+    const inside=j<ni,n=inside?ni:entries.length-ni,k=inside?j:j-ni,pad=inside?18:8;
+    let angle=(zi===3?(inside?20:48):(n===1?(a+b)/2:a+pad+(b-a-2*pad)*k/(n-1)))*Math.PI/180;
+    if(zi===2&&inside&&j>=2)angle=(j===2?135:163)*Math.PI/180;
+    const r=(zi===3?!inside:inside)?WORLD.INNER_RING:WORLD.OUTER_RING;
+    e.x=Math.sin(angle)*r;e.z=Math.cos(angle)*r;
+  });
+  const a0=(a+b)/2*Math.PI/180;zone.x=Math.sin(a0)*90;zone.z=Math.cos(a0)*90;
+  zone.spawn=[Math.sin(a0)*32,Math.cos(a0)*32];
+});
+const terraceSites=LINKS.map((entry,index)=>{
+  const r=Math.hypot(entry.x,entry.z),ux=entry.x/r,uz=entry.z/r;
+  const steps=20+(index%5)*4, rise=steps*WORLD.STEP_HEIGHT;
+  return {index,x:entry.x,z:entry.z,ux,uz,radius:WORLD.TERRACE_RADIUS,steps,rise,
+    baseY:rawTerrain(entry.x,entry.z),groundY:rawTerrain(entry.x,entry.z)+rise,
+    start:r-WORLD.TERRACE_RADIUS-WORLD.APPROACH_LENGTH,ring:r};
+});
+function smooth01(t){t=Math.max(0,Math.min(1,t));return t*t*(3-2*t);}
+function rawTerrain(x,z){
+  const r=Math.hypot(x,z),fade=smooth01((r-14)/30)*(1-smooth01((r-130)/20));
+  return fade*(1.4*Math.sin(x*.035)*Math.cos(z*.031)+.8*Math.sin((x+z)*.047));
+}
+// Terrain, rendered paths, steps and player all use the same height field.
+function terrainHeight(x,z){
+  let y=rawTerrain(x,z);
+  for(const t of terraceSites){
+    const dx=x-t.x,dz=z-t.z,d=Math.hypot(dx,dz),along=dx*t.ux+dz*t.uz,side=-dx*t.uz+dz*t.ux;
+    const flatten=1-smooth01((d-t.radius-2)/8);
+    y=y*(1-flatten)+t.baseY*flatten;
+    if(along< -t.radius&&along>=-t.radius-WORLD.APPROACH_LENGTH&&Math.abs(side)<4){
+      const blend=(1-smooth01((Math.abs(side)-1.5)/2.5))*smooth01((along+t.radius+WORLD.APPROACH_LENGTH)/6);y=y*(1-blend)+t.baseY*blend;
+    }
+  }
+  return y;
+}
 const $ = id => document.getElementById(id);
 let started=false,ready=false,failed=false,nearest=null,previousFocus=null;
 // Audio owns its own clock: neither render quality nor tab visibility changes it.
@@ -226,7 +273,7 @@ const keys=new Set(),joy={x:0,y:0};
 const touch=matchMedia('(pointer:coarse)').matches || navigator.maxTouchPoints>0;
 const motionQuery=matchMedia('(prefers-reduced-motion:reduce)');
 let reduced=motionQuery.matches;
-const needsLightQuality=()=>touch || innerWidth<760 || (devicePixelRatio||1)<1.25 || /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
+const needsLightQuality=()=>touch || innerWidth<760 || /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
 let lightQuality=needsLightQuality();
 motionQuery.addEventListener('change',e=>{reduced=e.matches;});
 document.body.classList.toggle('touch',touch);
@@ -261,11 +308,12 @@ let renderer;
 try{renderer=new THREE.WebGLRenderer({antialias:!lightQuality,alpha:false,powerPreference:'high-performance'});}
 catch(error){fail('当前浏览器无法开启三维场景。请尝试支持 WebGL 的浏览器，或从目录直接访问全部入口。');return;}
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x111b26).convertSRGBToLinear();
-scene.fog=new THREE.FogExp2(0x172532,.0085);scene.fog.color.convertSRGBToLinear();
-const camera=new THREE.PerspectiveCamera(45,innerWidth/innerHeight,.5,360);
-renderer.setPixelRatio(Math.min(devicePixelRatio||1,lightQuality?1.25:2));renderer.setSize(innerWidth,innerHeight);
+scene.fog=new THREE.FogExp2(0x172532,WORLD.FOG_NIGHT);scene.fog.color.convertSRGBToLinear();
+const camera=new THREE.PerspectiveCamera(WORLD.CAMERA_FOV,innerWidth/innerHeight,.4,WORLD.CAMERA_FAR);
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,lightQuality?1.15:1.5));renderer.setSize(innerWidth,innerHeight);
 // ACES belongs exclusively to the final pass. Keep ALL intermediate buffers linear.
 // Using THREE.ACESFilmicToneMapping here as well would tonemap scene materials twice in r128.
+renderer.info.autoReset=false;
 renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.NoToneMapping;renderer.toneMappingExposure=1.05;
 const supportsHDR=renderer.capabilities.isWebGL2?renderer.extensions.has('EXT_color_buffer_float'):
   renderer.extensions.has('EXT_color_buffer_half_float')&&renderer.extensions.has('OES_texture_half_float_linear');
@@ -300,14 +348,15 @@ renderer.domElement.addEventListener('webglcontextlost',e=>{e.preventDefault();f
 const hemi=new THREE.HemisphereLight(0xe8e2d5,0x303a3e,.85);scene.add(hemi);
 const moon=new THREE.DirectionalLight(0xc6dcf2,1.35);moon.position.set(20,42,-45);scene.add(moon);
 renderer.shadowMap.enabled=!lightQuality;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-moon.castShadow=!lightQuality;moon.shadow.mapSize.set(2048,2048);
-Object.assign(moon.shadow.camera,{left:-37,right:37,top:37,bottom:-37,near:12,far:110});
+moon.castShadow=!lightQuality;moon.shadow.mapSize.set(lightQuality?1024:2048,lightQuality?1024:2048);
+Object.assign(moon.shadow.camera,{left:-WORLD.SHADOW_RADIUS,right:WORLD.SHADOW_RADIUS,top:WORLD.SHADOW_RADIUS,bottom:-WORLD.SHADOW_RADIUS,near:1,far:400});
 moon.shadow.camera.updateProjectionMatrix();moon.shadow.bias=-.0005;moon.shadow.normalBias=.12;moon.shadow.radius=2;
-// Batch 7: sun key light — shadows trade off between sun and moon as the dominant body rises.
+// Sun and moon share a player-centred shadow budget; only the dominant key casts.
 const sun=new THREE.DirectionalLight(0xffc890,0);sun.position.set(30,40,50);scene.add(sun);
-sun.castShadow=false;sun.shadow.mapSize.set(2048,2048);
-Object.assign(sun.shadow.camera,{left:-37,right:37,top:37,bottom:-37,near:12,far:110});
+sun.castShadow=false;sun.shadow.mapSize.set(lightQuality?1024:2048,lightQuality?1024:2048);
+Object.assign(sun.shadow.camera,{left:-WORLD.SHADOW_RADIUS,right:WORLD.SHADOW_RADIUS,top:WORLD.SHADOW_RADIUS,bottom:-WORLD.SHADOW_RADIUS,near:1,far:400});
 sun.shadow.camera.updateProjectionMatrix();sun.shadow.bias=-.0005;sun.shadow.normalBias=.12;sun.shadow.radius=2;
+scene.add(moon.target,sun.target);
 const fakeShadows=[];
 const fill=new THREE.DirectionalLight(0x819baf,.35);fill.position.set(20,12,-20);scene.add(fill);
 const G={box:new THREE.BoxGeometry(1,1,1),cylinder:new THREE.CylinderGeometry(1,1,1,8),cone:new THREE.ConeGeometry(1,1,4),sphere:new THREE.IcosahedronGeometry(1,0),circle:new THREE.CircleGeometry(1,32),ring:new THREE.RingGeometry(.987,1,64)};
@@ -333,11 +382,42 @@ function mesh(geo,mat,parent,x,y,z,sx=1,sy=1,sz=1){
 }
 function disc(parent,x,z,r,mat,y=.025){const m=mesh(G.circle,mat,parent,x,y,z,r,r,1);m.rotation.x=-Math.PI/2;return m;}
 function ring(parent,x,z,r,color,opacity=.35,y=.035){const mat=new THREE.MeshBasicMaterial({color,transparent:true,opacity,depthWrite:false,side:THREE.DoubleSide});const m=mesh(G.ring,mat,parent,x,y,z,r,r,1);m.rotation.x=-Math.PI/2;return m;}
-// A true faceted floating island. The walkable boundary stays inside its narrowest edge.
-mesh(new THREE.CylinderGeometry(33.5,31.5,1.8,64),M.ground,scene,0,-.9,0).castShadow=false;
-mesh(new THREE.CylinderGeometry(31.5,22,7,16),M.edge,scene,0,-5.2,0);
-mesh(new THREE.ConeGeometry(22,6,12),M.dark,scene,0,-11.6,0).rotation.z=Math.PI;
-ring(scene,0,0,32.25,0x8b8271,.23,.02);
+// Shared instance batches: all repeated scenery uses one draw per geometry/material pair.
+const instanceBatches=new Map(),instanceDummy=new THREE.Object3D();
+function instance(geo,mat,x,y,z,sx=1,sy=1,sz=1,ry=0,rz=0){
+  const key=geo.uuid+mat.uuid;let b=instanceBatches.get(key);
+  if(!b){b={geo,mat,transforms:[]};instanceBatches.set(key,b);}
+  instanceDummy.position.set(x,y,z);instanceDummy.scale.set(sx,sy,sz);instanceDummy.rotation.set(0,ry,rz);instanceDummy.updateMatrix();
+  b.transforms.push(instanceDummy.matrix.clone());
+}
+function flushInstances(){
+  for(const b of instanceBatches.values()){
+    if(!b.transforms.length)continue;
+    const m=new THREE.InstancedMesh(b.geo,b.mat,b.transforms.length);
+    b.transforms.forEach((v,i)=>m.setMatrixAt(i,v));m.instanceMatrix.needsUpdate=true;
+    m.castShadow=b.mat.isMeshStandardMaterial&&b.mat!==M.glow;m.receiveShadow=!!b.mat.isMeshStandardMaterial;
+    scene.add(m);b.transforms=[];
+  }
+}
+const terrainGeometry=new THREE.PlaneGeometry(WORLD.ISLAND_RADIUS*2,WORLD.ISLAND_RADIUS*2,180,180);
+terrainGeometry.rotateX(-Math.PI/2);
+const terrainPos=terrainGeometry.attributes.position;
+for(let i=0;i<terrainPos.count;i++)terrainPos.setY(i,terrainHeight(terrainPos.getX(i),terrainPos.getZ(i)));
+const terrainIndices=[];const src=terrainGeometry.index.array;
+for(let i=0;i<src.length;i+=3){if([src[i],src[i+1],src[i+2]].every(v=>Math.hypot(terrainPos.getX(v),terrainPos.getZ(v))<=WORLD.ISLAND_RADIUS+1))terrainIndices.push(src[i],src[i+1],src[i+2]);}
+terrainGeometry.setIndex(terrainIndices);terrainGeometry.computeVertexNormals();
+mesh(terrainGeometry,M.ground,scene,0,0,0).castShadow=false;
+mesh(new THREE.CylinderGeometry(WORLD.ISLAND_RADIUS+1,WORLD.ISLAND_RADIUS*.9533333333,8,96,1,true),M.edge,scene,0,-4.05,0).castShadow=false;
+mesh(new THREE.CylinderGeometry(WORLD.ISLAND_RADIUS*.9533333333,WORLD.ISLAND_RADIUS*.7,18,48),M.dark,scene,0,-17,0).castShadow=false;
+ring(scene,0,0,WORLD.ISLAND_RADIUS,0x8b8271,.23,.025);
+const distantLand=[];
+const distantMaterial=new THREE.MeshBasicMaterial({color:0x24333c});
+for(let i=0;i<42;i++){
+  const a=i/42*Math.PI*2,r=WORLD.ISLAND_RADIUS*(2.2+(i%4)*.7),h=38+(i*37%113);
+  const peak=mesh(new THREE.ConeGeometry(1,1,5),distantMaterial,scene,Math.sin(a)*r,h*.5-24,Math.cos(a)*r,48+i%5*13,h,30+i%7*8);
+  peak.rotation.y=a;peak.castShadow=peak.receiveShadow=false;distantLand.push(peak);
+}
+
 // Water surrounds the suspended island; low quality swaps this shader for a flat blue disc.
 const simpleWater=new THREE.MeshBasicMaterial({color:new THREE.Color(0x142938).convertSRGBToLinear(),transparent:true,opacity:.84,depthWrite:false});
 const waterMaterial=new THREE.ShaderMaterial({
@@ -362,80 +442,41 @@ const waterMaterial=new THREE.ShaderMaterial({
       float fres=pow(1.0-max(dot(normal,viewDir),0.0),3.0);
       vec3 color=uDeep+ripple*.0018+uGlint*(reflected*(.35+.65*ribbon)+road*pathAlign*.5*uKeyI);
       color=mix(color,uSkyRef,fres*.45);
-      float haze=smoothstep(40.0,150.0,length(p));color=mix(color,uHor,haze);
+      float haze=smoothstep(350.0,1400.0,length(p));color=mix(color,uHor,haze);
       gl_FragColor=vec4(color,.88);
     }`
 });
-const water=disc(scene,0,0,155,lightQuality?simpleWater:waterMaterial,-15);water.castShadow=water.receiveShadow=false;
+const water=disc(scene,0,0,WORLD.WATER_RADIUS,lightQuality?simpleWater:waterMaterial,WORLD.WATER_Y);water.castShadow=water.receiveShadow=false;
 const garden=new THREE.Group();scene.add(garden);
 disc(garden,0,0,4.2,M.dark,.015);ring(garden,0,0,4.25,0xaaa18e,.38);
 ring(garden,0,0,3.75,0xc0563e,.32);
-// Batch 6: 曲径通幽 — the straight slab cross becomes meandering flagstone runs (visual only; walkable unchanged).
 const jitter=n=>{const s=Math.sin(n*127.1+311.7)*43758.5453;return s-Math.floor(s);};
-for(const [ux,uz] of [[0,1],[0,-1],[1,0],[-1,0]]){
-  const px=-uz,pz=ux,face=Math.atan2(ux,uz),phase=jitter(ux*3+uz*7+1)*6.28;
-  for(let t=4.6;t<29.6;t+=1.42){
-    const j1=jitter(t*5.3+phase),j2=jitter(t*9.1+phase),off=Math.sin(t*.23+phase)*.7,tilt=Math.cos(t*.23+phase)*.15;
-    const slab=mesh(G.box,j2>.32?M.path:M.stone,garden,ux*t+px*off,.03,uz*t+pz*off,1.3+j1*.45,.07,1+j2*.28);
-    slab.rotation.y=face+(j1-.5)*.2+tilt;slab.castShadow=false;
-    if(t%4.24<1.5){
-      const side=j1>.5?1:-1,ox=ux*(t+.6)+px*(off+side*(1.15+j2*.5)),oz=uz*(t+.6)+pz*(off+side*(1.15+j2*.5));
-      const rock=mesh(G.sphere,j2>.55?M.leaf:M.stone,garden,ox,.05,oz,.13+j1*.13,.07+j2*.06,.1+j1*.11);rock.rotation.y=j1*6.28;rock.castShadow=false;
-    }
-  }
-}
-// Batch 9: 陆地精修 — 岸缘卵石带、崖面垂岩、苔草丛、岛影投海(接触阴影)。纯视觉,walkable 不变。
-{
-  const contactCanvas=document.createElement('canvas');contactCanvas.width=contactCanvas.height=128;
-  const cc=contactCanvas.getContext('2d');const cg=cc.createRadialGradient(64,64,0,64,64,64);
-  cg.addColorStop(0,'rgba(4,8,10,.5)');cg.addColorStop(.55,'rgba(4,8,10,.22)');cg.addColorStop(1,'rgba(4,8,10,0)');
-  cc.fillStyle=cg;cc.fillRect(0,0,128,128);
-  const contactTex=new THREE.CanvasTexture(contactCanvas);contactTex.encoding=THREE.sRGBEncoding;
-  const contact=disc(scene,0,0,46,new THREE.MeshBasicMaterial({map:contactTex,transparent:true,opacity:.9,depthWrite:false}),-14.9);
-  contact.castShadow=contact.receiveShadow=false;
-}
-for(let i=0;i<34;i++){
-  const a=jitter(i*3.7)*6.28,r=31.2+jitter(i*5.1)*1.6,x=Math.sin(a)*r,z=Math.cos(a)*r,j=jitter(i*7.3);
-  const peb=mesh(G.sphere,j>.6?M.dark:(j>.3?M.stone:M.edge),scene,x,.04+j*.12,z,.18+j*.5,.1+j*.28,.22+j*.55);
-  peb.rotation.set(jitter(i*2.1)*3,jitter(i*4.9)*6.28,jitter(i*6.3)*2);peb.castShadow=j>.5;
-}
-for(let i=0;i<12;i++){
-  const a=jitter(i*9.1+40)*6.28,r=27.5+jitter(i*3.3+11)*3.5;
-  const crag=mesh(G.cone,i%2?M.edge:M.dark,scene,Math.sin(a)*r,-2.4-jitter(i*8.8)*1.2,Math.cos(a)*r,.8+jitter(i*2.2)*1.1,2.2+jitter(i*5.5)*2.4,.8+jitter(i*7.7)*1.1);
-  crag.rotation.set(Math.PI,0,jitter(i*1.9)*.5-.25);crag.castShadow=false;
-}
-for(let i=0;i<18;i++){
-  const a=jitter(i*4.4+80)*6.28,r=6+jitter(i*6.6+5)*23,x=Math.sin(a)*r,z=Math.cos(a)*r;
-  if(Math.hypot(x,z)>30.2)continue;
-  const tuft=mesh(G.cone,M.leaf,garden,x,.06,z,.08+jitter(i*8.1)*.1,.16+jitter(i*3.9)*.18,.08+jitter(i*2.7)*.1);
-  tuft.rotation.y=jitter(i*5.7)*6.28;tuft.castShadow=false;
-}
-ZONES.forEach(zone=>{
-  ring(garden,zone.x,zone.z,zone.name==='连接'?8.6:11.7,zone.color,.16);
-  ring(garden,zone.x,zone.z,zone.name==='连接'?8.2:11.3,zone.color,.055);
-});
 let seed=504;function random(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;}
-// GLB 精建模型的占位登记:加载成功后按登记表替换,失败则保留程序化几何。
-const glbTrees=[],glbStoneRows=[],glbToriiProc=[],glbRingLanterns=[],glbVisitorProc=[];
-function tree(x,z,size){
-  const group=new THREE.Group();group.position.set(x,0,z);scene.add(group);
-  const trunk=mesh(G.cylinder,M.wood,group,0,size*.6,0,.14,size*1.2,.14);
-  const crown=mesh(G.sphere,M.leaf,group,0,size*1.35,0,size*.8,size*.65,size*.72);crown.rotation.y=random()*6;
-  const tuft=mesh(G.sphere,M.leaf,group,size*.4,size*1.1,0,size*.55,size*.4,size*.5);
-  const shadow=disc(group,.2,0,size,M.shadow);
-  glbTrees.push({x,z,size,rot:crown.rotation.y,parts:[trunk,crown,tuft],shadow});
+const glbTrees=[],glbRingLanterns=[],glbVisitorProc=[];
+function pathSlab(x,z,y,ry,w=3,l=1.2){instance(G.box,M.path,x,y-.04,z,w,.08,l,ry);}
+// Ring paths connect all 21m processional branches; radial paths preserve an open centre.
+for(const r of [WORLD.INNER_RING-WORLD.TERRACE_RADIUS-WORLD.APPROACH_LENGTH,WORLD.OUTER_RING-WORLD.TERRACE_RADIUS-WORLD.APPROACH_LENGTH]){
+  const n=Math.ceil(2*Math.PI*r/1.2);
+  for(let i=0;i<n;i++){const a=i/n*Math.PI*2,x=Math.sin(a)*r,z=Math.cos(a)*r;pathSlab(x,z,terrainHeight(x,z)+.025,a,3.2,1.3);}
 }
-for(let i=0;i<28;i++){
-  const angle=i/28*Math.PI*2;const radius=30+random()*.7;const x=Math.sin(angle)*radius,z=Math.cos(angle)*radius;
-  if(i%3===0)tree(x,z,1.8+random());
-  else{const rock=mesh(G.sphere,i%2?M.dark:M.stone,scene,x,.3,z,.35+random()*.8,.35+random()*.55,.5+random()*.8);rock.rotation.set(random(),random(),random());}
+for(const [ux,uz] of [[0,1],[0,-1],[1,0],[-1,0]])for(let r=4;r<149;r+=1.2){const x=ux*r,z=uz*r;pathSlab(x,z,terrainHeight(x,z)+.03,Math.atan2(ux,uz));}
+function humanTree(x,z,h=6){
+  const y=terrainHeight(x,z);glbTrees.push({x,z,y,h,rot:jitter(x+z)*6.28});
 }
-// Small pools, stepping stones, and a quiet torii-like gate at the southern approach.
-disc(garden,12,21,4.2,material(0x14272b,{roughness:.35,metalness:.35}),.03);
-ring(garden,12,21,4.25,0x78928b,.2,.04);
-for(let i=0;i<5;i++)glbStoneRows.push(mesh(G.cylinder,M.stone,garden,9+i*1.4,.1,21+Math.sin(i)*.5,.45,.15,.35));
-for(const x of [-2.1,2.1])glbToriiProc.push(mesh(G.box,M.red,garden,x,2.1,26,.26,4.2,.3));
-glbToriiProc.push(mesh(G.box,M.wood,garden,0,4.25,26,5.4,.35,.6));glbToriiProc.push(mesh(G.box,M.red,garden,0,3.6,26,4.7,.17,.3));
+function stoneLantern(x,z,y){glbRingLanterns.push({x,z,y});}
+for(let i=0;i<96;i++){
+  const a=i/96*Math.PI*2,r=WORLD.ISLAND_RADIUS-3,x=Math.sin(a)*r,z=Math.cos(a)*r;
+  if(i%3===0)humanTree(x,z,5+jitter(i)*3);
+  else instance(G.sphere,M.edge,x,terrainHeight(x,z)+.12,z,.3+jitter(i)*.7,.2+jitter(i)*.3,.4+jitter(i)*.6,a);
+  if(i%8===0)stoneLantern(x,z,terrainHeight(x,z));
+}
+// Gate is the one intentionally monumental threshold, looking from the south toward the court.
+const toriiFallback=new THREE.Group();toriiFallback.position.z=WORLD.TORII_Z;garden.add(toriiFallback);
+for(const x of [-5.8,5.8])mesh(G.box,M.red,toriiFallback,x,6.2,0,.72,12.4,.8);
+mesh(G.box,M.wood,toriiFallback,0,12.5,0,15,1,1.5);mesh(G.box,M.red,toriiFallback,0,10.4,0,13,.5,.8);
+for(let i=0;i<3;i++){const z=42+i*6;stoneLantern(-3.5,z,terrainHeight(-3.5,z));stoneLantern(3.5,z,terrainHeight(3.5,z));}
+const contact=disc(scene,0,0,WORLD.ISLAND_RADIUS*1.18,M.shadow,WORLD.WATER_Y+.06);contact.visible=true;
+
 const glowCanvas=document.createElement('canvas');glowCanvas.width=glowCanvas.height=64;
 const glowContext=glowCanvas.getContext('2d');const gradient=glowContext.createRadialGradient(32,32,0,32,32,32);gradient.addColorStop(0,'rgba(244,207,146,.65)');gradient.addColorStop(.3,'rgba(215,161,98,.2)');gradient.addColorStop(1,'rgba(215,161,98,0)');glowContext.fillStyle=gradient;glowContext.fillRect(0,0,64,64);
 const glowTexture=new THREE.CanvasTexture(glowCanvas);glowTexture.encoding=THREE.sRGBEncoding;
@@ -443,7 +484,7 @@ function halo(parent,x,y,z,size,opacity=.3){const s=new THREE.Sprite(new THREE.S
 // A sparse upper-sky dome; no stars below the island horizon. Batch 9: cold/warm star tints + first-magnitude tier.
 const starCount=lightQuality?65:360,starPositions=new Float32Array(starCount*3),starPhases=new Float32Array(starCount),starColors=new Float32Array(starCount*3),starMag=new Float32Array(starCount);
 for(let i=0;i<starCount;i++){
-  const a=random()*Math.PI*2,y=10+random()*50,r=Math.sqrt(70*70-y*y);
+  const a=random()*Math.PI*2,y=120+random()*1200,r=Math.sqrt((WORLD.SKY_RADIUS*.89)**2-y*y);
   starPositions.set([Math.cos(a)*r,y,Math.sin(a)*r],i*3);starPhases[i]=random()*6.28;
   const first=random()>.93;starMag[i]=first?1.8+random()*1.2:.55+random()*1.0;
   const warmStar=first&&random()>.55;
@@ -466,9 +507,9 @@ for(const[mx,my,mr]of[[52,44,26],[86,58,18],[128,40,30],[170,66,22],[210,46,16],
 moonCtx.fillStyle='rgba(240,244,250,.5)';
 for(let i=0;i<26;i++){const cx=random()*256,cy=18+random()*92,cr=1.2+random()*3.6;moonCtx.beginPath();moonCtx.arc(cx,cy,cr,0,6.28);moonCtx.fill();}
 const moonTexture=new THREE.CanvasTexture(moonCanvas);moonTexture.encoding=THREE.sRGBEncoding;
-const moonOrb=mesh(new THREE.SphereGeometry(2.2,24,16),new THREE.MeshBasicMaterial({map:moonTexture,color:new THREE.Color(1.65,1.85,2.1),fog:false}),scene,20,18,-45);
-const moonHalo=halo(scene,20,18,-45,15,.16);moonHalo.material.color.setHex(0xb9d4f2);
-const moonGlow=halo(scene,20,18,-45,34,.06);moonGlow.material.color.setHex(0x8fb4d8);
+const moonOrb=mesh(new THREE.SphereGeometry(30,24,16),new THREE.MeshBasicMaterial({map:moonTexture,color:new THREE.Color(1.65,1.85,2.1),fog:false}),scene,20,18,-45);
+const moonHalo=halo(scene,20,18,-45,180,.16);moonHalo.material.color.setHex(0xb9d4f2);
+const moonGlow=halo(scene,20,18,-45,360,.06);moonGlow.material.color.setHex(0x8fb4d8);
 // Batch 9: 云朵絮状重绘(不规则软边团块)。
 const cloudCanvas=document.createElement('canvas');cloudCanvas.width=256;cloudCanvas.height=96;const cloudContext=cloudCanvas.getContext('2d');
 for(let i=0;i<14;i++){
@@ -505,10 +546,11 @@ const skyDomeMat=new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,
       float dither=fract(sin(dot(gl_FragCoord.xy,vec2(12.9898,78.233)))*43758.5453);
       gl_FragColor=vec4(col+(dither-.5)*.006,1.0);
     }`});
-const skyDome=new THREE.Mesh(new THREE.SphereGeometry(340,24,16),skyDomeMat);skyDome.renderOrder=-1000;skyDome.frustumCulled=false;scene.add(skyDome);
-const sunOrb=mesh(new THREE.SphereGeometry(2.6,24,16),new THREE.MeshBasicMaterial({color:new THREE.Color(2.1,1.35,.7),fog:false}),scene,0,-80,0);
-const sunHalo=halo(scene,0,-80,0,22,.2);sunHalo.material.color.setHex(0xffb37a);
-const sunCorona=halo(scene,0,-80,0,52,.07);sunCorona.material.color.setHex(0xff9a5c);
+const skyDome=new THREE.Mesh(new THREE.SphereGeometry(WORLD.SKY_RADIUS,24,16),skyDomeMat);skyDome.renderOrder=-1000;skyDome.frustumCulled=false;scene.add(skyDome);
+const sunOrb=mesh(new THREE.SphereGeometry(34,24,16),new THREE.MeshBasicMaterial({color:new THREE.Color(2.1,1.35,.7),fog:false}),scene,0,-80,0);
+const sunHalo=halo(scene,0,-80,0,230,.2);sunHalo.material.color.setHex(0xffb37a);
+const sunCorona=halo(scene,0,-80,0,470,.07);sunCorona.material.color.setHex(0xff9a5c);
+clouds.forEach(c=>{c.position.multiplyScalar(10);c.scale.multiplyScalar(8);c.userData.baseX=c.position.x;});
 const LIN=h=>new THREE.Color(h).convertSRGBToLinear(),RAW=h=>new THREE.Color(h);
 const SKY_LIN={top:SKY.map(s=>LIN(s.top)),mid:SKY.map(s=>LIN(s.mid)),hor:SKY.map(s=>LIN(s.hor)),fog:SKY.map(s=>LIN(s.fog))};
 const glowCool=new THREE.Color(.10,.14,.2),glowWarm=new THREE.Color(1.0,.42,.16);
@@ -531,13 +573,16 @@ function skyTick(dt){
   const glowI=warm*Math.max(0,1-Math.abs(sunEl-1)/20)*Math.max(0,Math.min(1,sunI*2+.25));
   skyDomeMat.uniforms.uGlowI.value=glowI;
   skyDomeMat.uniforms.uGlow.value.copy(glowCool).lerp(glowWarm,Math.min(1,warm*1.2));
-  skyDomeMat.uniforms.uGlowDir.value.copy(sun.position);
-  mixC(SKY_LIN.fog,i,v,scene.fog.color);scene.fog.density=.0085-.002*dayF;
+  dirPos(sunEl,sunAz,1,skyDomeMat.uniforms.uGlowDir.value);
+  mixC(SKY_LIN.fog,i,v,scene.fog.color);scene.fog.density=WORLD.FOG_NIGHT+(WORLD.FOG_DAY-WORLD.FOG_NIGHT)*dayF;distantMaterial.color.copy(scene.fog.color).multiplyScalar(.72);
   mixC(SKY_RAW.hemiS,i,v,hemi.color);mixC(SKY_RAW.hemiG,i,v,hemi.groundColor);hemi.intensity=L(a.hemiI,b.hemiI);
   mixC(SKY_RAW.sunC,i,v,sun.color);sun.intensity=sunI;moon.intensity=moonI;
-  dirPos(sunEl,sunAz,64,sun.position);dirPos(moonEl,moonAz,64,moon.position);
-  dirPos(sunEl,sunAz,56,sunOrb.position);sunHalo.position.copy(sunOrb.position);sunCorona.position.copy(sunOrb.position);
-  dirPos(moonEl,moonAz,52,moonOrb.position);moonHalo.position.copy(moonOrb.position);moonGlow.position.copy(moonOrb.position);
+  dirPos(Math.max(22,sunEl),sunAz,220,sun.position);dirPos(Math.max(22,moonEl),moonAz,220,moon.position);
+  waterMaterial.uniforms.keyDir.value.copy(sunI>=moonI?sun.position:moon.position);
+  for(const light of [sun,moon]){light.position.add(player.position);light.target.position.copy(player.position);light.target.updateMatrixWorld();}
+  skyDome.position.copy(camera.position);stars.position.copy(camera.position);
+  dirPos(sunEl,sunAz,WORLD.CELESTIAL_RADIUS,sunOrb.position);sunOrb.position.add(camera.position);sunHalo.position.copy(sunOrb.position);sunCorona.position.copy(sunOrb.position);
+  dirPos(moonEl,moonAz,WORLD.CELESTIAL_RADIUS,moonOrb.position);moonOrb.position.add(camera.position);moonHalo.position.copy(moonOrb.position);moonGlow.position.copy(moonOrb.position);
   const sunUp=sunEl>-1.5,moonUp=moonEl>-1.5;
   sunOrb.visible=sunHalo.visible=sunCorona.visible=sunUp;moonOrb.visible=moonHalo.visible=moonGlow.visible=moonUp;
   sunHalo.material.opacity=.16*Math.min(1,sunI);moonHalo.material.opacity=.12*moonI;
@@ -545,7 +590,7 @@ function skyTick(dt){
   if(!lightQuality&&!qualityReduced){const dom=sunI>moonI+.08;if(sun.castShadow!==dom){sun.castShadow=dom;moon.castShadow=!dom;}}
   starMaterial.uniforms.fade.value=star;stars.visible=star>.02;
   particles.material.opacity=.7*fireLevel;
-  waterMaterial.uniforms.keyDir.value.copy(sunI>=moonI&&sunUp?sun.position:moon.position);
+
   waterMaterial.uniforms.uKeyI.value=Math.max(sunUp?sunI:0,moonUp?moonI:0);
   waterMaterial.uniforms.uSkyRef.value.copy(skyDomeMat.uniforms.uMid.value);
   waterMaterial.uniforms.uGlint.value.copy(nightGlint).lerp(warmGlint,warm);
@@ -557,11 +602,7 @@ function skyTick(dt){
   if(a.name!==lastSkyName){lastSkyName=a.name;$('sky-button').textContent='天时 · '+a.name;}
 }
 $('sky-button').onclick=()=>{const nx=b=>b.t===0?.0001:b.t;skyTarget=nx(SKY[(SKY.findIndex(s=>s.name===lastSkyName)+1)%SKY.length]);};
-for(let i=0;i<12;i++){
-  const a=i/12*Math.PI*2,r=31.5,x=Math.cos(a)*r,z=Math.sin(a)*r;
-  const post=mesh(G.cylinder,M.dark,garden,x,.3,z,.28,.6,.28),chamber=mesh(G.box,M.glow,garden,x,.7,z,.25,.35,.25);halo(garden,x,.8,z,1.8,.2);
-  glbRingLanterns.push({x,z,parts:[post,chamber]});
-}
+
 function label(text){
   const canvas=document.createElement('canvas');const ctx=canvas.getContext('2d');
   ctx.font='500 34px "PingFang SC","Microsoft YaHei",sans-serif';const width=Math.ceil(ctx.measureText(text).width)+48;
@@ -569,15 +610,45 @@ function label(text){
   ctx.fillStyle='rgba(12,14,16,.66)';ctx.beginPath();ctx.moveTo(6,9);ctx.lineTo(width-6,9);ctx.quadraticCurveTo(width,9,width,15);ctx.lineTo(width,61);ctx.quadraticCurveTo(width,67,width-6,67);ctx.lineTo(6,67);ctx.quadraticCurveTo(0,67,0,61);ctx.lineTo(0,15);ctx.quadraticCurveTo(0,9,6,9);ctx.fill();
   ctx.font='500 34px "PingFang SC","Microsoft YaHei",sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#ffffff';ctx.fillText(text,width/2,39);
   const texture=new THREE.CanvasTexture(canvas);texture.minFilter=THREE.LinearFilter;texture.generateMipmaps=false;
-  const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,color:0xe8e2d5,transparent:true,depthWrite:false,depthTest:false,toneMapped:false}));
+  const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:texture,color:0xe8e2d5,transparent:true,depthWrite:false,depthTest:true,toneMapped:false}));
   sprite.scale.set(width/80*1.08,1.08,1);sprite.userData.baseWidth=sprite.scale.x;return sprite;
+}
+// Normalise from world bounds, including nested GLB transforms; never assume its authored origin.
+function placeMonument(glb,group,{targetHeight,tier}){
+  const wrap=new THREE.Group();wrap.add(glb);group.add(wrap);group.updateWorldMatrix(true,true);
+  let box=new THREE.Box3().setFromObject(wrap),h=box.max.y-box.min.y;
+  if(!Number.isFinite(h)||h<=0)throw new Error('Invalid monument bounds');
+  wrap.scale.multiplyScalar(targetHeight/h);group.updateWorldMatrix(true,true);box.setFromObject(wrap);
+  const centre=box.getCenter(new THREE.Vector3()),base=group.getWorldPosition(new THREE.Vector3());
+  // All monument parents have identity rotation/scale, so world deltas equal local metre deltas.
+  wrap.position.add(new THREE.Vector3(base.x-centre.x,base.y-box.min.y,base.z-centre.z));
+  wrap.updateWorldMatrix(true,true);wrap.userData.tier=tier;return wrap;
+}
+function buildTerrace(lm){
+  const t=lm.site,angle=Math.atan2(t.ux,t.uz),point=(d,side=0)=>[t.x+t.ux*d-t.uz*side,t.z+t.uz*d+t.ux*side];
+  const plinth=mesh(new THREE.CylinderGeometry(t.radius,t.radius+.4,t.rise,48),M.edge,scene,t.x,t.baseY+t.rise/2,t.z);
+  plinth.receiveShadow=true;disc(scene,t.x,t.z,t.radius,M.path,t.groundY+.012);
+  const stairRun=t.steps*WORLD.STEP_DEPTH;
+  for(let k=0;k<t.steps;k++){
+    const [x,z]=point(-t.radius-stairRun+(k+.5)*WORLD.STEP_DEPTH),h=(k+1)*WORLD.STEP_HEIGHT;
+    instance(G.box,M.stone,x,t.baseY+h/2,z,3,h,WORLD.STEP_DEPTH,angle);
+  }
+  for(let d=-t.radius-WORLD.APPROACH_LENGTH;d< -t.radius-stairRun;d+=.8){const [x,z]=point(d);pathSlab(x,z,terrainHeight(x,z)+.025,angle,3,.85);}
+  for(let d=-t.radius-WORLD.APPROACH_LENGTH;d< -t.radius-stairRun;d+=6)for(const side of [-2.3,2.3]){
+    const [x,z]=point(d,side);stoneLantern(x,z,terrainHeight(x,z));
+    if(d< -t.radius-18){const [tx,tz]=point(d,side*1.9);humanTree(tx,tz,5+(lm.index%4));}
+  }
+  for(const side of [-2.25,2.25]){const [x,z]=point(-t.radius+1,side);stoneLantern(x,z,t.groundY);}
+  // Human-size 2.7m threshold before the release onto the circular terrace.
+  for(const side of [-1.65,1.65]){const [x,z]=point(-t.radius+1,side);instance(G.box,M.wood,x,t.groundY+1.25,z,.15,2.5,.18,angle);}
+  const [gx,gz]=point(-t.radius+1);instance(G.box,M.wood,gx,t.groundY+2.6,gz,3.5,.2,.3,angle);
+  lm.entryPoint={x:gx,z:gz};
 }
 const landmarks=[],pickables=[],colliders=[];
 LINKS.forEach((entry,index)=>{
-  const group=new THREE.Group();group.position.set(entry.x,0,entry.z);scene.add(group);
+  const group=new THREE.Group();group.position.set(entry.x,terraceSites[index].groundY,entry.z);scene.add(group);
   const tint=ZONES[entry.zone].color;const glow=material(0xc9a672,{emissive:0xffbf72,emissiveIntensity:2.3});
-  disc(group,.3,.25,1.9,M.shadow);
-  mesh(G.box,M.dark,group,0,.12,0,2.8,.24,2.4);
+  disc(group,0,0,15,M.shadow);
   let height=3.1;const zproc=[];
   if(entry.zone===0){
     height=3.4;zproc.push(mesh(G.box,M.ivory,group,0,1.2,0,2.15,2,1.65));
@@ -614,26 +685,37 @@ LINKS.forEach((entry,index)=>{
   mesh(G.cylinder,M.wood,beacon,0,0,0,.07,.27,.07);
   mesh(G.sphere,M.glow,beacon,0,.2,0,.11,.16,.11);halo(beacon,0,.2,0,1.35,.4);
   // An emissive miniature lantern avoids adding 26 expensive PointLights.
-  const lm={entry,group,name,glow,lightHalo,marker,beacon,index,zproc,activation:0};landmarks.push(lm);
+  const targetHeight=({7:54,9:60,10:56,23:50,24:48})[index]||[32,36,30,30,30,38,34,36,36,36,36,30,42,30,30,30,32,30,34,36,30,34,34,36,36,32][index];
+  const lm={entry,group,name,glow,lightHalo,marker,beacon,index,zproc,activation:0,site:terraceSites[index],targetHeight};landmarks.push(lm);
+  const fallback=new THREE.Group();zproc.forEach(m=>fallback.add(m));
+  lm.fallback=placeMonument(fallback,group,{targetHeight,tier:'fallback'});
+  lm.fallbackBox=new THREE.Box3().setFromObject(lm.fallback);
+  lm.bboxHeight=targetHeight;lm.groundY=lm.site.groundY;
+  name.position.y=targetHeight+2.8;name.scale.multiplyScalar(3);name.userData.baseWidth=name.scale.x;
+  beacon.position.y=targetHeight+1;beacon.scale.setScalar(3);lightHalo.position.y=targetHeight*.65;lightHalo.scale.set(12,12,1);
+  marker.scale.set(15,15,1);
+  buildTerrace(lm);
   group.traverse(child=>{if(child.isMesh){child.userData.landmark=lm;pickables.push(child);}});
   name.userData.landmark=lm;pickables.push(name);
-  colliders.push({x:entry.x,z:entry.z,r:entry.zone===3?1.75:1.5});
+
 });
-ZONES.forEach(zone=>{const s=label(zone.name+' · '+zone.note);s.position.set(zone.x,.3,zone.z+12);s.scale.multiplyScalar(1.1);s.material.opacity=.55;scene.add(s);});
-const centerLabel=label('庭 心');centerLabel.position.set(0,.45,-1);centerLabel.material.opacity=.55;scene.add(centerLabel);
+
 // ===== Batch 5: Konigsberg seven-bridge archipelago (Euler 1736). Main island + 3 math isles = 4 land masses, degrees (5,3,3,3): no Euler trail until the 8th bridge. =====
 const MATH_ISLES=[
   {key:'K',name:'柯尼斯堡洲',note:'七桥之问 · 1736',x:52,z:-2,r:12,glb:'assets/models/LM27_Konigsberg.glb',root:'Konigsberg'},
   {key:'L',name:'叙拉古洲',note:'圆柱容球 · 阿基米德',x:58,z:-26,r:6,glb:'assets/models/LM28_Syracuse.glb',root:'Syracuse'},
   {key:'S',name:'图卢兹洲',note:'页边批注 · 费马',x:36,z:-32,r:9,glb:'assets/models/LM29_Toulouse.glb',root:'Toulouse'}
 ];
-const MAINLAND={x:0,z:0,r:31.55};
+MATH_ISLES.forEach(is=>{is.x*=WORLD.MATH_SCALE;is.z*=WORLD.MATH_SCALE;is.r*=WORLD.MATH_SCALE;});
+const MAINLAND={x:0,z:0,r:WORLD.ISLAND_RADIUS};
 function bridgeSpan(a,b){
   const dx=b.x-a.x,dz=b.z-a.z,d=Math.hypot(dx,dz),ux=dx/d,uz=dz/d;
   return {x1:a.x+ux*a.r,z1:a.z+uz*a.r,x2:b.x-ux*b.r,z2:b.z-uz*b.r};
 }
 function mkBridge(id,a,b,off,name,bonus){
-  const s=bridgeSpan(a,b),nx=-(s.z2-s.z1),nz=(s.x2-s.x1),nl=Math.hypot(nx,nz)||1;
+  off*=WORLD.MATH_SCALE;
+  const inset=3+off*off/(2*Math.min(a.r,b.r));
+  const s=bridgeSpan({...a,r:a.r-inset},{...b,r:b.r-inset}),nx=-(s.z2-s.z1),nz=(s.x2-s.x1),nl=Math.hypot(nx,nz)||1;
   return {id,name,bonus:!!bonus,x1:s.x1+nx/nl*off,z1:s.z1+nz/nl*off,x2:s.x2+nx/nl*off,z2:s.z2+nz/nl*off};
 }
 const BRIDGES=[
@@ -649,61 +731,30 @@ const BRIDGES=[
 let bridge8Open=false;
 MATH_ISLES.forEach(is=>{
   mesh(new THREE.CylinderGeometry(is.r+1.2,is.r,1.2,56),M.ground,scene,is.x,-.6,is.z);
-  const rim=mesh(new THREE.CylinderGeometry(is.r+1.3,is.r+1.05,.3,56),M.edge,scene,is.x,-.02,is.z);rim.castShadow=false;
-  const s=label(is.name+' · '+is.note);s.position.set(is.x,.3,is.z+is.r+3);s.scale.multiplyScalar(1.1);s.material.opacity=.55;scene.add(s);
-  colliders.push({x:is.x,z:is.z,r:2.1});
+  const rim=mesh(new THREE.CylinderGeometry(is.r+1.3,is.r+1.05,.3,56),M.edge,scene,is.x,-.16,is.z);rim.castShadow=false;
+  const s=label(is.name+' · '+is.note);s.position.set(is.x,is.key==='K'?70:42,is.z);s.scale.multiplyScalar(3);s.material.opacity=.55;scene.add(s);
+  const len=Math.hypot(is.x,is.z),site={index:26+MATH_ISLES.indexOf(is),x:is.x,z:is.z,ux:is.x/len,uz:is.z/len,radius:15,steps:20,rise:3,baseY:0,groundY:3};
+  is.site=site;terraceSites.push(site);buildTerrace({site,index:site.index});
 });
-// Batch 6: 玉带式石拱桥 — cambered slab deck, voussoir arch over a flattened opening, spandrel
-// masonry, 望柱+栏板 (midspan left open, 让月), approach steps and corner stone lanterns.
-function bridgeDeckY(x,L,rise){const half=L/2,c=Math.cos(Math.max(-1,Math.min(1,x/half))*Math.PI/2);return .055+rise*c;}
+// Continuous metre-scale decks, shared by the renderer and surfaceHeight().
+function bridgeDeckY(x,L,rise){return .04+rise*Math.cos(Math.max(-1,Math.min(1,x/(L/2)))*Math.PI/2);}
 function buildBridge(b){
   const g=new THREE.Group();scene.add(g);
-  const dx=b.x2-b.x1,dz=b.z2-b.z1,len=Math.hypot(dx,dz),ang=-Math.atan2(dz,dx);
-  const L=len+1.6,half=L/2,rise=Math.min(.62,len*.09),archA=Math.min(half-1.05,2.35),archB=Math.max(.34,rise-.06);
+  const dx=b.x2-b.x1,dz=b.z2-b.z1,len=Math.hypot(dx,dz),ang=-Math.atan2(dz,dx),L=len+2;
+  b.length=L;b.rise=.18;b.halfWidth=2.2;
   g.position.set((b.x1+b.x2)/2,0,(b.z1+b.z2)/2);g.rotation.y=ang;
-  // Cambered deck: stone slabs riding the arc, alternating path/stone, tilted to the tangent.
-  for(let i=0;i<9;i++){
-    const lx=-half+(i+.5)*(L/9),y=bridgeDeckY(lx,L,rise);
-    const slope=(bridgeDeckY(lx+.05,L,rise)-bridgeDeckY(lx-.05,L,rise))/.1;
-    const slab=mesh(G.box,i%3===1?M.stone:M.path,g,lx,y-.06,0,L/9*1.05,.12,2.14);
-    slab.rotation.z=Math.atan(slope);slab.castShadow=i===4;
+  const geo=new THREE.PlaneGeometry(L,4.4,Math.ceil(L/.5),1);geo.rotateX(-Math.PI/2);
+  const pos=geo.attributes.position;for(let i=0;i<pos.count;i++)pos.setY(i,bridgeDeckY(pos.getX(i),L,b.rise));geo.computeVertexNormals();
+  mesh(geo,M.path,g,0,0,0);
+  // Instanced railings live inside each bridge so opening bridge eight toggles all its parts.
+  const mats=[M.stone,M.glow],records=[[],[]];
+  for(let x=-L/2;x<=L/2;x+=3)for(const z of [-2.1,2.1]){
+    const y=bridgeDeckY(x,L,b.rise);records[0].push([x,y+.5,z,.14,1,.14]);records[1].push([x,y+1.06,z,.17,.12,.17]);
   }
-  // Spandrel masonry closing the triangle between arch legs and bridge feet.
-  for(const s of [-1,1]){
-    const x0=s*(archA-.15),x1=s*(half+.28),mid=(x0+x1)/2,w=Math.abs(x1-x0),top=bridgeDeckY(Math.max(-half,Math.min(half,mid)),L,rise)-.11;
-    mesh(G.box,M.stone,g,mid,(top+.02)/2,0,w,Math.max(.12,top),2).castShadow=true;
-  }
-  // Voussoir arch ring along a flattened half-ellipse; joints dressed in dark roof stone.
-  for(let i=0;i<7;i++){
-    const th=(i+.5)/7*Math.PI;
-    const vs=mesh(G.box,i%3===2?M.roof:M.stone,g,archA*Math.cos(th),.02+archB*Math.sin(th),0,archA/7*1.22,.15,1.9);
-    vs.rotation.z=Math.atan2(archB*Math.cos(th),-archA*Math.sin(th));vs.castShadow=false;
-  }
-  // Approach steps down to each shore.
-  for(const e of [-1,1])for(let k=0;k<2;k++)mesh(G.box,M.stone,g,e*(half+.3+k*.4),.065-k*.02,0,.52,.11-k*.025,2-k*.14).castShadow=false;
-  // 望柱 + 栏板 per side; the midspan panel is left open (让月).
-  const postXs=[-half*.96,-half*.32,half*.32,half*.96];
-  for(const s of [-1,1]){
-    for(const lx of postXs){
-      const y=bridgeDeckY(lx,L,rise);
-      mesh(G.box,M.ivory,g,lx,y+.24,s,.085,.42,.085).castShadow=false;
-      mesh(G.sphere,M.ivory,g,lx,y+.47,s,.075,.07,.075).castShadow=false;
-    }
-    for(const seg of [[-half*.96,-half*.32],[half*.32,half*.96]]){
-      const mid=(seg[0]+seg[1])/2,y=bridgeDeckY(mid,L,rise);
-      mesh(G.box,M.ivory,g,mid,y+.24,s,seg[1]-seg[0]-.1,.3,.055).castShadow=false;
-    }
-  }
-  // Corner stone lanterns: shaft, glowing chamber, pagoda roof.
-  for(const e of [-1,1])for(const s of [-1,1]){
-    const lx=e*(half-.3),lz=s*1.28,y=bridgeDeckY(lx,L,rise);
-    mesh(G.cylinder,M.stone,g,lx,y+.2,lz,.05,.4,.05).castShadow=false;
-    mesh(G.box,M.glow,g,lx,y+.5,lz,.15,.16,.15).castShadow=false;
-    mesh(G.cone,M.roof,g,lx,y+.64,lz,.16,.13,.16).castShadow=false;
-    halo(g,lx,y+.5,lz,1,.24);
-  }
+  records.forEach((rows,i)=>{const im=new THREE.InstancedMesh(G.box,mats[i],rows.length);rows.forEach((v,n)=>{instanceDummy.position.set(...v.slice(0,3));instanceDummy.scale.set(...v.slice(3));instanceDummy.rotation.set(0,0,0);instanceDummy.updateMatrix();im.setMatrixAt(n,instanceDummy.matrix);});im.receiveShadow=true;g.add(im);});
   g.visible=!b.bonus;b.mesh=g;return g;
 }
+
 BRIDGES.forEach(buildBridge);
 function onBridgeSeg(x,z,b,half){
   const dx=b.x2-b.x1,dz=b.z2-b.z1,l2=dx*dx+dz*dz;let t=((x-b.x1)*dx+(z-b.z1)*dz)/l2;t=Math.max(0,Math.min(1,t));
@@ -711,15 +762,33 @@ function onBridgeSeg(x,z,b,half){
 }
 function walkable(x,z){
   if(Math.hypot(x,z)<=MAINLAND.r)return true;
-  for(const b of BRIDGES){if(b.bonus&&!bridge8Open)continue;if(onBridgeSeg(x,z,b,1.5))return true;}
-  for(const is of MATH_ISLES){if(Math.hypot(x-is.x,z-is.z)<=is.r-.3)return true;}
+  for(const b of BRIDGES){if(b.bonus&&!bridge8Open)continue;if(onBridgeSeg(x,z,b,b.halfWidth-.1))return true;}
+  for(const is of MATH_ISLES){if(Math.hypot(x-is.x,z-is.z)<=is.r)return true;}
   return false;
 }
-// Deferred one microtask: gltfLoader (const below) is still in TDZ during synchronous IIFE execution.
-Promise.resolve().then(()=>MATH_ISLES.forEach(is=>{
-  glbLoad(is.glb).then(g=>{glbPlace(g.getObjectByName(is.root)||g,scene,is.x,.3,is.z,1.15,0);colliders.push({x:is.x,z:is.z,r:1.9});})
+function surfaceHeight(x,z){
+  for(const b of BRIDGES){if(b.bonus&&!bridge8Open)continue;if(onBridgeSeg(x,z,b,b.halfWidth)){
+    const dx=b.x2-b.x1,dz=b.z2-b.z1,len=Math.hypot(dx,dz),t=((x-b.x1)*dx+(z-b.z1)*dz)/(len*len);
+    return bridgeDeckY((t-.5)*len,b.length,b.rise);
+  }}
+  for(const t of terraceSites){
+    const dx=x-t.x,dz=z-t.z;if(Math.hypot(dx,dz)<=t.radius)return t.groundY;
+    const along=dx*t.ux+dz*t.uz,side=-dx*t.uz+dz*t.ux,run=t.steps*WORLD.STEP_DEPTH;
+    if(Math.abs(side)<=1.5&&along>=-t.radius-run&&along< -t.radius)return t.baseY+Math.min(t.steps,Math.floor((along+t.radius+run)/WORLD.STEP_DEPTH)+1)*WORLD.STEP_HEIGHT;
+  }
+  return Math.hypot(x,z)>WORLD.ISLAND_RADIUS?0:terrainHeight(x,z);
+}
+const mathMonuments=[];
+Promise.resolve().then(()=>MATH_ISLES.forEach((is,i)=>{
+  const group=new THREE.Group();group.position.set(is.x,is.site.groundY,is.z);scene.add(group);
+  const targetHeight=i===0?64:36;
+  const fb=new THREE.Group();mesh(G.cone,M.stone,fb,0,.5,0,.35,1,.35);
+  const fallback=placeMonument(fb,group,{targetHeight,tier:'math-fallback'});
+  const record={index:26+i,title:is.name,group,bboxHeight:targetHeight,groundY:is.site.groundY,platformY:is.site.groundY,x:is.x,z:is.z};mathMonuments.push(record);
+  glbLoad(is.glb).then(g=>{fallback.visible=false;record.model=placeMonument(glbRefine((g.getObjectByName(is.root)||g).clone(true)),group,{targetHeight,tier:'math'});const size=new THREE.Box3().setFromObject(record.model).getSize(new THREE.Vector3());record.lod=mesh(G.box,distantMaterial,group,0,size.y/2,0,size.x*.7,size.y,size.z*.7);record.lod.visible=false;})
     .catch(e=>console.warn(is.glb+' 未加载',e));
 }));
+
 // Seven-bridge challenge: cross each bridge exactly once. Euler 1736: 4 odd vertices make it impossible.
 const bridgesWalked=new Set();let currentBridge=0,toastTimer=0;
 function bridgeToast(text){const el=$('bridge-toast');el.textContent=text;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),2600);}
@@ -727,7 +796,7 @@ function updateBridgeCount(){const el=$('bridge-count');el.textContent=bridgesWa
 function showEuler(){$('euler-text').textContent='七桥走遍，重逢难免。欧拉 1736 年证明：四块陆地皆奇点，每桥恰走一次的路线并不存在——图论由此而生。';$('euler-card').hidden=false;}
 $('euler-action').onclick=()=>{bridge8Open=true;BRIDGES[7].mesh.visible=true;$('euler-text').textContent='新桥落成（柯尼斯堡后来真的这样做了）：奇点只剩两个——从任意奇点出发，八桥可以一笔画。';$('euler-action').hidden=true;bridgeToast('新桥落成 · 八桥可一笔画');};
 function bridgeTick(){
-  const bb=BRIDGES.find(b=>(!b.bonus||bridge8Open)&&onBridgeSeg(player.position.x,player.position.z,b,1.6));
+  const bb=BRIDGES.find(b=>(!b.bonus||bridge8Open)&&onBridgeSeg(player.position.x,player.position.z,b,b.halfWidth-.1));
   const bid=bb?bb.id:0;
   if(bid&&bid!==currentBridge){
     if(!bridgesWalked.has(bid)){
@@ -763,34 +832,41 @@ function glbRefine(root,glowOverride){
   }});
   return root;
 }
-function glbLoad(url){return new Promise((resolve,reject)=>gltfLoader.load(url,g=>resolve(g.scene),undefined,reject));}
+const modelLoads={loaded:[],failed:[]};
+function glbLoad(url){return new Promise((resolve,reject)=>gltfLoader.load(url,g=>{modelLoads.loaded.push(url);resolve(g.scene);},undefined,e=>{modelLoads.failed.push(url);reject(e);}));}
+function instancePrototype(proto,placements,heightOf){
+  const root=glbRefine(proto.clone(true));root.updateWorldMatrix(true,true);
+  const box=new THREE.Box3().setFromObject(root),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
+  const byGeometry=new Map();
+  root.traverse(o=>{if(!o.isMesh)return;const key=o.geometry.uuid+o.material.uuid;if(!byGeometry.has(key))byGeometry.set(key,{geo:o.geometry,mat:o.material,parts:[]});byGeometry.get(key).parts.push(o.matrixWorld.clone());});
+  for(const b of byGeometry.values()){
+    const im=new THREE.InstancedMesh(b.geo,b.mat,placements.length*b.parts.length);let n=0;
+    for(const p of placements){const k=heightOf(p)/size.y,base=new THREE.Matrix4().makeTranslation(p.x,p.y,p.z);
+      base.multiply(new THREE.Matrix4().makeRotationY(p.rot||0)).multiply(new THREE.Matrix4().makeScale(k,k,k)).multiply(new THREE.Matrix4().makeTranslation(-center.x,-box.min.y,-center.z));
+      for(const part of b.parts)im.setMatrixAt(n++,new THREE.Matrix4().multiplyMatrices(base,part));
+    }
+    im.castShadow=true;im.receiveShadow=true;scene.add(im);
+  }
+}
 function glbPlace(proto,parent,x,y,z,s,rotY,glowOverride){
   const wrap=new THREE.Group();wrap.position.set(x,y,z);wrap.scale.setScalar(s);if(rotY)wrap.rotation.y=rotY;
   wrap.add(glbRefine(proto.clone(true),glowOverride));(parent||scene).add(wrap);return wrap;
 }
-glbLoad('assets/models/Tree.glb').then(g=>{
-  const proto=g.getObjectByName('Tree')||g;
-  glbTrees.forEach(t=>{t.parts.forEach(m=>m.visible=false);t.shadow.scale.set(t.size*.55,t.size*.55,1);glbPlace(proto,scene,t.x,0,t.z,t.size*2/4.125,t.rot);});
-}).catch(e=>console.warn('Tree.glb 未加载,保留程序化树',e));
+glbLoad('assets/models/Tree.glb').then(g=>instancePrototype(g,glbTrees,p=>p.h)).catch(e=>{
+  glbTrees.forEach(p=>{instance(G.cylinder,M.wood,p.x,p.y+p.h*.25,p.z,.18,p.h*.5,.18);instance(G.sphere,M.leaf,p.x,p.y+p.h*.7,p.z,p.h*.26,p.h*.3,p.h*.26);});flushInstances();console.warn('Tree fallback',e);
+});
 glbLoad('assets/models/SteppingStone.glb').then(g=>{
-  const proto=g.getObjectByName('SteppingStone')||g;
-  glbStoneRows.forEach(m=>{m.visible=false;glbPlace(proto,scene,m.position.x,.03,m.position.z,.82);});
+  const stones=[];for(let i=0;i<8;i++)stones.push({x:4+i*.8,y:terrainHeight(4+i*.8,7),z:7});instancePrototype(g,stones,()=>.12);
 }).catch(e=>console.warn('SteppingStone.glb 未加载',e));
 glbLoad('assets/models/Torii.glb').then(g=>{
-  const proto=g.getObjectByName('Torii')||g;
-  glbToriiProc.forEach(m=>m.visible=false);
-  glbPlace(proto,garden,0,0,26,1,0);
+  toriiFallback.visible=false;const group=new THREE.Group();group.position.set(0,terrainHeight(0,WORLD.TORII_Z),WORLD.TORII_Z);garden.add(group);
+  placeMonument(glbRefine(g),group,{targetHeight:WORLD.TORII_HEIGHT,tier:'threshold'});
 }).catch(e=>console.warn('Torii.glb 未加载',e));
-glbLoad('assets/models/StoneLantern.glb').then(g=>{
-  const proto=g.getObjectByName('StoneLantern')||g;
-  glbRingLanterns.forEach(l=>{l.parts.forEach(m=>m.visible=false);glbPlace(proto,scene,l.x,.02,l.z,.5);});
-  landmarks.forEach(lm=>{
-    if(lm.entry.zone!==1||!lm.zproc.length||glbPerEntry[lm.index])return;
-    lm.zproc.forEach(m=>m.visible=false);
-    const wrap=glbPlace(proto,lm.group,0,0,0,2.05,0,lm.glow);
-    wrap.traverse(c=>{if(c.isMesh){c.userData.landmark=lm;pickables.push(c);}});
-  });
-}).catch(e=>console.warn('StoneLantern.glb 未加载',e));
+glbLoad('assets/models/StoneLantern.glb').then(g=>instancePrototype(g,glbRingLanterns,()=>WORLD.LANTERN_HEIGHT)).catch(e=>{
+  glbRingLanterns.forEach(p=>{instance(G.cylinder,M.stone,p.x,p.y+.8,p.z,.18,1.6,.18);instance(G.box,M.glow,p.x,p.y+1.9,p.z,.55,.6,.55);instance(G.cone,M.roof,p.x,p.y+2.3,p.z,.5,.2,.5);});flushInstances();console.warn('StoneLantern fallback',e);
+});
+flushInstances();
+
 glbLoad('assets/models/Visitor.glb').then(g=>{
   const proto=g.getObjectByName('Visitor')||g;
   const wrap=glbPlace(proto,body,0,0,0,1,0);
@@ -819,22 +895,27 @@ Object.keys(glbPerEntry).forEach(k=>{
   const lm=landmarks[Number(k)],spec=glbPerEntry[k];
   if(!lm||!lm.zproc.length)return;
   glbLoad(spec[0]).then(g=>{
-    const proto=g.getObjectByName(spec[1])||g;
-    lm.zproc.forEach(m=>m.visible=false);
-    const wrap=glbPlace(proto,lm.group,0,.24,0,spec[2],0,lm.glow);
+    const proto=(g.getObjectByName(spec[1])||g).clone(true);if(lm.index===15||lm.index===23)proto.rotation.y+=Math.PI/2; // Wide forms face their free corridor.
+    lm.fallback.visible=false;
+    const wrap=placeMonument(glbRefine(proto.clone(true),lm.glow),lm.group,{targetHeight:lm.targetHeight,tier:lm.targetHeight>=48?'major':'standard'});
+    lm.model=wrap;wrap.updateWorldMatrix(true,true);const box=new THREE.Box3().setFromObject(wrap);
+    lm.bboxHeight=box.max.y-box.min.y;lm.groundY=box.min.y;lm.bounds=box;
+    // A single simplified mass is used beyond LOD distance, with hysteresis in updateLandmarks.
+    const size=box.getSize(new THREE.Vector3());lm.lod=mesh(G.box,distantMaterial,lm.group,0,size.y/2,0,size.x*.65,size.y,size.z*.65);lm.lod.visible=false;lm.lod.castShadow=false;
+    lm.entryPoint={x:lm.entry.x-lm.site.ux*(lm.site.radius-2),z:lm.entry.z-lm.site.uz*(lm.site.radius-2)};
     wrap.traverse(c=>{if(c.isMesh){c.userData.landmark=lm;pickables.push(c);}});
   }).catch(e=>console.warn(spec[0]+' 未加载',e));
 });
 const particleCount=lightQuality?16:80,particlePositions=new Float32Array(particleCount*3),particleBase=[];
-for(let i=0;i<particleCount;i++){const a=random()*Math.PI*2,r=Math.sqrt(random())*31;particleBase.push([Math.cos(a)*r,.7+random()*4,Math.sin(a)*r,random()*6]);particlePositions.set(particleBase[i].slice(0,3),i*3);}
+for(let i=0;i<particleCount;i++){const a=random()*Math.PI*2,r=Math.sqrt(random())*WORLD.ISLAND_RADIUS;particleBase.push([Math.cos(a)*r,terrainHeight(Math.cos(a)*r,Math.sin(a)*r)+.7+random()*4,Math.sin(a)*r,random()*6]);particlePositions.set(particleBase[i].slice(0,3),i*3);}
 const particleGeometry=new THREE.BufferGeometry();particleGeometry.setAttribute('position',new THREE.BufferAttribute(particlePositions,3));
 const particles=new THREE.Points(particleGeometry,new THREE.PointsMaterial({color:new THREE.Color(5,3.7,1.8),map:glowTexture,size:lightQuality?.15:.18,transparent:true,opacity:.7,depthWrite:false,sizeAttenuation:true}));scene.add(particles);
 // Reused dust sprites: bounded allocations, one or two quiet puffs per occasional footfall.
 const dustPool=[];
 for(let i=0;i<(lightQuality?0:10);i++){const puff=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTexture,color:0x9c9c86,transparent:true,opacity:0,depthWrite:false}));puff.visible=false;puff.userData.life=0;scene.add(puff);dustPool.push(puff);}
 let dustElapsed=0,dustCursor=0,lookActive=0,lastLookAt=-10;
-const velocity=new THREE.Vector2(),desired=new THREE.Vector2(),camTarget=new THREE.Vector3(),camPosition=new THREE.Vector3(),cameraLook=new THREE.Vector3(),framing=new THREE.Vector3();
-const cameraState={yaw:0,pitch:.78,distance:touch?28:26};
+const velocity=new THREE.Vector2(),desired=new THREE.Vector2(),camTarget=new THREE.Vector3(),camPosition=new THREE.Vector3(),cameraLook=new THREE.Vector3();
+const cameraState={yaw:0,pitch:WORLD.CAMERA_PITCH,distance:WORLD.CAMERA_DISTANCE,framing:0};
 const visited=new Set();
 try{const saved=JSON.parse(localStorage.getItem('garden-visited-v1')||'[]');if(Array.isArray(saved))saved.forEach(url=>{const i=LINKS.findIndex(entry=>entry.url===url);if(i>=0)visited.add(i);});}catch(error){/* Storage may be unavailable in private mode. */}
 function updateVisited(){$('visited').textContent=String(visited.size).padStart(2,'0')+' / 26';}
@@ -865,7 +946,7 @@ function start(){
   bgm.start();
 }
 $('intro').addEventListener('click',start);
-function teleport(x,z){clearInput();velocity.set(0,0);player.position.set(x,0,z);setNear(null);cameraState.yaw=0;cameraState.pitch=.78;framing.set(0,0,0);if(started)$('world').focus({preventScroll:true});}
+function teleport(x,z){clearInput();velocity.set(0,0);if(!walkable(x,z))return false;player.position.set(x,surfaceHeight(x,z),z);setNear(null);cameraState.yaw=0;cameraState.pitch=WORLD.CAMERA_PITCH;cameraState.framing=0;camera.position.set(x,surfaceHeight(x,z+cameraState.distance)+2.1,z+cameraState.distance);cameraLook.set(x,player.position.y+1.6,z);if(started)$('world').focus({preventScroll:true});}
 $('home').onclick=()=>teleport(0,3);
 document.querySelectorAll('[data-zone]').forEach(button=>button.onclick=()=>{const zone=ZONES[Number(button.dataset.zone)];teleport(...zone.spawn);});
 const moveKeys=['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'];
@@ -888,40 +969,43 @@ $('joystick').addEventListener('pointermove',e=>{if(e.pointerId===joyPointer)upd
 function releaseJoystick(e){if(e.pointerId!==joyPointer)return;joyPointer=null;joy.x=joy.y=0;$('stick').style.transform='';}
 ['pointerup','pointercancel','lostpointercapture'].forEach(type=>$('joystick').addEventListener(type,releaseJoystick));
 const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
-function pick(e){const rect=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);raycaster.setFromCamera(pointer,camera);const hits=raycaster.intersectObjects(pickables,false);return hits.find(hit=>hit.object.visible&&(!hit.object.isSprite||hit.object.material.opacity>.2))?.object.userData.landmark;}
+function pick(e){const rect=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);raycaster.setFromCamera(pointer,camera);const hits=raycaster.intersectObjects(pickables,false);return hits.find(hit=>{let o=hit.object;while(o){if(!o.visible)return false;o=o.parent;}return !hit.object.isSprite||hit.object.material.opacity>.2;})?.object.userData.landmark;}
 function bindLook(element,canPick){
   let drag=null;
   element.addEventListener('pointerdown',e=>{if(!started||e.button!==0||drag)return;e.preventDefault();if(canPick)$('world').focus({preventScroll:true});lookActive++;lastLookAt=elapsed;drag={id:e.pointerId,x:e.clientX,y:e.clientY,travel:0};element.setPointerCapture(e.pointerId);});
   element.addEventListener('pointermove',e=>{
     if(!drag){if(canPick&&e.pointerType==='mouse')element.style.cursor=pick(e)?'pointer':'grab';return;}
-    if(drag.id!==e.pointerId)return;lastLookAt=elapsed;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.travel+=Math.hypot(dx,dy);cameraState.yaw-=dx*.006;cameraState.pitch=THREE.MathUtils.clamp(cameraState.pitch+dy*.004,.22,1.12);drag.x=e.clientX;drag.y=e.clientY;
+    if(drag.id!==e.pointerId)return;lastLookAt=elapsed;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.travel+=Math.hypot(dx,dy);cameraState.yaw-=dx*.0045;cameraState.pitch=THREE.MathUtils.clamp(cameraState.pitch+dy*.0035,WORLD.CAMERA_MIN_PITCH,WORLD.CAMERA_MAX_PITCH);drag.x=e.clientX;drag.y=e.clientY;
   });
   element.addEventListener('pointerup',e=>{if(!drag||drag.id!==e.pointerId)return;const click=drag.travel<7;drag=null;lookActive=Math.max(0,lookActive-1);lastLookAt=elapsed;if(canPick&&click)visit(pick(e));});
   ['pointercancel','lostpointercapture'].forEach(type=>element.addEventListener(type,()=>{if(drag)lookActive=Math.max(0,lookActive-1);drag=null;lastLookAt=elapsed;}));
 }
 bindLook(renderer.domElement,true);bindLook($('viewpad'),false);
-$('viewpad').addEventListener('keydown',e=>{if(!e.key.startsWith('Arrow')&&e.key!=='Home')return;e.preventDefault();e.stopPropagation();lastLookAt=elapsed;if(e.key==='ArrowLeft')cameraState.yaw+=.14;if(e.key==='ArrowRight')cameraState.yaw-=.14;if(e.key==='ArrowUp')cameraState.pitch=Math.min(1.12,cameraState.pitch+.08);if(e.key==='ArrowDown')cameraState.pitch=Math.max(.22,cameraState.pitch-.08);if(e.key==='Home'){cameraState.yaw=0;cameraState.pitch=.78;}});
+renderer.domElement.addEventListener('wheel',e=>{e.preventDefault();lastLookAt=elapsed;cameraState.distance=THREE.MathUtils.clamp(cameraState.distance+e.deltaY*.008,4,12);},{passive:false});
+$('viewpad').addEventListener('keydown',e=>{if(!e.key.startsWith('Arrow')&&e.key!=='Home')return;e.preventDefault();e.stopPropagation();lastLookAt=elapsed;if(e.key==='ArrowLeft')cameraState.yaw+=.14;if(e.key==='ArrowRight')cameraState.yaw-=.14;if(e.key==='ArrowUp')cameraState.pitch=Math.min(WORLD.CAMERA_MAX_PITCH,cameraState.pitch+.08);if(e.key==='ArrowDown')cameraState.pitch=Math.max(WORLD.CAMERA_MIN_PITCH,cameraState.pitch-.08);if(e.key==='Home'){cameraState.yaw=0;cameraState.pitch=WORLD.CAMERA_PITCH;}});
 function reduceQuality(){
   if(!lightQuality){lightQuality=true;if(bloom){bloom.enabled=false;composer.removePass(bloom);bloom.dispose();bloom=null;}
-    renderer.shadowMap.enabled=false;moon.castShadow=false;sun.castShadow=false;if(moon.shadow.map){moon.shadow.map.dispose();moon.shadow.map=null;}
+    renderer.shadowMap.enabled=false;moon.castShadow=false;sun.castShadow=false;for(const l of [moon,sun])if(l.shadow.map){l.shadow.map.dispose();l.shadow.map=null;}
     scene.traverse(object=>{if(object.material)object.material.needsUpdate=true;});
   }
+  distantLand.forEach((m,i)=>m.visible=i%2===0);
+  for(const light of [moon,sun]){const r=WORLD.SHADOW_MOBILE_RADIUS;Object.assign(light.shadow.camera,{left:-r,right:r,top:r,bottom:-r});light.shadow.camera.updateProjectionMatrix();}
   fakeShadows.forEach(shadow=>shadow.visible=true);starGeometry.setDrawRange(0,Math.min(65,starCount));particleGeometry.setDrawRange(0,Math.min(16,particleCount));
   clouds.forEach((cloud,i)=>cloud.visible=i===0);dustPool.forEach(puff=>{puff.visible=false;puff.userData.life=0;});water.material=simpleWater;
-  renderer.setPixelRatio(Math.min(devicePixelRatio||1,qualityReduced?1:1.25));composer.setPixelRatio(renderer.getPixelRatio());starMaterial.uniforms.pixelRatio.value=renderer.getPixelRatio();
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,qualityReduced?1:1.15));composer.setPixelRatio(renderer.getPixelRatio());starMaterial.uniforms.pixelRatio.value=renderer.getPixelRatio();
 }
 function resize(){
-  camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
+  camera.aspect=innerWidth/innerHeight;camera.setViewOffset(innerWidth,innerHeight,0,-innerHeight*.1,innerWidth,innerHeight);camera.updateProjectionMatrix();
   if(lightQuality||needsLightQuality()||qualityReduced)reduceQuality();
-  renderer.setPixelRatio(Math.min(devicePixelRatio||1,lightQuality?(qualityReduced?1:1.25):2));
+  renderer.setPixelRatio(Math.min(devicePixelRatio||1,lightQuality?(qualityReduced?1:1.15):1.5));
   renderer.setSize(innerWidth,innerHeight);composer.setPixelRatio(renderer.getPixelRatio());composer.setSize(innerWidth,innerHeight);
-  starMaterial.uniforms.pixelRatio.value=renderer.getPixelRatio();cameraState.distance=innerWidth<760?30:26;
+  starMaterial.uniforms.pixelRatio.value=renderer.getPixelRatio();
 }
 window.addEventListener('resize',resize);resize();
 const mapContext=$('map').getContext('2d');
 function drawMap(){
-  const ctx=mapContext;ctx.clearRect(0,0,288,288);ctx.save();ctx.translate(144,144);const scale=1.85;
-  ctx.fillStyle='rgba(12,14,16,.55)';ctx.strokeStyle='rgba(232,226,213,.18)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(0,0,33*scale,0,Math.PI*2);ctx.fill();ctx.stroke();
+  const ctx=mapContext;ctx.clearRect(0,0,288,288);ctx.save();ctx.translate(100,160);const scale=.62;
+  ctx.fillStyle='rgba(12,14,16,.55)';ctx.strokeStyle='rgba(232,226,213,.18)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(0,0,WORLD.ISLAND_RADIUS*scale,0,Math.PI*2);ctx.fill();ctx.stroke();
   ctx.strokeStyle='rgba(232,226,213,.09)';ctx.beginPath();ctx.moveTo(-132,0);ctx.lineTo(132,0);ctx.moveTo(0,-132);ctx.lineTo(0,132);ctx.stroke();
   for(const is of MATH_ISLES){ctx.fillStyle='rgba(12,14,16,.55)';ctx.strokeStyle='rgba(232,226,213,.18)';ctx.beginPath();ctx.arc(is.x*scale,is.z*scale,is.r*scale,0,Math.PI*2);ctx.fill();ctx.stroke();}
   ctx.strokeStyle='rgba(180,157,117,.55)';ctx.lineWidth=2;ctx.beginPath();
@@ -946,9 +1030,11 @@ function move(dt){
   for(const c of colliders){const dx=player.position.x-c.x,dz=player.position.z-c.z,d=Math.hypot(dx,dz),r=c.r+.38;if(d<r){const nx=d>1e-5?dx/d:1,nz=d>1e-5?dz/d:0;player.position.x=c.x+nx*r;player.position.z=c.z+nz*r;const inward=velocity.x*nx+velocity.y*nz;if(inward<0){velocity.x-=nx*inward;velocity.y-=nz*inward;}}}
   // Walkable = mainland ∪ bridge decks ∪ isle disks (batch 5); outside that is water — roll back.
   if(!walkable(player.position.x,player.position.z)){player.position.x=oldX;player.position.z=oldZ;velocity.multiplyScalar(0);}
-  // Batch 6: ride the cambered deck (visual height only; walkable logic untouched).
-  let ty=0;for(const bb of BRIDGES){if(bb.bonus&&!bridge8Open)continue;const bdx=bb.x2-bb.x1,bdz=bb.z2-bb.z1,bl2=bdx*bdx+bdz*bdz;const bt=((player.position.x-bb.x1)*bdx+(player.position.z-bb.z1)*bdz)/bl2;if(bt>=0&&bt<=1&&onBridgeSeg(player.position.x,player.position.z,bb,1.35)){const bl=Math.sqrt(bl2);ty=bridgeDeckY((bt-.5)*bl,bl+1.6,Math.min(.62,bl*.09));break;}}
-  player.position.y+=(ty-player.position.y)*(reduced?1:1-Math.exp(-10*dt));
+  const ty=surfaceHeight(player.position.x,player.position.z),oldY=surfaceHeight(oldX,oldZ);
+  // A vertical plinth is not a ramp. Only the 0.15m treads permit ascending it.
+  if(Math.abs(ty-oldY)>.32){player.position.x=oldX;player.position.z=oldZ;velocity.set(0,0);}
+  player.position.y=surfaceHeight(player.position.x,player.position.z);
+
   const speed=velocity.length();if(speed>.05){const target=Math.atan2(velocity.x,velocity.y);let diff=target-body.rotation.y;diff=Math.atan2(Math.sin(diff),Math.cos(diff));body.rotation.y+=diff*(reduced?1:1-Math.exp(-16*dt));}
   walkPhase+=speed*dt*2.5;body.position.y=reduced?0:Math.abs(Math.sin(walkPhase))*.065*Math.min(speed,1);legL.rotation.x=reduced?0:Math.sin(walkPhase)*.45*Math.min(speed,1);legR.rotation.x=-legL.rotation.x;
   lanternSwing.rotation.z=reduced?0:Math.sin(walkPhase+.65)*.13*Math.min(speed/3,1);lanternSwing.rotation.x=reduced?0:Math.cos(walkPhase*.5)*.06*Math.min(speed,1);
@@ -957,38 +1043,55 @@ function move(dt){
   bridgeTick();
 }
 function updateLandmarks(dt){
-  let closest=null,best=3.9;
-  for(const lm of landmarks){const d=Math.hypot(player.position.x-lm.entry.x,player.position.z-lm.entry.z);if(d<best){best=d;closest=lm;}}
+  let closest=null,best=WORLD.INTERACT_DISTANCE;
+  for(const lm of landmarks){const d=Math.hypot(player.position.x-lm.entryPoint.x,player.position.z-lm.entryPoint.z);if(d<best){best=d;closest=lm;}}
   setNear(started?closest:null);
   for(const lm of landmarks){
     const d=Math.hypot(player.position.x-lm.entry.x,player.position.z-lm.entry.z),active=lm===nearest;
-    lm.name.visible=!started||d<28;lm.name.material.opacity=active?1:!started?.75:THREE.MathUtils.clamp(1-(d-8)/25,.2,.85);
-    lm.name.material.color.setHex(active?0xffd6a3:0xe8e2d5);const factor=active?1.1:1;lm.name.scale.set(lm.name.userData.baseWidth*factor,1.08*factor,1);
+    lm.name.visible=started&&d<WORLD.LABEL_DISTANCE;lm.name.material.opacity=active?1:!started?.75:THREE.MathUtils.clamp(1-(d-20)/100,.2,.85);
+    lm.name.material.color.setHex(active?0xffd6a3:0xe8e2d5);const factor=active?1.1:1;lm.name.scale.set(lm.name.userData.baseWidth*factor,3.24*factor,1);
     lm.activation+=(Number(active)-lm.activation)*(reduced?1:1-Math.exp(-7*dt));
-    lm.group.position.y=reduced?0:lm.activation*.13;lm.group.rotation.y=reduced?0:lm.activation*.028;
+    // Keep the measured model base immovable; activation belongs to light, never to foundations.
+    if(lm.model){const limit=lightQuality?WORLD.LOD_MOBILE:WORLD.LOD_DESKTOP;
+      const far=d>limit+(lm.model.visible?12:-12);lm.model.visible=!far;lm.lod.visible=far;
+    }
     const lit=visited.has(lm.index),breath=reduced?0:Math.sin(elapsed*1.2+lm.index*.7)*.045;
     lm.glow.emissiveIntensity=(lit?2.8:2.3)+lm.activation*.65+breath;
     lm.lightHalo.material.opacity=(lit?.36:.24)+lm.activation*.15+breath*.2;lm.marker.material.opacity=active?.7:lit?.4:.16;
     lm.beacon.visible=lit;
     // Blob shadows stay on the ground while the building lifts.
-    lm.group.children.forEach(child=>{if(child.material===M.shadow)child.position.y=.025-lm.group.position.y;});
+    lm.group.children.forEach(child=>{if(child.material===M.shadow)child.position.y=.025;});
   }
-  let zone=-1,min=12;ZONES.forEach((item,i)=>{const d=Math.hypot(player.position.x-item.x,player.position.z-item.z);if(d<min){zone=i;min=d;}});
+  for(const m of mathMonuments)if(m.model){const d=Math.hypot(player.position.x-m.x,player.position.z-m.z),limit=lightQuality?WORLD.LOD_MOBILE:WORLD.LOD_DESKTOP,far=d>limit+(m.model.visible?12:-12);m.model.visible=!far;m.lod.visible=far;}
+  let zone=-1,min=80;ZONES.forEach((item,i)=>{const d=Math.hypot(player.position.x-item.x,player.position.z-item.z);if(d<min){zone=i;min=d;}});
   const inIsle=MATH_ISLES.find(is=>Math.hypot(player.position.x-is.x,player.position.z-is.z)<is.r+2.5);
   const uiKey=inIsle?'isle:'+inIsle.key:zone;
   if(uiKey!==lastUIZone){lastUIZone=uiKey;$('location').textContent=inIsle?inIsle.note:zone<0?'庭心':ZONES[zone].note;document.querySelectorAll('[data-zone]').forEach((button,i)=>{const on=!inIsle&&i===zone;button.classList.toggle('active',on);button.setAttribute('aria-pressed',String(on));});}
 }
 function updateCamera(dt){
-  if(!started){const wide=innerWidth<760?87:71;camTarget.set(0,0,0);camPosition.set(32,wide*.7,wide*.72);camera.position.copy(camPosition);cameraLook.copy(camTarget);camera.lookAt(camTarget);return;}
-  const d=cameraState.distance,p=cameraState.pitch,yaw=cameraState.yaw;
-  camTarget.set(player.position.x,1,player.position.z);
-  camPosition.set(camTarget.x+Math.sin(yaw)*Math.cos(p)*d,camTarget.y+Math.sin(p)*d,camTarget.z+Math.cos(yaw)*Math.cos(p)*d);
-  const canFrame=nearest&&!reduced&&!lookActive&&elapsed-lastLookAt>1.2;
-  const fx=canFrame?(nearest.entry.x-player.position.x)*.065:0,fz=canFrame?(nearest.entry.z-player.position.z)*.065:0;
-  const damping=reduced?1:1-Math.exp(-5.5*dt);
-  framing.x+=(fx-framing.x)*damping;framing.z+=(fz-framing.z)*damping;
-  camera.position.lerp(camPosition,damping);camTarget.add(framing);cameraLook.lerp(camTarget,damping);camera.lookAt(cameraLook);
+  if(!started){
+    camPosition.set(1.5+Math.sin(elapsed*.045)*.35,2.7,WORLD.TORII_Z+24);
+    camTarget.set(0,10,-75);camera.position.copy(camPosition);cameraLook.copy(camTarget);camera.lookAt(camTarget);return;
+  }
+  const d=cameraState.distance,yaw=cameraState.yaw;
+  const auto=nearest&&!lookActive&&elapsed-lastLookAt>2.5;
+  const damping=reduced?1:1-Math.exp(-3.5*dt);
+  cameraState.framing+=((auto?1:0)-cameraState.framing)*damping;
+  if(lookActive||elapsed-lastLookAt<.15)cameraState.framing=0; // immediately yield on pointer/keyboard input
+  const f=cameraState.framing,p=THREE.MathUtils.lerp(cameraState.pitch,-.35,f);cameraState.framedPitch=p;
+  camPosition.set(player.position.x+Math.sin(yaw)*d,0,player.position.z+Math.cos(yaw)*d);
+  const floor=surfaceHeight(camPosition.x,camPosition.z);
+  camPosition.y=floor+THREE.MathUtils.clamp(1.6+Math.sin(p)*2.5,1.4,4);
+  // Looking up moves the gaze, not the camera below ground.
+  camTarget.set(player.position.x,player.position.y+1.6+Math.max(0,-Math.sin(p)*d),player.position.z);
+  if(nearest&&f>0){camTarget.lerp(new THREE.Vector3(nearest.entry.x,nearest.groundY+nearest.bboxHeight*.42,nearest.entry.z),f);}
+  camera.position.lerp(camPosition,damping);
+  // Never lerp through cliffs or keep an aerial camera after teleporting.
+  camera.position.y=THREE.MathUtils.clamp(camera.position.y,surfaceHeight(camera.position.x,camera.position.z)+1.4,surfaceHeight(camera.position.x,camera.position.z)+4);
+  if(lookActive||elapsed-lastLookAt<.15)cameraLook.copy(camTarget);else cameraLook.lerp(camTarget,damping);
+  camera.lookAt(cameraLook);
 }
+
 function frame(now){
   requestAnimationFrame(frame);if(failed||document.hidden){lastTime=0;return;}
   const raw=lastTime?(now-lastTime)/1000:1/60,dt=Math.min(raw,.035);lastTime=now;elapsed+=dt;
@@ -1000,12 +1103,16 @@ function frame(now){
   mapElapsed+=dt;if(mapElapsed>.08){drawMap();mapElapsed=0;}
   if(!reduced){starMaterial.uniforms.time.value=elapsed;if(!lightQuality)waterMaterial.uniforms.time.value=elapsed;clouds.forEach((cloud,i)=>{if(cloud.visible)cloud.position.x=cloud.userData.baseX+Math.sin(elapsed*.025+i)*4;});}
   for(const puff of dustPool){if(reduced||lightQuality){puff.visible=false;puff.userData.life=0;continue;}if(puff.userData.life>0){puff.userData.life=Math.max(0,puff.userData.life-dt);const life=puff.userData.life/.65;puff.position.y+=dt*.17;puff.scale.setScalar(.16+(1-life)*.4);puff.material.opacity=life*.15;puff.visible=life>0;}}
-  composer.render(dt);
+  renderer.info.reset();composer.render(dt);
   // Ignore tab resumes and one-off stalls. Sustained slow frames downgrade the entire effect budget.
   if(!qualityReduced&&elapsed>3){slowFrames=raw>.029?slowFrames+1:Math.max(0,slowFrames-2);if(slowFrames>90){qualityReduced=true;reduceQuality();}}
 }
 // Read-mostly handle for automated smoke tests (batch 5 seven-bridge verification).
-window.__garden={walkable,teleport,start,player,cameraState,BRIDGES,MATH_ISLES,bridgesWalked,get bridge8Open(){return bridge8Open;},setSky(v){skyT=((v%1)+1)%1;skyTarget=null;},skyInfo(){return {t:+skyT.toFixed(3),name:lastSkyName,...skyState};}};
+window.__garden={WORLD,scene,renderer,camera,walkable,surfaceHeight,terrainHeight,teleport,start,player,cameraState,modelLoads,
+  get landmarks(){return landmarks.map(lm=>({index:lm.index,title:lm.entry.title,bboxHeight:lm.bboxHeight,groundY:lm.groundY,x:lm.entry.x,z:lm.entry.z,platformY:lm.site.groundY,targetHeight:lm.targetHeight,entryPoint:lm.entryPoint,site:lm.site,labelY:lm.group.position.y+lm.name.position.y}));},
+  get mathMonuments(){return mathMonuments.map(({group,model,lod,...r})=>r);},
+  get quality(){return {lightQuality,qualityReduced,pixelRatio:renderer.getPixelRatio(),drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles};},
+  get nearest(){return nearest?.index??null;},get cameraHeight(){return camera.position.y-surfaceHeight(camera.position.x,camera.position.z);},BRIDGES,MATH_ISLES,bridgesWalked,get bridge8Open(){return bridge8Open;},setSky(v){skyT=((v%1)+1)%1;skyTarget=null;},skyInfo(){return {t:+skyT.toFixed(3),name:lastSkyName,...skyState};}};
 ready=true;$('start').disabled=false;$('start').innerHTML='提灯入庭<span class="arrow">↗</span>';
 drawMap();requestAnimationFrame(frame);
 })();
