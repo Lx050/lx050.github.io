@@ -503,7 +503,7 @@ glbLoad('assets/models/StoneLantern.glb').then(g=>{
   const proto=g.getObjectByName('StoneLantern')||g;
   glbRingLanterns.forEach(l=>{l.parts.forEach(m=>m.visible=false);glbPlace(proto,scene,l.x,.02,l.z,.5);});
   landmarks.forEach(lm=>{
-    if(lm.entry.zone!==1||!lm.zproc.length)return;
+    if(lm.entry.zone!==1||!lm.zproc.length||glbPerEntry[lm.index])return;
     lm.zproc.forEach(m=>m.visible=false);
     const wrap=glbPlace(proto,lm.group,0,0,0,2.05,0,lm.glow);
     wrap.traverse(c=>{if(c.isMesh){c.userData.landmark=lm;pickables.push(c);}});
@@ -519,11 +519,14 @@ glbLoad('assets/models/Visitor.glb').then(g=>{
   if(nr){legR=nr;if(fr)nr.attach(fr);}
   if(pivot)lanternSwing.attach(pivot);
 }).catch(e=>console.warn('Visitor.glb 未加载',e));
-// Per-entry landmark models (batch 1: zone 0, entries 0-7). Falls back to procedural meshes on failure.
+// Per-entry landmark models (batch 1: zone 0, entries 0-7; batch 2: zone 1, entries 8-12). Falls back to procedural meshes on failure.
 const glbPerEntry={0:['assets/models/LM01_Moxi.glb','Moxi',1],1:['assets/models/LM02_Huayun.glb','Huayun',1],
   2:['assets/models/LM03_HuayunOld.glb','HuayunOld',1],3:['assets/models/LM04_Mosheng.glb','Mosheng',1],
   4:['assets/models/LM05_Nuanling.glb','Nuanling',1],5:['assets/models/LM06_NuanlingApp.glb','NuanlingApp',1],
-  6:['assets/models/LM07_Paiban.glb','Paiban',1],7:['assets/models/LM08_Patent.glb','Patent',1]};
+  6:['assets/models/LM07_Paiban.glb','Paiban',1],7:['assets/models/LM08_Patent.glb','Patent',1],
+  8:['assets/models/LM09_RSS.glb','RSS',1],9:['assets/models/LM10_Vault.glb','Vault',1],
+  10:['assets/models/LM11_Gateway.glb','Gateway',1],11:['assets/models/LM12_Dossier.glb','Dossier',1],
+  12:['assets/models/LM13_Lighthouse.glb','Lighthouse',1]};
 Object.keys(glbPerEntry).forEach(k=>{
   const lm=landmarks[Number(k)],spec=glbPerEntry[k];
   if(!lm||!lm.zproc.length)return;
