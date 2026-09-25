@@ -64,6 +64,17 @@ const TRACKS=[
   .tools button{padding:6px 0;color:#807e76}
   .hud::before{height:88px;background:linear-gradient(#0c0e10a6,transparent)}
 }
+/* D-only portrait clearing: controls stay reachable beneath the monument. */
+@media(max-width:760px) and (orientation:portrait){
+  .sea-palace-view #joystick{bottom:126px;left:14px;width:92px;height:92px}
+  .sea-palace-view #stick{left:25px;top:25px}
+  .sea-palace-view #joystick small{top:98px}
+  .sea-palace-view .mapbox{bottom:126px;right:12px}
+  .sea-palace-view .mapbox canvas{width:86px;height:86px;opacity:.7}
+  .sea-palace-view .mapbox small,.sea-palace-view .bottom-note{display:none}
+  .sea-palace-view .viewpad{top:76px;right:12px;height:48px}
+  .sea-palace-view #interaction{padding:10px 14px;bottom:max(10px,env(safe-area-inset-bottom))}
+}
 </style>
 <style id="bridge-style">#bridge-count{font:11px monospace;letter-spacing:1px;color:var(--paper)}#bridge-count.done{color:var(--red)}#bridge-toast{position:absolute;left:50%;bottom:120px;transform:translateX(-50%);color:var(--paper);font:13px/1.8 var(--serif);letter-spacing:2px;background:#0c0e10d9;border:1px solid var(--line);border-radius:6px;padding:8px 18px;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}#bridge-toast.show{opacity:1}#euler-card{position:absolute;right:30px;bottom:210px;width:min(360px,calc(100% - 60px));border:1px solid #c0563e88;border-radius:8px;background:rgba(15,18,19,.94);padding:18px 20px;display:flex;align-items:center;gap:16px;box-shadow:0 12px 50px #0004}#euler-card[hidden]{display:none}#euler-card h2{font:18px/1.4 var(--serif);margin:3px 0 4px}#euler-card p{margin:0;font-size:11px;color:var(--muted)}#euler-action{flex-shrink:0;border-left:1px solid var(--line);padding:10px 0 10px 16px;color:var(--paper);letter-spacing:2px;font-size:12px}#euler-action[hidden]{display:none}</style>
 </head>
@@ -109,6 +120,7 @@ const TRACKS=[
 <script>
 (() => {
 'use strict';
+let butterflySea=null; // Landmark #23 metre-space deck and collision field.
 // Wave 1 · metres. Human geometry is deliberately never scaled with the world.
 const WORLD=Object.freeze({PLAYER_HEIGHT:1.7,ISLAND_RADIUS:150,INNER_RING:70,OUTER_RING:124,
   TERRACE_RADIUS:15,PATH_WIDTH:3,APPROACH_LENGTH:21,STEP_HEIGHT:.15,STEP_DEPTH:.4,
@@ -569,7 +581,9 @@ function skyTick(dt){
   else skyT=(skyT+dt/260)%1;
   let i=SKY.findIndex((s,idx)=>{const nt=idx===SKY.length-1?1:SKY[idx+1].t;return skyT>=s.t&&skyT<nt;});if(i<0)i=0;
   const a=SKY[i],b=SKY[(i+1)%SKY.length],bt=b.t===0?1:b.t,v=Math.max(0,Math.min(1,(skyT-a.t)/(bt-a.t))),L=(x,y)=>x+(y-x)*v;
-  const sunEl=L(a.sunEl,b.sunEl),sunAz=L(a.sunAz,b.sunAz),moonEl=L(a.moonEl,b.moonEl),moonAz=L(a.moonAz,b.moonAz);
+  const sunEl=L(a.sunEl,b.sunEl),sunAz=L(a.sunAz,b.sunAz),moonEl=L(a.moonEl,b.moonEl),moonAz=butterflySea&&butterflySeaSurface(player.position.x,player.position.z)!==null
+    ?THREE.MathUtils.radToDeg(Math.atan2(butterflySea.ux,butterflySea.uz))+38+5*Math.sin(THREE.MathUtils.degToRad(L(a.moonAz,b.moonAz)-156))
+    :L(a.moonAz,b.moonAz); // Only the sea approach/courts use the offset moon; the rest of the garden keeps its sky path.
   const sunI=Math.max(0,L(a.sunI,b.sunI)),moonI=Math.max(0,L(a.moonI,b.moonI)),warm=L(a.warm,b.warm),star=L(a.star,b.star),dayF=Math.min(1,sunI/1.3);
   fireLevel=L(a.fire,b.fire);
   mixC(SKY_LIN.top,i,v,scene.background);mixC(SKY_LIN.hor,i,v,skyDomeMat.uniforms.uHor.value);mixC(SKY_LIN.top,i,v,skyDomeMat.uniforms.uTop.value);mixC(SKY_LIN.mid,i,v,skyDomeMat.uniforms.uMid.value);
@@ -685,15 +699,9 @@ function monumentLOD(group,size){
   const tip=mesh(G.sphere,lodWarm,lod,0,size.y+.25,0,.28,.28,.28);tip.castShadow=tip.receiveShadow=false;
   lod.visible=false;return lod;
 }
-// Reusable kinetic/reveal primitives. Pivots are in the unscaled object's frame.
-function createHinge(root,partNames,pivot,axis=new THREE.Vector3(0,1,0)){
-  const hinge=new THREE.Group();hinge.name=partNames[0].endsWith('L')?'wing-hinge-left':'wing-hinge-right';
-  hinge.position.copy(pivot);hinge.userData.axis=axis.clone().normalize();root.add(hinge);root.updateWorldMatrix(true,true);
-  partNames.forEach(name=>hinge.attach(root.getObjectByName(name)));return hinge;
-}
 function setHingeAngle(hinge,angle){hinge.quaternion.setFromAxisAngle(hinge.userData.axis,angle);hinge.userData.angle=angle;}
-const BUTTERFLY={maxAngle:.42,idlePeriod:16,activePeriod:4.8,palette:[0x365b65,0xa65342,0xb99a52,0x558575,0x78617e]};
-// Both detailed wings and distant silhouettes use these exact root-origin curves.
+const BUTTERFLY={idlePeriod:16,activePeriod:4.8};
+// Shared root-origin curves for the four roof wings.
 function butterflyWingShape(upper){
   const s=new THREE.Shape();s.moveTo(0,0);
   if(upper){
@@ -712,19 +720,6 @@ function butterflyWingShape(upper){
     s.bezierCurveTo(.06,-.20,.035,-.07,0,0);
   }
   s.closePath();return s;
-}
-function butterflyWingGeometry(shape,side,upper){
-  const source=new THREE.ShapeGeometry(shape,18),flat=source.toNonIndexed(),vertices=[];
-  // Interior subdivision gives the silk a continuous shallow camber, not a bent rim.
-  const subdivide=(a,b,c,depth)=>{
-    if(depth){const ab=a.clone().lerp(b,.5),bc=b.clone().lerp(c,.5),ca=c.clone().lerp(a,.5);subdivide(a,ab,ca,depth-1);subdivide(ab,b,bc,depth-1);subdivide(ca,bc,c,depth-1);subdivide(ab,bc,ca,depth-1);}
-    else for(const v of (side<0?[a,c,b]:[a,b,c]))vertices.push(v.x*side,v.y,.010*Math.sin(v.x/.68*Math.PI)*Math.sin(v.y/(upper?.64:-.46)*Math.PI));
-  };
-  const pos=flat.attributes.position;for(let i=0;i<pos.count;i+=3)subdivide(...[0,1,2].map(j=>new THREE.Vector3().fromBufferAttribute(pos,i+j)),2);
-  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));
-  const normals=[];for(let i=0;i<vertices.length;i+=3){const x=vertices[i]*side,y=vertices[i+1],h=upper?.64:-.46;const n=new THREE.Vector3(-side*.010*Math.PI/.68*Math.cos(x/.68*Math.PI)*Math.sin(y/h*Math.PI),-.010*Math.PI/h*Math.sin(x/.68*Math.PI)*Math.cos(y/h*Math.PI),1).normalize();normals.push(n.x,n.y,n.z);}
-  g.setAttribute('normal',new THREE.Float32BufferAttribute(normals,3));g.computeBoundingBox();
-  g.userData={proceduralWing:true,contourVertices:shape.getPoints(18).length,surfaceThickness:0,upper,side};source.dispose();flat.dispose();return g;
 }
 // A connected branching graph: central trunk, two levels of side branches, and
 // transverse joins enclosing silk cells. Travel is shortest distance along this graph.
@@ -800,81 +795,363 @@ function advanceReveal(state,dt,activation,wasVisited,night){
   state.visited+=(Number(wasVisited)-state.visited)*(1-Math.exp(-dt*2));
   state.night+=(night-state.night)*(1-Math.exp(-dt*3));
 }
-function prepareButterfly(root,lm){
-  root.rotation.y=0;root.updateWorldMatrix(true,true);
-  const boxes={};root.traverse(o=>{if(o.isMesh)boxes[o.name]=new THREE.Box3().setFromObject(o);});
-  // Remove authored panels/body from this clone only; GLB bytes and shared materials stay intact.
-  for(const o of [...root.children])root.remove(o);
-  const dark=material(0x38403b),edge=material(0x5b604e),paper=material(0x919184,{side:THREE.DoubleSide});
-  const base=mesh(G.box,dark,root,0,.10,0,1.36,.10,.45);base.name='Base010';
-  const panel=mesh(G.box,paper,root,0,1.24,-.13,1.40,1.28,.006);panel.name='Panel';
-  const rim=new THREE.Group();rim.name='blank-gallery-border';root.add(rim);
-  for(const x of [-.704,.704])mesh(G.box,edge,rim,x,1.24,-.13,.008,1.296,.012);
-  for(const y of [.596,1.884]){const r=mesh(G.box,edge,rim,0,y,-.13,1.416,.008,.012);if(y>1)r.name='FrameTop';}
-  for(const x of [-.59,.59])mesh(G.box,dark,root,x,.38,-.13,.012,.46,.016);
-  const curve=(points,radius,mat,parent=root)=>mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p))),32,radius,6,false),mat,parent,0,0,0);
-  curve([[.18,.15,.12],[.13,.45,.16],[-.04,.70,.12],[0,.965,.12]],.008,dark).name='perch-branch';
-  curve([[-.015,.68,.12],[.19,.79,.12],[.28,.86,.12]],.003,dark).name='perch-twig';
-  const body=new THREE.Group(),sphere=new THREE.SphereGeometry(1,12,8),bodyMat=dark.clone();bodyMat.flatShading=false;body.name='segmented-body';root.add(body);
-  const thorax=mesh(sphere,bodyMat,body,0,1.24,.24,.024,.068,.023);thorax.name='Body';
-  for(let i=0;i<7;i++){
-    const radius=.020-i*.0018,y=1.17-i*.037;
-    mesh(sphere,bodyMat,body,0,y,.24,radius,.025,radius*.83).name='abdomen-segment';
-    const ring=mesh(new THREE.TorusGeometry(radius*.91,.0009,4,12),edge,body,0,y-.012,.24);ring.rotation.x=Math.PI/2;
+function prepareButterflySea(lm){
+  const root=new THREE.Group(),old=lm.site,ux=old.ux,uz=old.uz;
+  const b=lm.butterfly={root,phase:0,breath:0,reveal:0,visited:0,night:1};
+  root.name='sea-butterfly-palace';root.rotation.y=Math.atan2(-ux,-uz);
+  // Keep the original terrace as the shore landing; no neighbour is translated.
+  const sea=butterflySea={x:ux*330,z:uz*330,ux,uz,radius:56,y:-14.4,start:139,end:276,startY:old.groundY,cameraBoxes:[],collisions:[]};
+  lm.site={...old,x:sea.x,z:sea.z,radius:56,groundY:sea.y,baseY:WORLD.WATER_Y,steps:0,ring:330};
+  lm.entry.x=sea.x;lm.entry.z=sea.z;lm.group.position.set(sea.x,sea.y,sea.z);
+  Object.assign(b,{wings:[],gateLocal:new THREE.Vector3(0,0,25),sea});
+  const stone=material(0x8e958d,{roughness:.93}),bronze=material(0x867a60,{metalness:.4,roughness:.69}),timber=material(0x64695e),edge=material(0x575f59,{metalness:.08,roughness:.85});
+  const walkStone=material(0x444e4b,{roughness:.98}),roofGlaze=material(0x7e938c,{metalness:.08,roughness:.73,side:THREE.DoubleSide});
+  const lamp=material(0xb5aa85,{emissive:0xe4b66f,emissiveIntensity:.6});b.lampMaterial=lamp;
+  const structure=new THREE.Group();structure.name='four-roof-courts';root.add(structure);b.creature=structure;
+  b.left=new THREE.Group();b.right=new THREE.Group();
+  [b.left,b.right].forEach((h,i)=>{h.name=i?'roof-hinge-right':'roof-hinge-left';h.userData.axis=new THREE.Vector3(0,0,1);structure.add(h);});
+  // Coalesce by parent + geometry + material; animated wings retain their own batches.
+  const batches=new Map();
+  function batch(parent,geo,mat,rows,name){
+    if(!rows.length)return;const key=parent.uuid+geo.uuid+mat.uuid;
+    if(!batches.has(key))batches.set(key,{parent,geo,mat,rows:[],names:[]});
+    const item=batches.get(key);item.rows.push(...rows);item.names.push(name);
   }
-  mesh(sphere,bodyMat,body,0,1.323,.24,.020,.023,.018).name='Head';
-  for(const side of [-1,1])curve([[side*.009,1.336,.24],[side*.04,1.40,.245],[side*.075,1.49,.23],[side*.102,1.505,.225],[side*.108,1.48,.225]],.0025,edge,body).name=side<0?'AntL':'AntR';
-  const light=mesh(sphere,material(0xb39561,{emissive:0xe3ad64,emissiveIntensity:.24,flatShading:false}),body,0,1.33,.260,.005,.005,.004);light.name='tiny-warm-light';
-  const shapes={upper:butterflyWingShape(true),lower:butterflyWingShape(false)},wings=[];
+  function block(rows,x,y,z,sx,sy,sz,rotation=0){const q=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0),rotation);rows.push(new THREE.Matrix4().compose(new THREE.Vector3(x,y,z),q,new THREE.Vector3(sx,sy,sz)));}
+  function beam(rows,a,c,width,depth=width){const A=new THREE.Vector3(...a),C=new THREE.Vector3(...c),d=C.clone().sub(A);rows.push(new THREE.Matrix4().compose(A.add(C).multiplyScalar(.5),new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,1,0),d.clone().normalize()),new THREE.Vector3(width,d.length(),depth)));}
+  const pillars=[],shoes=[],brackets=[],lamps=[],caps=[],paving=[],walkwayVertices=[];
+  function support(x,z,h,r=.62){block(pillars,x,h/2,z,r*2,h,r*2);block(shoes,x,.28,z,r*3.4,.56,r*3.4);block(brackets,x,h-.16,z,1.5,.22,.8);sea.collisions.push({x,z,r:r*1.42,h});}
+  function lantern(x,z,y=0){block(shoes,x,y+.14,z,.8,.28,.8);block(pillars,x,y+.9,z,.25,1.5,.25);block(lamps,x,y+1.8,z,.55,.65,.55);block(caps,x,y+2.25,z,1,.22,1,Math.PI/4);}
+  // The round altar sits 3.6m above the sea. Two inset annular treads meet the causeway.
+  mesh(new THREE.CylinderGeometry(56,57,3.6,128),stone,root,0,-1.8,0).name='sea-altar-foundation';
+  // Matching 128-segment boundaries remove the exposed foundation's sawtooth band.
+  const deckFace=mesh(new THREE.CircleGeometry(55.8,128),stone,root,0,.02,0);deckFace.rotation.x=-Math.PI/2;deckFace.name='unbroken-altar-deck';
+  const rim=mesh(new THREE.RingGeometry(55.15,55.5,128),bronze,root,0,.045,0);rim.rotation.x=-Math.PI/2;rim.name='flush-annular-inlay';
+  // A shallow water film over the safe continuous altar; dry routes remain legible.
+  const pond=mesh(new THREE.CircleGeometry(49.5,128),material(0x293f43,{metalness:.7,roughness:.21}),root,0,.075,0);pond.rotation.x=-Math.PI/2;pond.name='sea-mirror-pond';b.pool=pond;
+  // The shore axis ends at the gate apron. An inner ring leads around the body.
+  block(paving,0,.10,41,5.8,.20,28);block(paving,0,.10,24,17,.20,8);
+  const innerWalk=mesh(new THREE.RingGeometry(12,15.5,128),walkStone,root,0,.20,0);innerWalk.rotation.x=-Math.PI/2;innerWalk.name='body-circumambulatory-walk';
+  block(paving,0,.10,18,5,.20,8);
+  // A low round lotus court closes the composition without an axial north exit.
+  const bodyCourt=mesh(new THREE.CylinderGeometry(7.6,8,.20,64),stone,root,0,.10,-9);bodyCourt.name='lotus-body-court';
+  for(const side of [-1,1])block(paving,side*6,.10,-9,5,.20,3.4);
+  // Two unequal Bezier lobes per side, in one axial frame: forewings reach seaward.
+  // The very same coordinates drive the silk shader and the branching structural ribs.
+  // The raised ribs must reveal too: otherwise their solid bronze faces mask the
+  // membrane's coloured vein lines, especially when viewing the upper roofs.
+  const ribGlaze=material(0x788d84,{metalness:.16,roughness:.62});
+  ribGlaze.onBeforeCompile=shader=>{
+    const u=b.wings[0].material.userData.revealUniforms;
+    for(const key of ['uReveal','uTime','uNight','uPigmentA','uPigmentB'])shader.uniforms[key]=u[key];
+    shader.vertexShader='varying vec3 vSeaRib;\n'+shader.vertexShader;
+    shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>',
+      '#include <begin_vertex>\n vSeaRib=(instanceMatrix*vec4(transformed,1.0)).xyz;');
+    shader.fragmentShader='varying vec3 vSeaRib;uniform float uReveal,uTime,uNight;uniform vec3 uPigmentA,uPigmentB;\n'+shader.fragmentShader;
+    shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+      float upper=step(vSeaRib.z,1.0);
+      vec2 p=vec2(max(0.0,abs(vSeaRib.x)-3.5)/mix(39.44,46.92,upper),abs(vSeaRib.z-1.0)/mix(29.9,44.8,upper));
+      float arrival=length(p)*.43;
+      float veinGrowth=smoothstep(arrival,arrival+.12,uReveal)*smoothstep(0.0,.08,uReveal);
+      vec3 veinPigment=mix(uPigmentA,uPigmentB,.5+.18*sin(p.y*6.0));
+      diffuseColor.rgb=mix(diffuseColor.rgb*.42,veinPigment*1.65,veinGrowth);
+      float veinFlow=.5+.5*sin(length(p)*24.0-uTime*.85);
+      vec3 ribEmission=vec3(.009,.012,.011)+veinPigment*veinGrowth*(.16+.12*veinFlow)*uNight;
+    `);
+    shader.fragmentShader=shader.fragmentShader.replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\n totalEmissiveRadiance+=ribEmission;');
+  };ribGlaze.customProgramCacheKey=()=> 'sea-raised-vein-enamel-d4';
   for(const side of [-1,1])for(const upper of [true,false]){
-    const wing=mesh(butterflyWingGeometry(shapes[upper?'upper':'lower'],side,upper),paper,root,side*.023,1.24,.24);
-    wing.name='Wing'+(upper?'U':'L')+(side<0?'L':'R');wing.castShadow=wing.receiveShadow=false;wings.push(wing);
+    const shape=butterflyWingShape(upper),sx=upper?69:58,sz=upper?70:65;
+    const parent=side<0?b.left:b.right,rafters=[],eaves=[],verts=[],wingUV=[];
+    const roofY=(x,z)=>upper?9+x*.42-z*.23+2.4*Math.sin(x/48*Math.PI):7+x*.10-z*.045+1.2*Math.sin(x/32*Math.PI);
+    const point=(p,dy=0)=>{const x=3.5+p.x*sx,z=1-p.y*sz;return new THREE.Vector3(x*side,roofY(x,z)+dy,z);};
+    const poly=shape.getPoints(14);
+    const flat=new THREE.ShapeGeometry(shape,14).toNonIndexed(),pos=flat.attributes.position;
+    const tri=(a,c,d,depth)=>{if(depth){const ac=a.clone().lerp(c,.5),cd=c.clone().lerp(d,.5),da=d.clone().lerp(a,.5);tri(a,ac,da,depth-1);tri(ac,c,cd,depth-1);tri(da,cd,d,depth-1);tri(ac,cd,da,depth-1);}else for(const p of (side<0?[a,d,c]:[a,c,d])){verts.push(...point(p).toArray());wingUV.push(p.x*side,p.y);}};
+    for(let i=0;i<pos.count;i+=3)tri(...[0,1,2].map(j=>new THREE.Vector2(pos.getX(i+j),pos.getY(i+j))),1);
+    flat.dispose();
+    const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(verts,3));geometry.setAttribute('wingCoord',new THREE.Float32BufferAttribute(wingUV,2));geometry.computeVertexNormals();geometry.computeBoundingBox();
+    const mat=makeRevealWingMaterial({side,upper});mat.opacity=.94;mat.depthWrite=true;
+    mat.metalness=.04;mat.roughness=.82;
+    const u=mat.userData.revealUniforms;
+    // Four restrained enamels on EVERY lobe; cells vary, never a spectral gradient.
+    const palette=[0x345c99,0x38998e,0xb29152,0x9d4c70];
+    mat.userData.palette=palette;
+    u.uPigmentA.value.setHex(palette[0]).convertSRGBToLinear();
+    u.uPigmentB.value.setHex(palette[1]).convertSRGBToLinear();
+    u.uOchre={value:new THREE.Color(palette[2]).convertSRGBToLinear()};
+    u.uMadder={value:new THREE.Color(palette[3]).convertSRGBToLinear()};
+    const compile=mat.onBeforeCompile;mat.onBeforeCompile=shader=>{
+      compile(shader);
+      shader.vertexShader='attribute vec2 wingCoord;\n'+shader.vertexShader;
+      shader.vertexShader=shader.vertexShader.replace('vWingXY=position.xy;','vWingXY=wingCoord;');
+      shader.fragmentShader=shader.fragmentShader.replace('uniform vec3 uPigmentA,uPigmentB;','uniform vec3 uPigmentA,uPigmentB,uOchre,uMadder;');
+      const start=shader.fragmentShader.indexOf('      float aa=max(fwidth(veinDistance)');
+      const end=shader.fragmentShader.indexOf('#include <alphamap_fragment>',start);
+      shader.fragmentShader=shader.fragmentShader.slice(0,start)+`
+      float aa=max(fwidth(veinDistance),.0012);
+      float vein=1.0-smoothstep(.003,.003+aa*1.5,veinDistance);
+      float root=1.0-smoothstep(.035,.32,length(w));
+      // First the root, then geodesic main/branch veins, finally their enclosed cells.
+      // At departure the shared reveal source also extinguishes the root, without memory.
+      float travel=arrival*.42+veinDistance*1.85+.055*cellTone;
+      float growth=smoothstep(travel,travel+.15,uReveal)*smoothstep(0.0,.08,uReveal);
+      float veinGrowth=smoothstep(arrival*.40,arrival*.40+.12,uReveal)*smoothstep(0.0,.08,uReveal);
+      float rootGrowth=root*smoothstep(0.0,.15,uReveal);
+      float stain=max(growth,max(rootGrowth,vein*veinGrowth));
+      vec3 pigment=mix(uPigmentA,uPigmentB,smoothstep(.18,.72,cellTone));
+      pigment=mix(pigment,mix(uOchre,uMadder,uUpper*.65),smoothstep(.80,.96,cellTone)*.65);
+      pigment=mix(pigment,uPigmentB,root*.35);
+      float grainPhase=w.x*570.0+w.y*180.0;
+      float silk=1.0+.016*sin(grainPhase)*sin(w.y*510.0)/(1.0+fwidth(grainPhase)*2.0);
+      float grazing=pow(1.0-abs(dot(normalize(vNormal),normalize(vViewPosition))),3.0);
+      vec3 ink=diffuseColor.rgb*.43;
+      vec3 glaze=mix(ink,pigment*(1.30+root*.28),stain*.91)*silk;
+      vec3 wire=mix(vec3(.065,.073,.068),mix(pigment,uOchre,.28)*1.65,veinGrowth);
+      diffuseColor.rgb=mix(glaze,wire,vein*.64);
+      // A soft silk backlight is bilateral: the upper roof cannot lose all its colour.
+      float flow=.5+.5*sin(arrival*24.0-uTime*.85);
+      vec3 wingEmission=vec3(.013,.019,.019)*(1.0+grazing*.8)
+        +pigment*(growth*(.12+.38*uNight)+rootGrowth*.16)
+        +mix(pigment,uOchre,.22)*vein*veinGrowth*(.18+.12*flow)*uNight;
+      `+shader.fragmentShader.slice(end);
+      shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',
+        '#include <roughnessmap_fragment>\n roughnessFactor=clamp(.86-stain*.20-vein*.12,.48,.88);');
+    };mat.customProgramCacheKey=()=> 'sea-silk-enamel-d4';
+    const skin=mesh(geometry,mat,parent,0,0,0);skin.name='silk-enamel-'+(upper?'upper':'lower')+(side<0?'-left':'-right');skin.castShadow=false;skin.receiveShadow=false;b.wings.push(skin);
+    // A continuous deep fascia and fine rolled copper lip retain architectural thickness.
+    poly.forEach((p,i)=>{if(i===poly.length-1)return;const q=poly[i+1];beam(eaves,point(p,-.24).toArray(),point(q,-.24).toArray(),.48,.64);beam(rafters,point(p,.10).toArray(),point(q,.10).toArray(),.12,.16);});
+    const inside=p=>{let c=false;for(let i=0,j=poly.length-1;i<poly.length;j=i++){const a=poly[i],b=poly[j];if((a.y>p.y)!==(b.y>p.y)&&p.x<(b.x-a.x)*(p.y-a.y)/(b.y-a.y)+a.x)c=!c;}return c;};
+    for(const [ia,ib] of butterflyVeins.edges){
+      const A=butterflyVeins.nodes[ia],B=butterflyVeins.nodes[ib],main=ib===ia+1&&ia<4;
+      let prev=null;
+      for(let j=0;j<=8;j++){const t=j/8,x=THREE.MathUtils.lerp(A[0],B[0],t),y=THREE.MathUtils.lerp(A[1],B[1],t);const p=new THREE.Vector2((x-.018*Math.sin(y*8)*y)*.68,(y-.012*Math.sin(x*9)*x)*(upper?.64:-.46));
+        if(inside(p)){if(prev)beam(rafters,point(prev,.13).toArray(),point(p,.13).toArray(),main?.31:.17,main?.42:.24);prev=p;}else prev=null;
+      }
+    }
+    batch(parent,G.box,ribGlaze,rafters,'branching-vein-ribs');batch(parent,G.box,edge,eaves,'continuous-thick-eaves');
+    const columns=upper?[[15,-18],[36,-28]]:[[10,12],[25,16]];
+    for(const [x,z] of columns)support(x*side,z,roofY(x,z)-.6,upper?.29:.25);
+    // One curved stylobate under each cloister, connected to the axial terrace.
+    const curve=new THREE.CatmullRomCurve3([[3.5,upper?-3:6],...columns].map(([x,z])=>new THREE.Vector3(side*x,.12,z)));
+    const screen=[],strip=[];
+    for(let j=0;j<=32;j++){
+      const p=curve.getPoint(j/32),t=curve.getTangent(j/32).normalize(),n=new THREE.Vector3(t.z,0,-t.x).multiplyScalar(1.9);
+      strip.push([p.clone().add(n),p.clone().sub(n)]);
+    }
+    // One continuous ribbon, without overlapping coplanar box ends / white slivers.
+    const triangle=(a,b,c)=>walkwayVertices.push(a.x,.22,a.z,b.x,.22,b.z,c.x,.22,c.z);
+    for(let j=0;j<32;j++){const [a,b]=strip[j],[c,d]=strip[j+1];triangle(a,b,c);triangle(b,d,c);}
+    // Low stone balustrades interrupt the ribbon silhouette; the roof remains the wing.
+    for(let j=4;j<29;j+=5){
+      const [a,c]=strip[j],[d,e]=strip[j+4];
+      for(const [v,w] of [[a,d],[c,e]]){
+        block(shoes,v.x,.48,v.z,.22,.52,.22);
+        beam(brackets,[v.x,.72,v.z],[w.x,.72,w.z],.11,.14);
+      }
+    }
+    if(!upper){for(let j=4;j<30;j+=6){const p=curve.getPoint(j/32);block(screen,p.x,1.0,p.z,.12,1.5,.16);}batch(structure,G.box,bronze,screen,'cloister-open-screen');}
   }
-  const left=createHinge(root,['WingUL','WingLL'],new THREE.Vector3(-.023,1.24,.24));
-  const right=createHinge(root,['WingUR','WingLR'],new THREE.Vector3(.023,1.24,.24));
-  // Lower the living sculpture into the screen's visual field, leaving 6.7m of air.
-  for(const part of [left,right,body]){part.position.y-=.095;part.position.z-=.12;}
-  root.rotation.y=Math.atan2(-lm.site.ux,-lm.site.uz);
-  lm.butterfly={root,left,right,measurements:boxes,shapes,phase:0,breath:0,reveal:0,visited:0,night:1,wings,lift:.12,veinGraph:butterflyVeins};
-  return root;
+  const walkGeometry=new THREE.BufferGeometry();walkGeometry.setAttribute('position',new THREE.Float32BufferAttribute(walkwayVertices,3));walkGeometry.computeVertexNormals();
+  const cloister=mesh(walkGeometry,walkStone,root,0,0,0);cloister.name='four-dark-stone-cloister-walks';cloister.castShadow=false;
+  // Paired que: split lintels leave the entire central sightline open to the sky.
+  for(const side of [-1,1]){
+    support(side*6,25,10.8,.26);
+    block(brackets,side*6,10.8,25,3.8,.22,1.05);
+    block(brackets,side*6,11.18,25,4.5,.16,1.25);
+    block(lamps,side*6,9.95,25,.18,.7,.18);
+  }
+  const gateLight=new THREE.PointLight(0xffd6a2,.85,22,2);gateLight.position.set(0,5,25);gateLight.castShadow=false;structure.add(gateLight);
+  // Butterfly-body sutra pillar: unequal storeys, octagonal facets, gathered veins.
+  // All repetitive ornaments join existing batches; three canopies share ONE geometry.
+  const axis=structure,oct=new THREE.CylinderGeometry(.82,1,1,8),drums=[],shafts=[],veinRelief=[],canopies=[],petals=[],bells=[];
+  function drum(y,r,h){block(drums,0,y,-9,r,h,r,Math.PI/8);}
+  // Sumeru plinth: spreading foot / recessed waist / inverted and upright lotus lips.
+  drum(.65,4.8,.9);drum(1.35,4.25,.5);drum(2.05,3.45,.9);drum(2.75,4.05,.48);drum(3.25,3.5,.52);
+  const storeys=[{lo:3.5,hi:19,r:2.8,eave:6.6,rise:3.0},{lo:22,hi:33.2,r:2.08,eave:5.0,rise:2.5},{lo:35.7,hi:43.5,r:1.46,eave:3.65,rise:2.1}];
+  for(const [k,t] of storeys.entries()){
+    const h=t.hi-t.lo;
+    drum(t.lo+h/2,t.r,h);drum(t.lo+.25,t.r*1.14,.5);drum(t.hi-.28,t.r*1.05,.48);
+    // Fine face mullions frame the warm incised windows; no smooth central mast.
+    for(let j=0;j<8;j++){
+      const a=j*Math.PI/4+Math.PI/8,rad=(r,y)=>[Math.sin(a)*r,y,-9+Math.cos(a)*r];
+      beam(shafts,rad(t.r*1.06,t.lo+.4),rad(t.r*.88,t.hi-.4),.13-k*.018);
+      // On the middle of each facet, a slim luminous opening with a timber surround.
+      const f=a+Math.PI/8,rr=t.r*.89,x=Math.sin(f)*rr,z=-9+Math.cos(f)*rr;
+      block(pillars,x,t.lo+h*.55,z,.40-k*.055,h*.53,.20,f);
+      block(lamps,x+Math.sin(f)*.115,t.lo+h*.55,z+Math.cos(f)*.115,.14-k*.016,h*.47,.06,f);
+      const v0=rad(t.r*1.01,t.lo+.65),v1=rad(t.r*.96,t.lo+h*.42),v2=rad(t.r*.85,t.hi-.4);
+      beam(veinRelief,v0,v1,.075);beam(veinRelief,v1,v2,.065);
+      for(const sign of [-1,1]){
+        const f=a+sign*.23;
+        beam(veinRelief,[Math.sin(f)*t.r*.96,t.lo+h*.30,-9+Math.cos(f)*t.r*.96],v1,.055);
+      }
+    }
+    block(canopies,0,t.hi,-9,t.eave,t.rise,t.eave);
+  }
+  // A ridged octagonal canopy: hollow below, folded thin edge, gently lifted corners.
+  const roofVertices=[],roofTri=(a,b,c)=>roofVertices.push(...a,...b,...c);
+  function roofPoint(sector,t,r,y){
+    const a=sector*Math.PI/4,b=(sector+1)*Math.PI/4;
+    return [THREE.MathUtils.lerp(Math.sin(a),Math.sin(b),t)*r,y,THREE.MathUtils.lerp(Math.cos(a),Math.cos(b),t)*r];
+  }
+  const rings=[[.19,1],[.43,.48],[.74,.06],[1,.11]];
+  for(let j=0;j<8;j++)for(let h=0;h<3;h++)for(let n=0;n<4;n++){
+    const t=n/4,q=(n+1)/4;
+    const p=(i,u)=>roofPoint(j,u,rings[i][0],rings[i][1]+Math.pow(Math.abs(u-.5)*2,3)*Math.pow(rings[i][0],3)*.22);
+    const a=p(h,t),b=p(h,q),c=p(h+1,t),d=p(h+1,q);
+    roofTri(a,c,b);roofTri(b,c,d);
+    if(h===2){const e=c.map((v,i)=>i===1?v-.065:v),f=d.map((v,i)=>i===1?v-.065:v);roofTri(c,e,d);roofTri(d,e,f);}
+  }
+  const canopyGeo=new THREE.BufferGeometry();canopyGeo.setAttribute('position',new THREE.Float32BufferAttribute(roofVertices,3));canopyGeo.computeVertexNormals();
+  batch(axis,canopyGeo,roofGlaze,canopies,'three-upswept-octagonal-canopies');
+  // The copper corner ridges and four small bell-lamps per canopy share box/light batches.
+  for(const t of storeys)for(let j=0;j<8;j++){
+    const a=j*Math.PI/4,p=(r,y)=>[Math.sin(a)*t.eave*r,t.hi+t.rise*y,-9+Math.cos(a)*t.eave*r];
+    for(let i=0;i<3;i++)beam(veinRelief,p(rings[i][0],rings[i][1]+Math.pow(rings[i][0],3)*.22+.025),p(rings[i+1][0],rings[i+1][1]+Math.pow(rings[i+1][0],3)*.22+.025),.07);
+    if(j%2===0){
+      const tip=p(.98,.31),bottom=[tip[0],tip[1]-.85,tip[2]];
+      beam(veinRelief,tip,bottom,.035);
+      block(bells,bottom[0],bottom[1]-.17,bottom[2],.23,.34,.23);
+      block(lamps,bottom[0],bottom[1]-.35,bottom[2],.10,.13,.10);
+    }
+    // Warm, recessed eave throat; no opaque black parasol underside.
+    const throat=p(.26,.14);block(lamps,...throat,.14,.65,.14,a);
+  }
+  // Wing roots gather into the same branching relief on the lower body.
+  for(const side of [-1,1])for(const front of [-1,1]){
+    const pts=[[side*5.5,11.2,front*2],[side*3.2,13.4,-3],[side*2.4,16.4,-7.5]];
+    beam(veinRelief,pts[0],pts[1],.14);beam(veinRelief,pts[1],pts[2],.11);
+  }
+  // Pointed lotus petals have a convex midrib; top view reads a flower, not a nut.
+  const petalGeo=new THREE.BufferGeometry(),pv=[];
+  const petalPoints=[[0,0,0],[-.46,.23,.46],[0,.42,.60],[.46,.23,.46],[0,1,1]];
+  for(const [a,b,c] of [[0,2,1],[0,3,2],[1,2,4],[2,3,4]])pv.push(...petalPoints[a],...petalPoints[b],...petalPoints[c]);
+  petalGeo.setAttribute('position',new THREE.Float32BufferAttribute(pv,3));petalGeo.computeVertexNormals();
+  function lotus(y,r,rise,count){for(let j=0;j<count;j++){const a=j*Math.PI*2/count;block(petals,Math.sin(a)*r*.55,y,-9+Math.cos(a)*r*.55,r*.65,rise,r*.67,a);}}
+  lotus(2.8,3.1,.95,16);lotus(21.4,1.7,.65,8);lotus(35.1,1.28,.6,8);
+  drum(46.25,1.15,1.15);drum(47.35,.86,1.05);drum(48.15,1.4,.55);
+  lotus(48.25,1.85,2.25,8);drum(49.3,.85,1.2);
+  batch(axis,oct,stone,drums,'faceted-sutra-body-sumeru-waists');
+  batch(axis,G.box,timber,shafts,'octagonal-body-mullions');
+  batch(axis,G.box,bronze,veinRelief,'gathered-wing-relief-and-canopy-ridges');
+  batch(axis,petalGeo,roofGlaze,petals,'lotus-petal-seats-and-finial');
+  batch(axis,oct,bronze,bells,'twelve-suspended-bells');
+  sea.collisions.push({x:0,z:-9,r:4.6,h:53.5});
+  const finial=material(0xafcec7,{emissive:0xabcfc8,emissiveIntensity:.65,roughness:.36});b.finialMaterial=finial;
+  const pearl=mesh(new THREE.SphereGeometry(1,16,12),finial,axis,0,51.15,-9);pearl.scale.set(1.32,2.05,1.32);pearl.name='lotus-held-eternal-chrysalis-lamp';
+  b.seal=ring(root,0,25,2.2,0xb9a575,.18,.24);b.seal.name='future-gate-seal';
+  for(const z of [-4,4])for(const side of [-1,1])lantern(side*6.3,z);
+  for(let i=0;i<12;i++){const a=(i+.5)*Math.PI*2/12;lantern(Math.sin(a)*53.2,Math.cos(a)*53.2);}
+  for(let z=34;z<51;z+=14)for(const side of [-1,1])lantern(side*4,z);
+  batch(root,G.box,stone,paving,'axis-and-court-paving');batch(structure,G.box,stone,shoes,'column-shoes-and-lamp-bases');batch(structure,G.box,timber,pillars,'colonnade-columns');batch(structure,G.box,bronze,brackets,'dougong-brackets');batch(structure,G.box,lamp,lamps,'architectural-lights');batch(structure,G.box,bronze,caps,'stone-lamp-caps');
+  // The sea causeway is outside the monument bounds. 4.8m clear walking width.
+  const bridge=new THREE.Group();bridge.name='butterfly-sea-causeway';scene.add(bridge);b.causeway=bridge;
+  const deck=[],posts=[],rails=[],lights=[],pier=[];
+  const toWorld=(r,side,y)=>[ux*r-uz*side,y,uz*r+ux*side];
+  const angle=Math.atan2(ux,uz),L=sea.end-sea.start,N=Math.ceil(L/2);
+  for(let i=0;i<N;i++){const r=sea.start+(i+.5)*L/N,y=butterflySeaDeck(r),next=butterflySeaDeck(r+L/N/2),prev=butterflySeaDeck(r-L/N/2),m=new THREE.Matrix4().compose(new THREE.Vector3(...toWorld(r,0,y-.25)),new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.atan2(next-prev,L/N),angle,0,'YXZ')),new THREE.Vector3(5.6,.5,L/N+.03));deck.push(m);}
+  for(let r=sea.start+2;r<sea.end;r+=14){
+    const y=butterflySeaDeck(r);
+    for(const side of [-3,3]){
+      block(posts,...toWorld(r,side,y+.35),.14,.7,.14);
+      block(lights,...toWorld(r,side,y+.79),.24,.18,.24);
+      const end=Math.min(r+14,sea.end);beam(rails,toWorld(r,side,y+.66),toWorld(end,side,butterflySeaDeck(end)+.66),.09);
+    }
+  }
+  // Four slender, dark supports instead of the repeated heavy pier wall.
+  for(let r=sea.start+18;r<sea.end;r+=36){const h=butterflySeaDeck(r)-WORLD.WATER_Y;block(pier,...toWorld(r,0,WORLD.WATER_Y+h/2),.42,h,.42,angle);}
+  batch(bridge,G.box,stone,deck,'continuous-ramped-stone-deck');batch(bridge,G.box,stone,posts,'causeway-balusters');batch(bridge,G.box,bronze,rails,'causeway-handrails');batch(bridge,G.box,lamp,lights,'processional-lights');batch(bridge,G.box,timber,pier,'sea-piers');
+  for(const {parent,geo,mat,rows,names} of batches.values()){
+    const im=new THREE.InstancedMesh(geo,mat,rows.length);im.name=names.join('+');im.userData.components=names;
+    rows.forEach((m,i)=>im.setMatrixAt(i,m));im.instanceMatrix.needsUpdate=true;
+    // r128 tests only the unit geometry's sphere for instances: avoid false culling.
+    im.frustumCulled=false;im.castShadow=false;im.receiveShadow=false;parent.add(im);
+  }
 }
-function finishButterfly(lm){
-  const b=lm.butterfly,root=b.root,wrap=lm.model;
-  for(const wing of b.wings)wing.material=makeRevealWingMaterial({side:wing.name.endsWith('L')?-1:1,upper:wing.name.includes('U')});
-  // A static sweep envelope. 129 poses plus a Lipschitz XZ margin encloses every
-  // intermediate angle; Y is unchanged by the vertical hinges. Never rebuilt per frame.
-  const bounds=new THREE.Box3();let radius=0;
-  for(const hinge of [b.left,b.right])hinge.traverse(o=>{if(o.isMesh){o.updateWorldMatrix(true,false);const p=o.geometry.attributes.position;for(let i=0;i<p.count;i++){const v=hinge.worldToLocal(new THREE.Vector3().fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld));radius=Math.max(radius,Math.hypot(v.x,v.z)*wrap.scale.x);}}});
-  for(let i=0;i<=128;i++){const a=BUTTERFLY.maxAngle*i/128;setHingeAngle(b.left,a);setHingeAngle(b.right,-a);wrap.updateWorldMatrix(true,true);bounds.union(new THREE.Box3().setFromObject(wrap));}
-  const margin=radius*BUTTERFLY.maxAngle/256+1e-5;bounds.min.x-=margin;bounds.min.z-=margin;bounds.max.x+=margin;bounds.max.z+=margin;
-  setHingeAngle(b.left,0);setHingeAngle(b.right,0);wrap.updateWorldMatrix(true,true);
+function butterflySeaDeck(r){const s=butterflySea,t=THREE.MathUtils.clamp((r-s.start)/((s.end-s.start)*.72),0,1);return THREE.MathUtils.lerp(s.startY,s.y+.20,smooth01(t));}
+function butterflySeaSurface(x,z){
+  const s=butterflySea,along=x*s.ux+z*s.uz,side=-x*s.uz+z*s.ux,d=Math.hypot(x-s.x,z-s.z);
+  if(d<=55.8){
+    // A shallow water film between the continuous courts; deck/bridge tops agree.
+    return s.y+.20;
+  }
+  if(along>=s.start-.3&&along<=s.end+.5&&Math.abs(side)<=2.55)return butterflySeaDeck(along);
+  return null;
+}
+function finishButterflySea(lm){
+  const b=lm.butterfly;lm.model.updateWorldMatrix(true,true);
+  lm.bounds=butterflySeaBounds(b.creature).expandByScalar(.4);lm.model.userData.bounds=lm.bounds;lm.bboxHeight=lm.bounds.max.y-lm.site.groundY;lm.groundY=lm.site.groundY;
+  b.wingBounds=new THREE.Box3();b.wings.forEach(w=>b.wingBounds.union(new THREE.Box3().setFromObject(w)));b.wingBounds.expandByScalar(.4);
   b.observationTargets=b.wings.map(w=>w.localToWorld(w.geometry.boundingBox.getCenter(new THREE.Vector3())));
-  wrap.userData.bounds=lm.bounds=bounds;lm.bboxHeight=bounds.max.y-bounds.min.y;lm.groundY=bounds.min.y;b.sweepMargin=margin;
-  // The same curved outlines at a fixed slight opening: four lobes, never four panels.
-  const lod=new THREE.Group(),silhouette=new THREE.Group();lod.name='butterfly-silhouette';lm.group.add(lod);lod.add(silhouette);
-  silhouette.position.copy(wrap.position);silhouette.scale.copy(wrap.scale);silhouette.rotation.copy(root.rotation);
-  const dark=new THREE.MeshBasicMaterial({color:new THREE.Color(0x293e40).convertSRGBToLinear().multiplyScalar(.48),side:THREE.DoubleSide});
-  for(const side of [-1,1])for(const upper of [true,false]){
-    const wing=mesh(new THREE.ShapeGeometry(b.shapes[upper?'upper':'lower'],18),dark,silhouette,side*.023,1.145,.12,side,1,1);
-    wing.rotation.y=side<0?.10:-.10;wing.name='silhouette-wing';wing.castShadow=wing.receiveShadow=false;
-  }
-  mesh(G.sphere,dark,silhouette,0,1.065,.12,.019,.18,.017);
-  mesh(G.sphere,lodWarm,silhouette,0,1.235,.14,.005,.005,.004);
-  lod.visible=false;lm.lod=lod;
+  const g=b.root.localToWorld(b.gateLocal.clone());lm.gatePoint={x:g.x,y:lm.site.groundY+.20,z:g.z};
+  lm.lod=new THREE.Group();lm.lod.visible=false;lm.group.add(lm.lod);
+  for(const c of b.sea.collisions){const p=b.root.localToWorld(new THREE.Vector3(c.x,0,c.z));colliders.push({x:p.x,z:p.z,r:c.r});b.sea.cameraBoxes.push(new THREE.Box3(new THREE.Vector3(p.x-c.r,p.y,p.z-c.r),new THREE.Vector3(p.x+c.r,p.y+c.h,p.z+c.r)));}
+  // A planar mirror on BOTH quality tiers. Separate render scene contains no deck,
+  // below-water geometry or duplicate coplanar surfaces; projective UVs keep it whole.
+  b.reflectionScene=new THREE.Scene();b.reflectionClone=b.creature.clone(true);b.reflectionScene.add(b.reflectionClone);
+  b.reflectionHemi=hemi.clone();b.reflectionKey=moon.clone();b.reflectionKey.castShadow=false;b.reflectionScene.add(b.reflectionHemi,b.reflectionKey);
+  b.reflectionMoon=moonOrb.clone();b.reflectionMoon.castShadow=false;b.reflectionScene.add(b.reflectionMoon);
+  const size=lightQuality?384:640;b.reflectionTarget=new THREE.WebGLRenderTarget(size,size);
+  b.reflectionCamera=new THREE.PerspectiveCamera();b.reflectionClearColor=new THREE.Color();b.reflectionClock=1;
+  b.reflectionTextureMatrix=new THREE.Matrix4();
+  b.reflectionPlane=new THREE.Plane();b.reflectionClip=new THREE.Vector4();b.reflectionQ=new THREE.Vector4();
+  b.pool.receiveShadow=false;b.pool.castShadow=false;
+  b.pool.material=new THREE.ShaderMaterial({uniforms:{reflection:{value:b.reflectionTarget.texture},textureMatrix:{value:b.reflectionTextureMatrix},time:{value:0}},
+    vertexShader:'uniform mat4 textureMatrix;varying vec4 mirrorCoord;varying vec2 p;void main(){vec4 world=modelMatrix*vec4(position,1.0);p=position.xy;mirrorCoord=textureMatrix*world;gl_Position=projectionMatrix*viewMatrix*world;}',
+    fragmentShader:'uniform sampler2D reflection;uniform float time;varying vec4 mirrorCoord;varying vec2 p;void main(){vec2 uv=mirrorCoord.xy/mirrorCoord.w;uv.x+=.00015*sin(p.y*18.0+time*.4);vec4 r=texture2D(reflection,clamp(uv,0.0,1.0));float valid=step(.0001,mirrorCoord.w)*step(0.0,uv.x)*step(uv.x,1.0)*step(0.0,uv.y)*step(uv.y,1.0);gl_FragColor=vec4(mix(vec3(.024,.043,.045),r.rgb*.73,r.a*.8*valid),1.0);}',polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1});
 }
 
-function updateButterfly(dt,lm){
-  if(!lm.butterfly)return;const b=lm.butterfly;
-  advanceReveal(b,dt,lm.activation,visited.has(lm.index),1-Math.min(1,(skyState.sunI||0)/1.3));
-  const angle=reduced?0:THREE.MathUtils.lerp(.012,.04,lm.activation)+THREE.MathUtils.lerp(.043,.38,lm.activation)*b.breath;
-  setHingeAngle(b.left,angle);setHingeAngle(b.right,-angle);
-  if(!lm.model.visible)return;
-  for(const wing of b.wings){const u=wing.material.userData.revealUniforms;u.uReveal.value=b.reveal;u.uTime.value=reduced?0:elapsed;u.uVisited.value=b.visited;u.uNight.value=b.night;}
+function updateButterflySea(dt,lm){
+  const b=lm.butterfly,local=b.root.worldToLocal(player.position.clone());
+  // One continuous activation corridor, gate -> heart -> paired wing roots.
+  const axialZ=THREE.MathUtils.clamp(local.z,-9,25),d=Math.hypot(local.x,local.z-axialZ);
+  const arrival=THREE.MathUtils.lerp(1,.86,smooth01((local.z-2)/23));
+  const active=started?(1-smooth01((d-8)/28))*arrival:0;
+  advanceReveal(b,dt,active,false,1-Math.min(1,(skyState.sunI||0)/1.3));
+  // A slow architectural welcome, 24 seconds per breath even when fully revealed.
+  const a=reduced?0:.0035*(1-Math.cos(elapsed*Math.PI/12));setHingeAngle(b.left,a);setHingeAngle(b.right,-a);
+  for(const w of b.wings){const u=w.material.userData.revealUniforms;u.uReveal.value=b.reveal;u.uTime.value=reduced?0:elapsed;u.uVisited.value=0;u.uNight.value=b.night;}
+  b.lampMaterial.emissiveIntensity=.6+b.reveal*.6;b.finialMaterial.emissiveIntensity=.65+b.reveal*.48;b.seal.material.opacity=.18+b.reveal*.55;
+}
+function updateButterflySeaReflection(dt){
+  const b=landmarks[23].butterfly;if(!b?.reflectionTarget)return;
+  const activeCamera=camera;
+  b.reflectionClock+=dt;if(b.reflectionClock<1/15)return;b.reflectionClock=0;
+  b.root.updateWorldMatrix(true,true);b.reflectionClone.matrixAutoUpdate=false;b.reflectionClone.matrix.copy(b.root.matrixWorld);
+  b.reflectionClone.getObjectByName('roof-hinge-left').quaternion.copy(b.left.quaternion);b.reflectionClone.getObjectByName('roof-hinge-right').quaternion.copy(b.right.quaternion);
+  b.reflectionHemi.intensity=hemi.intensity;b.reflectionKey.intensity=moon.intensity;b.reflectionKey.position.copy(moon.position);
+  // Keep the reflected celestial direction identical to the visible moon.
+  b.reflectionMoon.position.copy(moonOrb.position).sub(camera.position).add(activeCamera.position);b.reflectionMoon.visible=moonOrb.visible;
+  const rc=b.reflectionCamera,waterY=b.sea.y+.075,direction=new THREE.Vector3();activeCamera.getWorldDirection(direction);
+  rc.copy(activeCamera);rc.position.y=2*waterY-activeCamera.position.y;
+  const target=activeCamera.position.clone().add(direction);target.y=2*waterY-target.y;
+  rc.up.copy(activeCamera.up);rc.up.y*=-1;rc.lookAt(target);rc.updateMatrixWorld(true);
+  b.reflectionTextureMatrix.set(.5,0,0,.5,0,.5,0,.5,0,0,.5,.5,0,0,0,1).multiply(rc.projectionMatrix).multiply(rc.matrixWorldInverse);
+  // Oblique near plane clips the submerged bases before they become white shards.
+  // The texture projection above keeps the original XY projection (clip changes Z only).
+  b.reflectionPlane.set(new THREE.Vector3(0,1,0),-waterY-.015).applyMatrix4(rc.matrixWorldInverse);
+  const clip=b.reflectionClip,plane=b.reflectionPlane,projection=rc.projectionMatrix.elements,q=b.reflectionQ;
+  clip.set(plane.normal.x,plane.normal.y,plane.normal.z,plane.constant);
+  q.set((Math.sign(clip.x)+projection[8])/projection[0],(Math.sign(clip.y)+projection[9])/projection[5],-1,(1+projection[10])/projection[14]);
+  const denominator=clip.dot(q);
+  if(Math.abs(denominator)>1e-6){clip.multiplyScalar(2/denominator);projection[2]=clip.x;projection[6]=clip.y;projection[10]=clip.z+1;projection[14]=clip.w;rc.projectionMatrixInverse.copy(rc.projectionMatrix).invert();}
+  b.pool.material.uniforms.time.value=elapsed;
+  const old=renderer.getRenderTarget(),alpha=renderer.getClearAlpha();renderer.getClearColor(b.reflectionClearColor);
+  renderer.setRenderTarget(b.reflectionTarget);renderer.setClearColor(0,0);renderer.render(b.reflectionScene,rc);renderer.setRenderTarget(old);renderer.setClearColor(b.reflectionClearColor,alpha);
 }
 
+function butterflySeaBounds(root){
+  root.updateWorldMatrix(true,true);const box=new THREE.Box3();
+  root.traverse(o=>{if(!o.isMesh)return;if(!o.geometry.boundingBox)o.geometry.computeBoundingBox();
+    if(o.isInstancedMesh){const matrix=new THREE.Matrix4();for(let i=0;i<o.count;i++){o.getMatrixAt(i,matrix);matrix.premultiply(o.matrixWorld);box.union(o.geometry.boundingBox.clone().applyMatrix4(matrix));}}
+    else box.union(o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld));
+  });return box;
+}
 // Normalise from world bounds, including nested GLB transforms; never assume its authored origin.
 function placeMonument(glb,group,{targetHeight,tier}){
   const wrap=new THREE.Group();wrap.add(glb);group.add(wrap);group.updateWorldMatrix(true,true);
+  if(tier==='butterfly-sea'){wrap.userData.tier=tier;wrap.userData.dressing=new THREE.Group();wrap.userData.bounds=butterflySeaBounds(wrap);return wrap;}
   let box=new THREE.Box3().setFromObject(wrap),h=box.max.y-box.min.y;
   if(!Number.isFinite(h)||h<=0)throw new Error('Invalid monument bounds');
   wrap.scale.multiplyScalar(targetHeight/h);group.updateWorldMatrix(true,true);box.setFromObject(wrap);
@@ -890,8 +1167,7 @@ function placeMonument(glb,group,{targetHeight,tier}){
         m.userData.monument=true;m.userData.baseEmission=m.emissiveIntensity;materials.set(original,m);}
       return materials.get(original);
     });if(o.material.length===1)o.material=o.material[0];});
-    if(tier!=='butterfly')dressMonument(wrap);
-    else {wrap.userData.dressing=new THREE.Group();wrap.userData.bounds=new THREE.Box3().setFromObject(wrap);}
+    dressMonument(wrap);
   }
   return wrap;
 }
@@ -921,7 +1197,9 @@ LINKS.forEach((entry,index)=>{
   const tint=ZONES[entry.zone].color;const glow=material(0xc9a672,{emissive:0xffbf72,emissiveIntensity:2.3});
   disc(group,0,0,15,M.shadow);
   let height=3.1;const zproc=[];
-  if(entry.zone===0){
+  if(index===23){
+    // The sea palace is built directly; no gallery slab or generic monument placeholder.
+  }else if(entry.zone===0){
     height=3.4;zproc.push(mesh(G.box,M.ivory,group,0,1.2,0,2.15,2,1.65));
     const zroof=mesh(G.cone,index%3===0?M.red:M.roof,group,0,2.65,0,1.9,1.15,1.6);zroof.rotation.y=Math.PI/4;zproc.push(zroof);
     zproc.push(mesh(G.box,M.wood,group,-.4,.78,.84,.48,1.35,.05));
@@ -958,9 +1236,11 @@ LINKS.forEach((entry,index)=>{
   // An emissive miniature lantern avoids adding 26 expensive PointLights.
   const targetHeight=({7:54,9:60,10:56,23:50,24:48})[index]||[32,36,30,30,30,38,34,36,36,36,36,30,42,30,30,30,32,30,34,36,30,34,34,36,36,32][index];
   const lm={entry,group,name,glow,lightHalo,marker,beacon,index,zproc,activation:0,site:terraceSites[index],targetHeight};landmarks.push(lm);
-  const fallback=new THREE.Group();zproc.forEach(m=>fallback.add(m));
-  lm.fallback=placeMonument(fallback,group,{targetHeight,tier:'fallback'});
-  lm.fallbackBox=lm.fallback.userData.bounds;lm.bounds=lm.fallbackBox;
+  if(index!==23){
+    const fallback=new THREE.Group();zproc.forEach(m=>fallback.add(m));
+    lm.fallback=placeMonument(fallback,group,{targetHeight,tier:'fallback'});
+    lm.fallbackBox=lm.fallback.userData.bounds;lm.bounds=lm.fallbackBox;
+  }
   lm.bboxHeight=targetHeight;lm.groundY=lm.site.groundY;
   name.position.set(-lm.site.ux*2,targetHeight+5,-lm.site.uz*2);name.scale.multiplyScalar(3);name.userData.baseWidth=name.scale.x;
   beacon.position.set(lm.site.uz*2,targetHeight+1,-lm.site.ux*2);beacon.scale.setScalar(1.5);lightHalo.position.y=targetHeight*.65;lightHalo.scale.set(12,12,1);
@@ -1032,12 +1312,14 @@ function onBridgeSeg(x,z,b,half){
   return Math.hypot(x-(b.x1+dx*t),z-(b.z1+dz*t))<half;
 }
 function walkable(x,z){
+  if(butterflySea&&butterflySeaSurface(x,z)!==null)return true;
   if(Math.hypot(x,z)<=MAINLAND.r)return true;
   for(const b of BRIDGES){if(b.bonus&&!bridge8Open)continue;if(onBridgeSeg(x,z,b,b.halfWidth-.1))return true;}
   for(const is of MATH_ISLES){if(Math.hypot(x-is.x,z-is.z)<=is.r)return true;}
   return false;
 }
 function surfaceHeight(x,z){
+  if(butterflySea){const y=butterflySeaSurface(x,z);if(y!==null)return y;}
   for(const b of BRIDGES){if(b.bonus&&!bridge8Open)continue;if(onBridgeSeg(x,z,b,b.halfWidth)){
     const dx=b.x2-b.x1,dz=b.z2-b.z1,len=Math.hypot(dx,dz),t=((x-b.x1)*dx+(z-b.z1)*dz)/(len*len);
     return bridgeDeckY((t-.5)*len,b.length,b.rise);
@@ -1190,16 +1472,26 @@ const glbPerEntry={0:['assets/models/LM01_Moxi.glb','Moxi',1],1:['assets/models/
   24:['assets/models/LM25_MindCareAI.glb','MindCare',1],25:['assets/models/LM26_GitHub.glb','GitHub',1]};
 Object.keys(glbPerEntry).forEach(k=>{
   const lm=landmarks[Number(k)],spec=glbPerEntry[k];
-  if(!lm||!lm.zproc.length)return;
+  if(!lm)return;
+  if(lm.index===23){
+    prepareButterflySea(lm);
+    lm.model=placeMonument(lm.butterfly.root,lm.group,{tier:'butterfly-sea'});
+    finishButterflySea(lm);
+    lm.entryPoint={x:lm.entry.x-lm.site.ux*(lm.site.radius-2),z:lm.entry.z-lm.site.uz*(lm.site.radius-2)};
+    // Retain the 34-model loading contract; the palace needs no authored panel meshes.
+    glbLoad(spec[0]).catch(e=>console.warn(spec[0]+' 未加载',e));
+    return;
+  }
+  if(!lm.zproc.length)return;
   glbLoad(spec[0]).then(g=>{
     const proto=(g.getObjectByName(spec[1])||g).clone(true);if(lm.index===15)proto.rotation.y+=Math.PI/2; // Wide forms face their free corridor.
     lm.fallback.visible=false;lm.fallback.userData.dressing.visible=false;
-    const refined=glbRefine(proto,lm.glow);if(lm.index===23)prepareButterfly(refined,lm);
-    const wrap=placeMonument(refined,lm.group,{targetHeight:lm.targetHeight,tier:lm.index===23?'butterfly':lm.targetHeight>=48?'major':'standard'});
+    const refined=glbRefine(proto,lm.glow);
+    const wrap=placeMonument(refined,lm.group,{targetHeight:lm.targetHeight,tier:lm.targetHeight>=48?'major':'standard'});
     lm.model=wrap;wrap.updateWorldMatrix(true,true);const box=new THREE.Box3().setFromObject(wrap);
     lm.bboxHeight=box.max.y-box.min.y;lm.groundY=box.min.y;lm.bounds=wrap.userData.bounds;
     // A single simplified mass is used beyond LOD distance, with hysteresis in updateLandmarks.
-    const size=box.getSize(new THREE.Vector3());if(lm.butterfly)finishButterfly(lm);else lm.lod=monumentLOD(lm.group,size);
+    const size=box.getSize(new THREE.Vector3());lm.lod=monumentLOD(lm.group,size);
     lm.entryPoint={x:lm.entry.x-lm.site.ux*(lm.site.radius-2),z:lm.entry.z-lm.site.uz*(lm.site.radius-2)};
     wrap.traverse(c=>{if(c.isMesh){c.userData.landmark=lm;pickables.push(c);}});
   }).catch(e=>console.warn(spec[0]+' 未加载',e));
@@ -1244,7 +1536,7 @@ function start(){
   bgm.start();
 }
 $('intro').addEventListener('click',start);
-function teleport(x,z){clearInput();velocity.set(0,0);if(!walkable(x,z))return false;player.position.set(x,surfaceHeight(x,z),z);setNear(null);cameraState.yaw=0;cameraState.pitch=WORLD.CAMERA_PITCH;cameraState.framing=0;viewCache=null;camera.position.set(x,surfaceHeight(x,z+cameraState.distance)+2.1,z+cameraState.distance);cameraLook.set(x,player.position.y+1.6,z);if(started)$('world').focus({preventScroll:true});}
+function teleport(x,z){clearInput();velocity.set(0,0);if(!walkable(x,z))return false;player.position.set(x,surfaceHeight(x,z),z);setNear(null);cameraState.yaw=0;cameraState.pitch=WORLD.CAMERA_PITCH;cameraState.framing=0;viewCache=null;camera.position.set(x,surfaceHeight(x,z+cameraState.distance)+2.1,z+cameraState.distance);cameraLook.set(x,player.position.y+1.6,z);if(butterflySea&&butterflySeaSurface(x,z)!==null){cameraState.yaw=Math.atan2(-butterflySea.ux,-butterflySea.uz);camera.position.set(x-butterflySea.ux*cameraState.distance,player.position.y+2.1,z-butterflySea.uz*cameraState.distance);cameraLook.copy(landmarks[23].butterfly.root.localToWorld(new THREE.Vector3(0,8,-9)));camera.lookAt(cameraLook);}if(started)$('world').focus({preventScroll:true});}
 $('home').onclick=()=>teleport(0,3);
 document.querySelectorAll('[data-zone]').forEach(button=>button.onclick=()=>{const zone=ZONES[Number(button.dataset.zone)];teleport(...zone.spawn);});
 const moveKeys=['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'];
@@ -1342,7 +1634,7 @@ function move(dt){
 }
 function updateLandmarks(dt){
   let closest=null,best=WORLD.INTERACT_DISTANCE;
-  for(const lm of landmarks){const d=Math.hypot(player.position.x-lm.entryPoint.x,player.position.z-lm.entryPoint.z);if(d<best){best=d;closest=lm;}}
+  for(const lm of landmarks){const entryDistance=Math.hypot(player.position.x-lm.entryPoint.x,player.position.z-lm.entryPoint.z),d=lm.gatePoint?Math.min(entryDistance,Math.hypot(player.position.x-lm.gatePoint.x,player.position.z-lm.gatePoint.z)):entryDistance;if(d<best){best=d;closest=lm;}}
   setNear(started?closest:null);
   for(const lm of landmarks){
     const d=Math.hypot(player.position.x-lm.entry.x,player.position.z-lm.entry.z),active=lm===nearest;
@@ -1351,7 +1643,7 @@ function updateLandmarks(dt){
     lm.activation+=(Number(active)-lm.activation)*(reduced?1:1-Math.exp(-7*dt));
     // Keep the measured model base immovable; activation belongs to light, never to foundations.
     if(lm.model){const limit=lightQuality?WORLD.LOD_MOBILE:WORLD.LOD_DESKTOP;
-      const far=d>limit+(lm.model.visible?12:-12);lm.model.visible=!far;lm.model.userData.dressing.visible=!far;lm.lod.visible=far;
+      const far=lm.index===23?false:d>limit+(lm.model.visible?12:-12);lm.model.visible=!far;lm.model.userData.dressing.visible=!far;lm.lod.visible=far;
     }
     const lit=visited.has(lm.index),breath=reduced?0:Math.sin(elapsed*1.2+lm.index*.7)*.045;
     const body=lm.model||lm.fallback;body.traverse(o=>{if(o.isMesh){for(const mat of (Array.isArray(o.material)?o.material:[o.material]))if(mat.userData.baseEmission)mat.emissiveIntensity=mat.userData.baseEmission*(lit?1.08:1);}});
@@ -1375,7 +1667,7 @@ function segmentHit(a,b,box,margin=0){
   const hit=cameraRay.intersectBox(expanded,rayPoint);return hit&&hit.distanceTo(a)<length-1e-5?hit.clone():null;
 }
 function clearCamera(position,target){
-  const boxes=subjectBounds(),pad=WORLD.CAMERA_CLEARANCE;
+  const boxes=butterflySea?subjectBounds().filter(b=>b!==landmarks[23].bounds).concat(butterflySea.cameraBoxes):subjectBounds(),pad=WORLD.CAMERA_CLEARANCE;
   position.y=surfaceHeight(position.x,position.z)+2.1;
   // Retract the boom along target -> camera when an obstacle lies between them.
   for(const box of boxes){if(box.clone().expandByScalar(pad).containsPoint(target))continue;const hit=segmentHit(target,position,box,pad);if(hit){const dir=position.clone().sub(target).normalize();position.copy(hit).addScaledVector(dir,-.05);}}
@@ -1429,6 +1721,9 @@ function monumentView(lm){
 }
 const framingRay=new THREE.Raycaster();
 function framingSubject(){
+  if(butterflySea&&butterflySeaSurface(player.position.x,player.position.z)!==null)return null;
+  if(butterflySea){const lm=landmarks[23],t=lm.site,dx=player.position.x-t.x,dz=player.position.z-t.z,along=dx*t.ux+dz*t.uz,side=-dx*t.uz+dz*t.ux;
+    if(Math.abs(side)<5&&along>=-t.radius-WORLD.APPROACH_LENGTH-5&&along<3&&Math.cos(cameraState.yaw-Math.atan2(-t.ux,-t.uz))>.65)return lm;}
   if(nearest)return nearest;
   const forward=new THREE.Vector3(-Math.sin(cameraState.yaw),0,-Math.cos(cameraState.yaw));
   let chosen=null,best=Infinity;
@@ -1453,6 +1748,28 @@ function updateCamera(dt){
   if(!started){
     camPosition.set(1.5+Math.sin(elapsed*.045)*.35,2.7,WORLD.TORII_Z+24);
     camTarget.set(0,10,-75);camera.position.copy(camPosition);cameraLook.copy(camTarget);camera.lookAt(camTarget);return;
+  }
+  if(butterflySea){
+    const onSea=butterflySeaSurface(player.position.x,player.position.z)!==null;
+    document.body.classList.toggle('sea-palace-view',onSea);
+    if(onSea&&!lookActive&&elapsed-lastLookAt>2.5){
+      const b=landmarks[23].butterfly,local=b.root.worldToLocal(player.position.clone());
+      if(local.z>-16&&Math.abs(local.x)<18){
+        const damping=reduced?1:1-Math.exp(-4*dt),portrait=camera.aspect<1;
+        cameraState.yaw=Math.atan2(-b.sea.ux,-b.sea.uz);cameraState.framing=0;
+        // Retreat continuously at the gate so portrait keeps both wings, with a
+        // narrower distant lens instead of spending most of the frame on sky.
+        const back=Math.max(local.z+cameraState.distance,portrait?104:68);
+        camPosition.copy(b.root.localToWorld(new THREE.Vector3(local.x*.25,0,back)));
+        camPosition.y=surfaceHeight(camPosition.x,camPosition.z)+2.1;
+        camTarget.copy(b.root.localToWorld(new THREE.Vector3(0,22,-9)));
+        const distance=camPosition.distanceTo(camTarget),halfWidth=53;
+        const fit=THREE.MathUtils.radToDeg(2*Math.atan(halfWidth/(distance*camera.aspect*.84)));
+        const fov=THREE.MathUtils.clamp(Math.max(fit,THREE.MathUtils.radToDeg(2*Math.atan(33/(distance*.62)))),38,portrait?104:78);
+        camera.position.lerp(camPosition,damping);cameraLook.lerp(camTarget,damping);
+        camera.fov=THREE.MathUtils.lerp(camera.fov,fov,damping);camera.updateProjectionMatrix();camera.lookAt(cameraLook);return;
+      }
+    }
   }
   const d=cameraState.distance,yaw=cameraState.yaw;
   const subject=framingSubject(),auto=subject&&!lookActive&&elapsed-lastLookAt>2.5,damping=reduced?1:1-Math.exp(-3.5*dt);
@@ -1487,6 +1804,9 @@ function layoutLabels(){
     const rect={x0:x-w/2-6,x1:x+w/2+6,y0:y-h/2-4,y1:y+h/2+4};
     if(labelWorld.z>1||rect.y0<(innerWidth<760?80:95)||rect.x0<12||rect.x1>innerWidth-12||rect.y1>innerHeight-120||occupied.some(r=>rect.x0<r.x1&&rect.x1>r.x0&&rect.y0<r.y1&&rect.y1>r.y0)){lm.name.visible=false;continue;}
     occupied.push(rect);
+    // The portrait sea gate already names this landmark in the interaction card.
+    // Keep its layout slot so every other label retains the default placement.
+    if(lm.index===23&&lm===nearest&&innerWidth<=760&&camera.aspect<1&&butterflySea&&butterflySeaSurface(player.position.x,player.position.z)!==null)lm.name.visible=false;
   }
 }
 
@@ -1495,20 +1815,20 @@ function frame(now){
   const raw=lastTime?(now-lastTime)/1000:1/60,dt=Math.min(raw,.035);lastTime=now;elapsed+=dt;
   skyTick(dt);
   if(started&&$('directory').hidden)move(dt);
-  updateLandmarks(dt);updateButterfly(dt,landmarks[23]);updateCamera(dt);layoutLabels();
+  updateLandmarks(dt);updateButterflySea(dt,landmarks[23]);updateCamera(dt);layoutLabels();
   particles.visible=!reduced&&fireLevel>.02;starMaterial.uniforms.motion.value=reduced?0:1;
   if(!reduced){for(let i=0;i<(lightQuality?Math.min(16,particleCount):particleCount);i++){const b=particleBase[i];particlePositions[i*3]=b[0]+Math.sin(elapsed*.25+b[3])*.3;particlePositions[i*3+1]=b[1]+Math.sin(elapsed*.6+b[3])*.35;}particleGeometry.attributes.position.needsUpdate=true;}
   mapElapsed+=dt;if(mapElapsed>.08){drawMap();mapElapsed=0;}
   if(!reduced){starMaterial.uniforms.time.value=elapsed;if(!lightQuality)waterMaterial.uniforms.time.value=elapsed;clouds.forEach((cloud,i)=>{if(cloud.visible)cloud.position.x=cloud.userData.baseX+Math.sin(elapsed*.025+i)*4;});}
   for(const puff of dustPool){if(reduced||lightQuality){puff.visible=false;puff.userData.life=0;continue;}if(puff.userData.life>0){puff.userData.life=Math.max(0,puff.userData.life-dt);const life=puff.userData.life/.65;puff.position.y+=dt*.17;puff.scale.setScalar(.16+(1-life)*.4);puff.material.opacity=life*.15;puff.visible=life>0;}}
-  renderer.info.reset();composer.render(dt);
+  renderer.info.reset();if(butterflySea)updateButterflySeaReflection(dt);composer.render(dt);
   // Ignore tab resumes and one-off stalls. Sustained slow frames downgrade the entire effect budget.
   if(!qualityReduced&&elapsed>3){slowFrames=raw>.029?slowFrames+1:Math.max(0,slowFrames-2);if(slowFrames>90){qualityReduced=true;reduceQuality();}}
 }
 // Read-mostly handle for automated smoke tests (batch 5 seven-bridge verification).
 window.__garden={WORLD,scene,renderer,camera,composer,cameraLook,subjectBounds,monumentFaces,walkable,surfaceHeight,terrainHeight,teleport,start,player,cameraState,modelLoads,
   get butterfly(){return landmarks[23].butterfly;},get sharedIvory(){return M.ivory;},BUTTERFLY,
-  get landmarks(){return landmarks.map(lm=>({index:lm.index,title:lm.entry.title,bboxHeight:lm.bboxHeight,groundY:lm.groundY,x:lm.entry.x,z:lm.entry.z,bounds:lm.bounds,platformY:lm.site.groundY,targetHeight:lm.targetHeight,entryPoint:lm.entryPoint,site:lm.site,labelY:lm.group.position.y+lm.name.position.y}));},
+  get landmarks(){return landmarks.map(lm=>({index:lm.index,title:lm.entry.title,bboxHeight:lm.bboxHeight,groundY:lm.groundY,x:lm.entry.x,z:lm.entry.z,bounds:lm.bounds,platformY:lm.site.groundY,targetHeight:lm.targetHeight,entryPoint:lm.entryPoint,...(lm.gatePoint?{gatePoint:lm.gatePoint}:{}),site:lm.site,labelY:lm.group.position.y+lm.name.position.y}));},
   get mathMonuments(){return mathMonuments.map(({group,model,lod,fallback,bounds,site,name,...r})=>r);},
   get quality(){return {lightQuality,qualityReduced,pixelRatio:renderer.getPixelRatio(),drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles};},
   get observation(){return viewCache?{position:viewCache.position,target:viewCache.target,k:viewCache.k}:null;},
