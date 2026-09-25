@@ -1,14 +1,30 @@
 /* Run against a local static server. Test tooling is external to the shipped single file.
    PLAYWRIGHT_PATH=/path/to/playwright node docs/wave1-check.cjs http://127.0.0.1:8874
-   WAVE1_ARTIFACTS=/tmp/wave1.5-qa controls screenshots and JSON report. */
+   WAVE1_ARTIFACTS=/tmp/wave2-qa controls screenshots and JSON report. */
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),crypto=require('node:crypto');
 const {chromium}=require(process.env.PLAYWRIGHT_PATH||'playwright');
 const url=process.argv[2]||'http://127.0.0.1:8874';
-const out=process.env.WAVE1_ARTIFACTS||'/tmp/wave1.5-qa';fs.mkdirSync(out,{recursive:true});
+const out=process.env.WAVE1_ARTIFACTS||'/tmp/wave2-qa';fs.mkdirSync(out,{recursive:true});
 const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
 assert.equal(html,fs.readFileSync(path.join(__dirname,'../island.html'),'utf8'));
 for(const [pattern,hash] of [[/const LINKS = (\[[\s\S]*?\n\]);/,'ace50acab071aea8f309c15e55bc67c2afc8e17f36b5a4544a980c942c1f1d42'],[/const TRACKS=(\[[\s\S]*?\n\]);/,'da871476abe678cee5e02d374c710a1ec98d904195550ca94ab30d34ee8a558b']])assert.equal(crypto.createHash('sha256').update(html.match(pattern)[1]).digest('hex'),hash);
 assert(!/<script[^>]+src=["']https?:/.test(html));
+// Verify the binary's real transforms/accessors before any browser adaptation.
+function measureButterflyGLB(){
+ const THREE=require('../vendor/three.min.js'),buffer=fs.readFileSync(path.join(__dirname,'../assets/models/LM24_Butterfly.glb'));
+ const length=buffer.readUInt32LE(12),g=JSON.parse(buffer.toString('utf8',20,20+length)),bin=buffer.subarray(28+length),parts={};
+ assert.equal(g.nodes.length,16);assert.equal(g.meshes.length,15);assert.equal(g.materials.length,4);assert.equal((g.skins||[]).length,0);assert.equal((g.animations||[]).length,0);
+ for(const node of g.nodes){if(node.mesh===undefined)continue;const primitive=g.meshes[node.mesh].primitives[0],a=g.accessors[primitive.attributes.POSITION],view=g.bufferViews[a.bufferView],offset=(view.byteOffset||0)+(a.byteOffset||0);
+  const matrix=new THREE.Matrix4().compose(new THREE.Vector3(...(node.translation||[0,0,0])),new THREE.Quaternion(...(node.rotation||[0,0,0,1])),new THREE.Vector3(...(node.scale||[1,1,1]))),box=new THREE.Box3();
+  for(let i=0;i<a.count;i++){const p=offset+i*(view.byteStride||12);box.expandByPoint(new THREE.Vector3(bin.readFloatLE(p),bin.readFloatLE(p+4),bin.readFloatLE(p+8)).applyMatrix4(matrix));}
+  parts[node.name]={min:box.min.toArray(),max:box.max.toArray(),rotation:node.rotation||[0,0,0,1],material:g.materials[primitive.material].name};
+  if(node.name.startsWith('Wing')){assert.equal(parts[node.name].material,'ivory');assert(primitive.attributes.TEXCOORD_0!==undefined);assert.equal(primitive.attributes.COLOR_0,undefined);assert(!g.materials[primitive.material].pbrMetallicRoughness.baseColorTexture);}
+ }
+ const pivotY=(parts.WingLL.max[1]+parts.WingUL.min[1])/2;assert(Math.abs(pivotY-1.145)<1e-6);assert(Math.abs(parts.Body.max[0]-.045)<1e-6);
+ return {nodes:g.nodes.length,meshes:g.meshes.length,materials:g.materials.length,skins:0,animations:0,parts,pivotY};
+}
+const butterflySource=measureButterflyGLB();
+
 // Display-space luminance: full composited WebGL frame, before HTML HUD/vignette.
 // Night mean .025–.32; solid monument mean .025–.48 and p95 <=.65.
 // White components use 4-connectivity at actual drawing-buffer resolution.
@@ -85,12 +101,79 @@ async function dressingAudit(p,fallback=false){
  },fallback);
 }
 
+// Real scene readback, with a separate depth-tested mask of just the four front wings.
+// RAF pause is injected by the harness only, so captures share exact camera/pose/time.
+async function wingPixels(p){return p.evaluate(()=>{
+ const g=__garden,r=g.renderer,gl=r.getContext(),w=gl.drawingBufferWidth,h=gl.drawingBufferHeight,n=w*h;
+ g.composer.render(0);const pixels=new Uint8Array(n*4);gl.readPixels(0,0,w,h,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
+ const swaps=[],hidden=[],black=new THREE.MeshBasicMaterial({color:0,side:THREE.DoubleSide,fog:false}),white=new THREE.MeshBasicMaterial({color:0xffffff,side:THREE.DoubleSide,fog:false}),back=black.clone();back.depthWrite=false;
+ g.scene.traverse(o=>{if(o.isMesh){swaps.push([o,o.material]);const mat=Array.isArray(o.material)?o.material[0]:o.material;o.material=g.butterfly.wings.includes(o)?white:mat.depthWrite===false?back:black;}else if(o.isSprite||o.isPoints){hidden.push([o,o.visible]);o.visible=false;}});
+ const rt=new THREE.WebGLRenderTarget(w,h),bg=g.scene.background;g.scene.background=new THREE.Color(0);r.setRenderTarget(rt);r.render(g.scene,g.camera);const mask=new Uint8Array(n*4);r.readRenderTargetPixels(rt,0,0,w,h,mask);r.setRenderTarget(null);rt.dispose();g.scene.background=bg;swaps.forEach(([o,m])=>o.material=m);hidden.forEach(([o,v])=>o.visible=v);black.dispose();white.dispose();back.dispose();g.composer.render(0);
+ let count=0,saturation=0,coloured=0,nearWhite=0;for(let i=0;i<n;i++)if(mask[i*4]>200){const rgb=[pixels[4*i],pixels[4*i+1],pixels[4*i+2]],mx=Math.max(...rgb),mn=Math.min(...rgb),sat=mx?(mx-mn)/mx:0;count++;saturation+=sat;if(sat>.3)coloured++;if(rgb[0]*.2126+rgb[1]*.7152+rgb[2]*.0722>255*.97)nearWhite++;}
+ return {pixels:count,saturation:saturation/Math.max(1,count),colouredRatio:coloured/Math.max(1,count),whiteRatio:nearWhite/Math.max(1,count),reveal:g.butterfly.reveal,uniformReveal:g.butterfly.wings[0].material.userData.revealUniforms.uReveal.value};
+});}
+async function butterflyAudit(p,mobile){
+ const structure=await p.evaluate(()=>{
+  const g=__garden,b=g.butterfly,errors=[],wrap=b.root.parent;
+  for(const [h,names] of [[b.left,['WingUL','WingLL','BackUL','BackLL']],[b.right,['WingUR','WingLR','BackUR','BackLR']]])if(!h.isGroup||h.children.map(o=>o.name).sort().join()!==names.sort().join())errors.push('hinge children');
+  if(wrap.userData.tier!=='butterfly'||wrap.userData.dressing.children.length||wrap.getObjectByName('face-trim'))errors.push('generic dressing');
+  const panel=b.root.getObjectByName('Panel');if(panel.material.map||panel.material.emissive.getHex()!==0||panel.material.userData.revealWing)errors.push('blank canvas');
+  for(const w of b.wings){const m=w.material,u=m.userData.revealUniforms;if(!m.isMeshStandardMaterial||!m.userData.revealWing||!u.uReveal||!u.uTime||!u.uVisited||!u.uNight||m===g.sharedIvory)errors.push('wing material');}
+  const expected=new THREE.Color(0xe8e2d5).convertSRGBToLinear();if(g.sharedIvory.userData.revealUniforms||g.sharedIvory.onBeforeCompile.toString().includes('wing'))errors.push('shared ivory polluted');
+  const shared=g.sharedIvory.color.toArray();if(shared.some((x,i)=>Math.abs(x-expected.toArray()[i])>1e-9))errors.push('shared colour');
+  const sample=[];g.scene.traverse(o=>{if(o.isMesh&&o.userData.landmark?.index===0)sample.push({name:o.name,color:o.material.color?.toArray(),reveal:!!o.material.userData.revealWing});});if(sample.some(x=>x.reveal))errors.push('other landmark shader');
+  const saved=[b.left.quaternion.clone(),b.right.quaternion.clone()],box=g.landmarks[23].bounds,escaped=[],panelBox=new THREE.Box3().setFromObject(panel);let vertices=0,minPanelClearance=Infinity;
+  // Independent random-looking poses plus both limits; sample every actual vertex.
+  for(let j=0;j<=40;j++){const a=g.BUTTERFLY.maxAngle*(j===40?1:(j*17%40)/40);b.left.rotation.set(0,a,0);b.right.rotation.set(0,-a,0);g.scene.updateMatrixWorld(true);
+   for(const hinge of [b.left,b.right])for(const mesh of hinge.children){const pos=mesh.geometry.attributes.position;for(let i=0;i<pos.count;i++){const v=new THREE.Vector3().fromBufferAttribute(pos,i).applyMatrix4(mesh.matrixWorld);vertices++;if(!box.containsPoint(v))escaped.push(mesh.name);const local=b.root.worldToLocal(v.clone());minPanelClearance=Math.min(minPanelClearance,local.z-(-.05));}}
+  }
+  b.left.quaternion.copy(saved[0]);b.right.quaternion.copy(saved[1]);g.scene.updateMatrixWorld(true);
+  const lod=wrap.parent.getObjectByName('butterfly-silhouette');if(!lod||lod.children[0].children.filter(x=>x.name==='silhouette-wing').length!==4)errors.push('silhouette');
+  return {errors,pivots:[b.left.position.toArray(),b.right.position.toArray()],vertices,escaped,minPanelClearance,shared,sample,palette:g.BUTTERFLY.palette,margin:b.sweepMargin,panelSize:panelBox.getSize(new THREE.Vector3()).toArray()};
+ });
+ assert.deepEqual(structure.errors,[]);assert.deepEqual(structure.escaped,[]);assert(structure.minPanelClearance>0);
+ async function collect(ms){return p.evaluate(async ms=>{const rows=[],start=performance.now();while(performance.now()-start<ms){await new Promise(requestAnimationFrame);const b=__garden.butterfly;rows.push({a:b.left.userData.angle,r:b.right.userData.angle,reveal:b.reveal});}return {fps:rows.length*1000/(performance.now()-start),min:Math.min(...rows.map(x=>x.a)),max:Math.max(...rows.map(x=>x.a)),mirrorError:Math.max(...rows.map(x=>Math.abs(x.a+x.r))),frames:rows.length};},ms);}
+ await p.evaluate(()=>{(()=>{const l=__garden.landmarks[23];__garden.teleport(l.x-l.site.ux*36,l.z-l.site.uz*36)})();__garden.setSky(.55)});await p.waitForTimeout(6000);
+ const idle=await collect(3000);assert(idle.max<=.05501&&idle.min>=.01199);assert(idle.max-idle.min>.0001);assert(idle.mirrorError<1e-9);
+ const baselineMaterials=await p.evaluate(()=>{const rows=[];__garden.scene.traverse(o=>{if(o.isMesh&&o.userData.landmark?.index!==23&&o.userData.landmark&&o.material.color)rows.push([o.uuid,o.material.color.toArray()]);});return rows;});
+ // Establish the real entry-point camera without waiting for activation to colour it.
+ await p.evaluate(()=>{const g=__garden,l=g.landmarks[23];g.teleport(l.entryPoint.x,l.entryPoint.z);g.cameraState.yaw=Math.atan2(-l.site.ux,-l.site.uz)});await p.waitForTimeout(3600);
+ const fixed=await p.evaluate(()=>({position:__garden.camera.position.toArray(),target:__garden.cameraLook.toArray()}));
+ await p.evaluate(()=>(()=>{const l=__garden.landmarks[23];__garden.teleport(l.x-l.site.ux*36,l.z-l.site.uz*36)})());await p.waitForTimeout(7000);
+ async function lock(view=fixed,night=true){if(night){await p.evaluate(()=>__garden.setSky(.55));await p.waitForTimeout(80);}await p.evaluate(view=>{window.__pauseFrames=true;const g=__garden;g.butterfly.left.rotation.set(0,.1,0);g.butterfly.right.rotation.set(0,-.1,0);g.butterfly.wings.forEach(w=>w.material.userData.revealUniforms.uTime.value=20);g.scene.updateMatrixWorld(true);g.camera.position.fromArray(view.position);g.cameraLook.fromArray(view.target);g.camera.lookAt(g.cameraLook);g.camera.updateMatrixWorld(true);g.composer.render(0);},view);}
+ const photos={};await lock();const rest=await wingPixels(p);photos.rest=await exposure(p,'butterfly-rest',mobile);await p.evaluate(()=>window.__pauseFrames=false);
+ assert(rest.uniformReveal<.01);assert(rest.pixels>100);assert(rest.saturation<.24,JSON.stringify(rest));
+ // Fixed processional view: player at the foot of the original stairs, eye on axis.
+ await p.evaluate(()=>{const g=__garden,l=g.landmarks[23];g.teleport(l.x-l.site.ux*30,l.z-l.site.uz*30);g.cameraState.yaw=Math.atan2(-l.site.ux,-l.site.uz);});await p.waitForTimeout(3500);
+ const axial=await p.evaluate(()=>{const g=__garden,l=g.landmarks[23],x=l.x-l.site.ux*38,z=l.z-l.site.uz*38;return {position:[x,g.surfaceHeight(x,z)+2.1,z],target:[l.x,l.groundY+28,l.z]};});
+ await lock(axial);photos.approach=await exposure(p,'butterfly-approach',mobile);await p.evaluate(()=>window.__pauseFrames=false);
+ await p.evaluate(()=>{const g=__garden,l=g.landmarks[23];g.teleport(l.entryPoint.x,l.entryPoint.z);g.cameraState.yaw=Math.atan2(-l.site.ux,-l.site.uz)});await p.waitForTimeout(5000);
+ const active=await collect(5200);assert(active.min>=.0399&&active.max<=.42001);assert(active.max-active.min>.30);assert(active.mirrorError<1e-9);assert(active.fps>=(mobile?30:55));
+ await lock();const peak=await wingPixels(p);photos.peak=await exposure(p,'butterfly-peak',mobile);assert(peak.uniformReveal>.6);assert(peak.saturation>rest.saturation+.12&&peak.colouredRatio>.3,JSON.stringify({rest,peak}));assert(peak.whiteRatio<=(mobile?.04:.02));
+ await p.evaluate(()=>window.__pauseFrames=false);
+ // Day/night is driven by the existing sky, not by a test-only uniform override.
+ await p.evaluate(()=>__garden.setSky(.1));await p.waitForTimeout(1500);const day=await p.evaluate(()=>__garden.butterfly.wings[0].material.userData.revealUniforms.uNight.value);assert(day<.1);await lock(fixed,false);const dayPixels=await wingPixels(p);await p.evaluate(()=>window.__pauseFrames=false);assert(dayPixels.saturation<peak.saturation);
+ await p.evaluate(()=>__garden.setSky(.55));await p.waitForTimeout(1500);const night=await p.evaluate(()=>__garden.butterfly.wings[0].material.userData.revealUniforms.uNight.value);assert(night>.9);
+ await p.evaluate(()=>(()=>{const l=__garden.landmarks[23];__garden.teleport(l.x-l.site.ux*36,l.z-l.site.uz*36)})());await p.waitForTimeout(7500);await lock();const faded=await wingPixels(p);photos.faded=await exposure(p,'butterfly-faded',mobile);await p.evaluate(()=>window.__pauseFrames=false);
+ assert(faded.uniformReveal<.01&&faded.saturation<peak.saturation-.12);
+ // Genuine distance LOD, camera remains aimed at this monument for the fixed shot.
+ await p.evaluate(()=>__garden.teleport(0,145));await p.waitForTimeout(100);const lod=await p.evaluate(()=>{const b=__garden.butterfly,lod=b.root.parent.parent.getObjectByName('butterfly-silhouette');return {visible:lod.visible,model:b.root.parent.visible};});assert(lod.visible&&!lod.model);
+ await lock({position:[fixed.position[0],fixed.position[1]+18,fixed.position[2]],target:fixed.target});photos.distant=await exposure(p,'butterfly-silhouette',mobile);await p.evaluate(()=>window.__pauseFrames=false);
+ // Click the actual entry, intercepting its external destination in the existing harness.
+ await p.evaluate(()=>{const g=__garden,l=g.landmarks[23];g.teleport(l.entryPoint.x,l.entryPoint.z)});await p.waitForTimeout(1200);assert.equal(await p.getAttribute('#enter-link','href'),'https://uncolored-butterfly.maniforld.com');
+ const popupPromise=p.waitForEvent('popup');await p.click('#enter-link');const popup=await popupPromise;await popup.waitForLoadState('domcontentloaded');assert.equal(popup.url(),'https://uncolored-butterfly.maniforld.com/');await popup.close();await p.bringToFront();
+ await p.evaluate(()=>(()=>{const l=__garden.landmarks[23];__garden.teleport(l.x-l.site.ux*36,l.z-l.site.uz*36)})());await p.waitForTimeout(7500);await lock();const memory=await wingPixels(p),visited=await p.evaluate(()=>({uniform:__garden.butterfly.wings[0].material.userData.revealUniforms.uVisited.value,saved:JSON.parse(localStorage.getItem('garden-visited-v1'))}));await p.evaluate(()=>window.__pauseFrames=false);
+ assert(visited.uniform>.99&&visited.saved.includes('https://uncolored-butterfly.maniforld.com'));assert(memory.uniformReveal<.01);assert(memory.saturation>faded.saturation&&memory.saturation<peak.saturation);
+ const unchanged=await p.evaluate(before=>before.every(([id,color])=>{const m=__garden.scene.getObjectByProperty('uuid',id)?.material;return m&&m.color.toArray().every((v,i)=>v===color[i])&&!m.userData.revealWing;}),baselineMaterials);assert(unchanged);
+ return {structure,idle,active,rest,peak,faded,memory,visited,day,dayPixels,night,lod,unchanged,fixed,photos};
+}
+
 async function run(){
- const browser=await chromium.launch({channel:'chrome',headless:true});const report={wave:'1.5',generatedAt:new Date().toISOString(),sourceSha256:crypto.createHash('sha256').update(html).digest('hex'),complete:false,thresholds:{whiteDesktop:.02,whiteMobile:.04,maxWhiteComponent:.005,nightMean:[.025,.32],bodyMean:[.025,.48],bodyP95:.65,maxUnbrokenPlane:12,viewKDesktop:.5,viewKPortrait:.62}};
+ const browser=await chromium.launch({channel:'chrome',headless:true});const report={wave:'2A',butterflySource,generatedAt:new Date().toISOString(),sourceSha256:crypto.createHash('sha256').update(html).digest('hex'),complete:false,thresholds:{whiteDesktop:.02,whiteMobile:.04,maxWhiteComponent:.005,nightMean:[.025,.32],bodyMean:[.025,.48],bodyP95:.65,maxUnbrokenPlane:12,viewKDesktop:.5,viewKPortrait:.62}};
  try{
  for(const mobile of [false,true]){
   const context=await browser.newContext({viewport:mobile?{width:390,height:844}:{width:1440,height:900},deviceScaleFactor:mobile?3:1,isMobile:mobile,hasTouch:mobile});
-  await context.addInitScript(()=>{const AudioNative=window.Audio;window.__testAudio=[];window.Audio=function(...args){const a=new AudioNative(...args);window.__testAudio.push(a);return a;};window.Audio.prototype=AudioNative.prototype;});
+  await context.addInitScript(()=>{const raf=window.requestAnimationFrame.bind(window);window.requestAnimationFrame=fn=>raf(function tick(t){if(window.__pauseFrames)raf(tick);else fn(t);});const AudioNative=window.Audio;window.__testAudio=[];window.Audio=function(...args){const a=new AudioNative(...args);window.__testAudio.push(a);return a;};window.Audio.prototype=AudioNative.prototype;});
   await context.route('**/*',route=>{if(new URL(route.request().url()).origin!==new URL(url).origin)return route.fulfill({status:200,contentType:'text/html',body:'<title>Destination intercepted by regression test</title>'});return route.continue();});
   const p=await context.newPage(),errors=[];p.on('pageerror',e=>{errors.push(e.stack);console.error(e.stack)});p.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
   await p.goto(url);await p.waitForFunction(()=>window.__garden?.modelLoads.loaded.length===34);
@@ -98,6 +181,8 @@ async function run(){
   assert.equal(initial.loads.failed.length,0);assert(initial.y<6);assert(initial.far>=2200);assert(initial.radius===150);
   const photos={};await p.evaluate(()=>__garden.setSky(.55));await p.waitForTimeout(100);photos.intro=await exposure(p,'intro',mobile);await p.click('#start');
   await p.waitForTimeout(1200);photos.court=await exposure(p,'court',mobile);
+  const butterfly=await butterflyAudit(p,mobile);console.log('Butterfly passed',mobile,JSON.stringify({rest:butterfly.rest,peak:butterfly.peak,faded:butterfly.faded}));
+  if(process.env.BUTTERFLY_ONLY){report[mobile?'mobile':'desktop']={butterfly,errors};assert.deepEqual(errors,[]);await context.close();continue;}
   const geometry=await p.evaluate(async()=>{
    const g=__garden,errors=[],records=g.landmarks;let minSpacing=Infinity,maxStep=0,maxBridgeStep=0,absoluteMax=0;
    const pause=()=>new Promise(requestAnimationFrame);
@@ -121,7 +206,7 @@ async function run(){
     g.teleport((b.x1+b.x2)/2,(b.z1+b.z2)/2);await pause();
    }
    for(const is of g.MATH_ISLES){g.teleport(is.x,is.z);await pause();if(!g.walkable(is.x,is.z))errors.push('isle '+is.key);}
-   const boxes=[];g.scene.traverse(o=>{if(['major','standard'].includes(o.userData.tier))boxes.push(new THREE.Box3().setFromObject(o));});
+   const boxes=[];g.scene.traverse(o=>{if(['major','standard','butterfly'].includes(o.userData.tier))boxes.push(o.userData.bounds);});
    for(let i=0;i<boxes.length;i++)for(let j=i+1;j<boxes.length;j++){const a=boxes[i],b=boxes[j];if(Math.min(a.max.x,b.max.x)-Math.max(a.min.x,b.min.x)>.05&&Math.min(a.max.z,b.max.z)-Math.max(a.min.z,b.min.z)>.05)errors.push('model overlap '+i+'/'+j);}
    return {errors,minSpacing,maxStep,maxBridgeStep,absoluteMax,monuments:records.map(({site,...r})=>r),math:g.mathMonuments,bridgesWalked:[...g.bridgesWalked]};
   });
@@ -149,19 +234,20 @@ async function run(){
   await p.keyboard.up('KeyD');
   assert(performanceResult.fps>=(mobile?30:55));assert.equal(performanceResult.quality.qualityReduced,false);assert.equal(performanceResult.overflow,false);assert.deepEqual(errors,[]);
   const cameraChecks=await cameraAudit(p,mobile);console.log('Camera audit',mobile,cameraChecks.errors);assert.deepEqual(cameraChecks.errors,[]);
-  const dressing=await dressingAudit(p);console.log('Dressing audit',mobile,dressing.errors);assert.deepEqual(dressing.errors,[]);assert.equal(dressing.rows.length,29);
+  const dressing=await dressingAudit(p);console.log('Dressing audit',mobile,dressing.errors);assert.deepEqual(dressing.errors,[]);assert.equal(dressing.rows.length,28);
   await p.evaluate(()=>{document.querySelector('#euler-card').hidden=true;document.querySelector('#bridge-toast').classList.remove('show')});
   for(const [name,i,d] of [['approach',0,30],['vault',9,29],['mindcare',24,32]]){
    await p.evaluate(({i,d})=>{const g=__garden,l=g.landmarks[i];g.teleport(l.x-l.site.ux*d,l.z-l.site.uz*d);g.cameraState.yaw=Math.atan2(-l.site.ux,-l.site.uz);g.setSky(.55);},{i,d});await p.waitForTimeout(3200);photos[name]=await exposure(p,name,mobile);
   }
   await p.evaluate(()=>{__garden.teleport(135,-22);__garden.cameraState.yaw=-Math.PI/2;__garden.setSky(.55)});await p.waitForTimeout(3200);photos.distant=await exposure(p,'distant',mobile);
   assert.deepEqual(errors,[]);assert.equal(await p.evaluate(()=>__garden.quality.qualityReduced),false);
-  report[mobile?'mobile':'desktop']={initial,geometry,sky,performance:performanceResult,errors,photos,cameraChecks,dressing};
+  report[mobile?'mobile':'desktop']={initial,geometry,sky,performance:performanceResult,errors,photos,cameraChecks,dressing,butterfly};
   fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(report,null,2));
-  await p.reload();await p.waitForFunction(()=>window.__garden?.modelLoads.loaded.length===34);assert.equal(await p.locator('#visited').textContent(),'01 / 26');
+  await p.reload();await p.waitForFunction(()=>window.__garden?.modelLoads.loaded.length===34);assert.equal(await p.locator('#visited').textContent(),'02 / 26');
   if(!mobile){await p.evaluate(()=>__garden.renderer.getContext().getExtension('WEBGL_lose_context').loseContext());await p.waitForTimeout(150);assert(await p.locator('#error').isVisible());await p.click('#fallback-list');assert.equal(await p.locator('#directory-grid a').count(),26);}
   await context.close();console.log((mobile?'Mobile':'Desktop')+' passed');
  }
+ if(process.env.BUTTERFLY_ONLY){report.complete=true;return;}
  // Intentionally fail model requests on an isolated page: these network errors are expected.
  const fallback=await browser.newPage();await fallback.route('**/*.glb',r=>r.abort());await fallback.goto(url);await fallback.waitForFunction(()=>window.__garden?.modelLoads.failed.length===34);
  assert(await fallback.evaluate(()=>__garden.landmarks.every(l=>l.bboxHeight>=24&&Math.abs(l.groundY-l.platformY)<.001)&&__garden.mathMonuments[0].bboxHeight>=48));const fallbackDressing=await dressingAudit(fallback,true);assert.deepEqual(fallbackDressing.errors,[]);assert.equal(fallbackDressing.rows.length,29);await fallback.screenshot({path:path.join(out,'fallback.png')});await fallback.close();report.fallback={passed:true,dressing:fallbackDressing};

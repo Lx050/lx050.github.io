@@ -685,6 +685,133 @@ function monumentLOD(group,size){
   const tip=mesh(G.sphere,lodWarm,lod,0,size.y+.25,0,.28,.28,.28);tip.castShadow=tip.receiveShadow=false;
   lod.visible=false;return lod;
 }
+// Reusable kinetic/reveal primitives. Pivots are in the unscaled object's frame.
+function createHinge(root,partNames,pivot,axis=new THREE.Vector3(0,1,0)){
+  const hinge=new THREE.Group();hinge.name=partNames[0].endsWith('L')?'wing-hinge-left':'wing-hinge-right';
+  hinge.position.copy(pivot);hinge.userData.axis=axis.clone().normalize();root.add(hinge);root.updateWorldMatrix(true,true);
+  partNames.forEach(name=>hinge.attach(root.getObjectByName(name)));return hinge;
+}
+function setHingeAngle(hinge,angle){hinge.quaternion.setFromAxisAngle(hinge.userData.axis,angle);hinge.userData.angle=angle;}
+const BUTTERFLY={maxAngle:.42,idlePeriod:16,activePeriod:4.8,palette:[0x365b65,0xa65342,0xb99a52,0x558575,0x78617e]};
+function makeRevealWingMaterial({side,upper}){
+  const mat=material(0xaca99e,{side:THREE.DoubleSide,transparent:true,opacity:.96,roughness:.92});
+  mat.name='butterfly-reveal';mat.userData.monument=true;mat.userData.revealWing=true;
+  const uniforms={uReveal:{value:0},uTime:{value:0},uVisited:{value:0},uNight:{value:1},uSide:{value:side},uUpper:{value:upper?1:0},uPalette:{value:BUTTERFLY.palette.map(c=>new THREE.Color(c).convertSRGBToLinear())}};
+  mat.userData.revealUniforms=uniforms;
+  mat.customProgramCacheKey=()=> 'wing-reveal-v1';
+  mat.onBeforeCompile=shader=>{
+    Object.assign(shader.uniforms,uniforms);
+    // The authored box UV front island: U=.375..625 is height, V=0..25 is width.
+    // Decode each island in the vertex stage, retaining the original UV buffer.
+    shader.vertexShader='varying vec2 vWingUV;\n'+shader.vertexShader;
+    shader.vertexShader=shader.vertexShader.replace('#include <uv_vertex>',`#include <uv_vertex>
+      if(normal.z>.5) vWingUV=vec2(uv.y*4.0,(uv.x-.375)*4.0);
+      else if(normal.z<-.5) vWingUV=vec2((.75-uv.y)*4.0,(uv.x-.375)*4.0);
+      else vWingUV=position.xy+.5;`);
+    shader.fragmentShader=`varying vec2 vWingUV;
+      uniform float uReveal,uTime,uVisited,uNight,uSide,uUpper;
+      uniform vec3 uPalette[5];
+      float wingHash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+      `+shader.fragmentShader;
+    shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+      vec2 w=vWingUV;w.x=mix(1.0-w.x,w.x,step(0.0,uSide));
+      w.y=mix(1.0-w.y,w.y,uUpper);
+      // Five branching paths share an inner root; travel proceeds along the veins first.
+      float rootY=.02,veinDistance=1.0;
+      for(int j=0;j<5;j++){
+        float tip=float(j)*.235+.04;
+        float path=mix(rootY,tip,pow(clamp(w.x,0.0,1.0),.8));
+        path+=.024*sin(w.x*9.0+float(j)*1.7)*w.x;
+        veinDistance=min(veinDistance,abs(w.y-path));
+      }
+      float vein=1.0-smoothstep(.004,.012,veinDistance);
+      float grain=wingHash(floor(w*vec2(135.0,105.0)));
+      float travel=.67*w.x+.26*clamp(veinDistance*6.0,0.0,1.0)+.035*grain;
+      float growth=smoothstep(travel,travel+.10,uReveal)*smoothstep(0.0,.08,uReveal);
+      float memory=uVisited*.055*(1.0-smoothstep(.0,.28,w.x));
+      float field=clamp(w.y*.65+w.x*.25+.035*sin(uTime*.055+w.y*4.0),0.0,1.0)*4.0;
+      vec3 pigment=mix(uPalette[0],uPalette[1],smoothstep(0.0,1.0,field));
+      pigment=mix(pigment,uPalette[2],smoothstep(1.0,2.0,field));
+      pigment=mix(pigment,uPalette[3],smoothstep(2.0,3.0,field));
+      pigment=mix(pigment,uPalette[4],smoothstep(3.0,4.0,field));
+      float ink=.86+.10*grain-.17*vein;
+      diffuseColor.rgb=mix(diffuseColor.rgb*.38*ink,pigment*(.72+.28*grain),max(memory,growth*(.52+.40*uNight)));
+      float dust=step(.975,grain)*(1.0-smoothstep(.10,.24,length(fract(w*vec2(135.0,105.0))-.5)));
+      vec3 wingEmission=pigment*(vein*.85+dust*2.8)*growth*uNight;
+      `);
+    shader.fragmentShader=shader.fragmentShader.replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\n totalEmissiveRadiance+=wingEmission;');
+  };return mat;
+}
+function advanceReveal(state,dt,activation,wasVisited,night){
+  state.phase+=dt*2*Math.PI/THREE.MathUtils.lerp(BUTTERFLY.idlePeriod,BUTTERFLY.activePeriod,activation);
+  // A raised cosine cubed pauses at the open pose, then breathes in and releases.
+  state.breath=Math.pow((1-Math.cos(state.phase))*.5,3);
+  const target=activation*(.88+.12*state.breath);
+  state.reveal+=(target-state.reveal)*(1-Math.exp(-dt*(target>state.reveal?1.5:.9)));
+  state.visited+=(Number(wasVisited)-state.visited)*(1-Math.exp(-dt*2));
+  state.night+=(night-state.night)*(1-Math.exp(-dt*3));
+}
+function prepareButterfly(root,lm){
+  root.rotation.y=0;root.updateWorldMatrix(true,true);
+  const boxes={};root.traverse(o=>{if(o.isMesh)boxes[o.name]=new THREE.Box3().setFromObject(o);});
+  // Move all living parts together: rear wing min Z=-.12986 must clear panel front Z=-.05.
+  const frame=root.getObjectByName('FrameTop');frame.position.y=1.88;frame.scale.x*=1.42/1.5;frame.scale.y*=.12;frame.scale.z*=.83;
+  const base=root.getObjectByName('Base010')||root.getObjectByName('Base.010');base.scale.x*=.84;base.scale.z*=.35;
+  const lift=.22;root.children.forEach(o=>{if(!['Panel','FrameTop','Base010','Base.010'].includes(o.name))o.position.z+=lift;});
+  const y=(boxes.WingLL.max.y+boxes.WingUL.min.y)/2,z=(boxes.WingLL.min.z+boxes.WingLL.max.z)/2+lift;
+  const left=createHinge(root,['WingUL','WingLL','BackUL','BackLL'],new THREE.Vector3(boxes.Body.min.x,y,z));
+  const right=createHinge(root,['WingUR','WingLR','BackUR','BackLR'],new THREE.Vector3(boxes.Body.max.x,y,z));
+  // +Z of the gallery faces the incoming processional axis.
+  root.rotation.y=Math.atan2(-lm.site.ux,-lm.site.uz);
+  lm.butterfly={root,left,right,measurements:boxes,phase:0,breath:0,reveal:0,visited:0,night:1,wings:[],lift};
+  return root;
+}
+function finishButterfly(lm){
+  const b=lm.butterfly,root=b.root,wrap=lm.model;
+  for(const name of ['WingUL','WingLL','WingUR','WingLR']){
+    const wing=root.getObjectByName(name);wing.material=makeRevealWingMaterial({side:name.endsWith('L')?-1:1,upper:name.includes('U')});b.wings.push(wing);
+  }
+  const backing=material(0x263b3c,{side:THREE.DoubleSide,transparent:true,opacity:.88});backing.userData.monument=true;
+  for(const name of ['BackUL','BackLL','BackUR','BackLR'])root.getObjectByName(name).material=backing;
+  const paper=material(0x77786f);paper.userData.monument=true;root.getObjectByName('Panel').material=paper;
+  const edge=material(0x263232);edge.userData.monument=true;
+  const frame=root.getObjectByName('FrameTop');frame.material=edge;
+  // Only a narrow perimeter; the full interior of the native gallery panel stays blank.
+  const rim=new THREE.Group();rim.name='blank-gallery-border';root.add(rim);
+  for(const x of [-.705,.705])mesh(G.box,edge,rim,x,1.05,-.038,.012,1.65,.014);
+  mesh(G.box,edge,rim,0,.231,-.038,1.42,.012,.014);
+  const head=root.getObjectByName('Head');head.material=material(0x876c47,{emissive:0xe3ad64,emissiveIntensity:.28});head.material.userData.monument=true;
+  // A static sweep envelope. 129 poses plus a Lipschitz XZ margin encloses every
+  // intermediate angle; Y is unchanged by the vertical hinges. Never rebuilt per frame.
+  const bounds=new THREE.Box3();let radius=0;
+  for(const hinge of [b.left,b.right])hinge.traverse(o=>{if(o.isMesh){o.updateWorldMatrix(true,false);const p=o.geometry.attributes.position;for(let i=0;i<p.count;i++){const v=hinge.worldToLocal(new THREE.Vector3().fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld));radius=Math.max(radius,Math.hypot(v.x,v.z)*wrap.scale.x);}}});
+  for(let i=0;i<=128;i++){const a=BUTTERFLY.maxAngle*i/128;setHingeAngle(b.left,a);setHingeAngle(b.right,-a);wrap.updateWorldMatrix(true,true);bounds.union(new THREE.Box3().setFromObject(wrap));}
+  const margin=radius*BUTTERFLY.maxAngle/256+1e-5;bounds.min.x-=margin;bounds.min.z-=margin;bounds.max.x+=margin;bounds.max.z+=margin;
+  setHingeAngle(b.left,0);setHingeAngle(b.right,0);wrap.updateWorldMatrix(true,true);
+  b.observationTargets=b.wings.map(w=>w.getWorldPosition(new THREE.Vector3()));
+  wrap.userData.bounds=lm.bounds=bounds;lm.bboxHeight=bounds.max.y-bounds.min.y;lm.groundY=bounds.min.y;b.sweepMargin=margin;
+  // Six inexpensive silhouette meshes, in the same root frame as the live sculpture.
+  const lod=new THREE.Group(),silhouette=new THREE.Group();lod.name='butterfly-silhouette';lm.group.add(lod);lod.add(silhouette);
+  silhouette.position.copy(wrap.position);silhouette.scale.copy(wrap.scale);silhouette.rotation.copy(root.rotation);
+  const dark=new THREE.MeshBasicMaterial({color:new THREE.Color(0x19292d).convertSRGBToLinear().multiplyScalar(.38),side:THREE.DoubleSide});
+  for(const side of [-1,1])for(const upper of [false,true]){
+    const points=upper?[[.045,1.16],[.12,1.48],[.49,1.59],[.53,1.26],[.23,1.18]]:[[.045,1.14],[.40,1.08],[.44,.85],[.28,.78],[.12,.98]];
+    const shape=new THREE.Shape(points.map(([x,y])=>new THREE.Vector2(x*side,y)));
+    const wing=mesh(new THREE.ShapeGeometry(shape),dark,silhouette,0,0,.24);wing.name='silhouette-wing';
+  }
+  mesh(G.box,dark,silhouette,0,1.15,.24,.065,.5,.04);
+  mesh(G.sphere,lodWarm,silhouette,0,1.45,.27,.035,.035,.035);
+  lod.visible=false;lm.lod=lod;
+}
+function updateButterfly(dt,lm){
+  if(!lm.butterfly)return;const b=lm.butterfly;
+  advanceReveal(b,dt,lm.activation,visited.has(lm.index),1-Math.min(1,(skyState.sunI||0)/1.3));
+  const angle=reduced?0:THREE.MathUtils.lerp(.012,.04,lm.activation)+THREE.MathUtils.lerp(.043,.38,lm.activation)*b.breath;
+  setHingeAngle(b.left,angle);setHingeAngle(b.right,-angle);
+  if(!lm.model.visible)return;
+  for(const wing of b.wings){const u=wing.material.userData.revealUniforms;u.uReveal.value=b.reveal;u.uTime.value=reduced?0:elapsed;u.uVisited.value=b.visited;u.uNight.value=b.night;}
+}
+
 // Normalise from world bounds, including nested GLB transforms; never assume its authored origin.
 function placeMonument(glb,group,{targetHeight,tier}){
   const wrap=new THREE.Group();wrap.add(glb);group.add(wrap);group.updateWorldMatrix(true,true);
@@ -703,7 +830,8 @@ function placeMonument(glb,group,{targetHeight,tier}){
         m.userData.monument=true;m.userData.baseEmission=m.emissiveIntensity;materials.set(original,m);}
       return materials.get(original);
     });if(o.material.length===1)o.material=o.material[0];});
-    dressMonument(wrap);
+    if(tier!=='butterfly')dressMonument(wrap);
+    else {wrap.userData.dressing=new THREE.Group();wrap.userData.bounds=new THREE.Box3().setFromObject(wrap);}
   }
   return wrap;
 }
@@ -919,7 +1047,8 @@ function glbRefine(root,glowOverride){
 }
 const modelLoads={loaded:[],failed:[]};
 function glbLoad(url){return new Promise((resolve,reject)=>gltfLoader.load(url,g=>{modelLoads.loaded.push(url);resolve(g.scene);},undefined,e=>{modelLoads.failed.push(url);reject(e);}));}
-function instancePrototype(proto,placements,heightOf,refine=glbRefine){
+const sceneryBounds=[];
+function instancePrototype(proto,placements,heightOf,refine=glbRefine,cameraObstacle=false){
   const root=refine(proto.clone(true));root.updateWorldMatrix(true,true);
   const box=new THREE.Box3().setFromObject(root),size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());
   const byGeometry=new Map();
@@ -931,13 +1060,14 @@ function instancePrototype(proto,placements,heightOf,refine=glbRefine){
       for(const part of b.parts)im.setMatrixAt(n++,new THREE.Matrix4().multiplyMatrices(base,part));
     }
     im.castShadow=true;im.receiveShadow=true;scene.add(im);
+    if(cameraObstacle){b.geo.computeBoundingBox();for(let i=0;i<im.count;i++){const m=new THREE.Matrix4();im.getMatrixAt(i,m);sceneryBounds.push(b.geo.boundingBox.clone().applyMatrix4(m));}}
   }
 }
 function glbPlace(proto,parent,x,y,z,s,rotY,glowOverride){
   const wrap=new THREE.Group();wrap.position.set(x,y,z);wrap.scale.setScalar(s);if(rotY)wrap.rotation.y=rotY;
   wrap.add(glbRefine(proto.clone(true),glowOverride));(parent||scene).add(wrap);return wrap;
 }
-glbLoad('assets/models/Tree.glb').then(g=>instancePrototype(g,glbTrees,p=>p.h)).catch(e=>{
+glbLoad('assets/models/Tree.glb').then(g=>instancePrototype(g,glbTrees,p=>p.h,glbRefine,true)).catch(e=>{
   glbTrees.forEach(p=>{instance(G.cylinder,M.wood,p.x,p.y+p.h*.25,p.z,.18,p.h*.5,.18);instance(G.sphere,M.leaf,p.x,p.y+p.h*.7,p.z,p.h*.26,p.h*.3,p.h*.26);});flushInstances();console.warn('Tree fallback',e);
 });
 glbLoad('assets/models/SteppingStone.glb').then(g=>{
@@ -1002,13 +1132,14 @@ Object.keys(glbPerEntry).forEach(k=>{
   const lm=landmarks[Number(k)],spec=glbPerEntry[k];
   if(!lm||!lm.zproc.length)return;
   glbLoad(spec[0]).then(g=>{
-    const proto=(g.getObjectByName(spec[1])||g).clone(true);if(lm.index===15||lm.index===23)proto.rotation.y+=Math.PI/2; // Wide forms face their free corridor.
+    const proto=(g.getObjectByName(spec[1])||g).clone(true);if(lm.index===15)proto.rotation.y+=Math.PI/2; // Wide forms face their free corridor.
     lm.fallback.visible=false;lm.fallback.userData.dressing.visible=false;
-    const wrap=placeMonument(glbRefine(proto.clone(true),lm.glow),lm.group,{targetHeight:lm.targetHeight,tier:lm.targetHeight>=48?'major':'standard'});
+    const refined=glbRefine(proto,lm.glow);if(lm.index===23)prepareButterfly(refined,lm);
+    const wrap=placeMonument(refined,lm.group,{targetHeight:lm.targetHeight,tier:lm.index===23?'butterfly':lm.targetHeight>=48?'major':'standard'});
     lm.model=wrap;wrap.updateWorldMatrix(true,true);const box=new THREE.Box3().setFromObject(wrap);
     lm.bboxHeight=box.max.y-box.min.y;lm.groundY=box.min.y;lm.bounds=wrap.userData.bounds;
     // A single simplified mass is used beyond LOD distance, with hysteresis in updateLandmarks.
-    const size=box.getSize(new THREE.Vector3());lm.lod=monumentLOD(lm.group,size);
+    const size=box.getSize(new THREE.Vector3());if(lm.butterfly)finishButterfly(lm);else lm.lod=monumentLOD(lm.group,size);
     lm.entryPoint={x:lm.entry.x-lm.site.ux*(lm.site.radius-2),z:lm.entry.z-lm.site.uz*(lm.site.radius-2)};
     wrap.traverse(c=>{if(c.isMesh){c.userData.landmark=lm;pickables.push(c);}});
   }).catch(e=>console.warn(spec[0]+' 未加载',e));
@@ -1209,8 +1340,8 @@ function monumentView(lm){
   for(const x of [box.min.x,box.max.x])for(const y of [box.min.y,box.max.y])for(const z of [box.min.z,box.max.z])corners.push(new THREE.Vector3(x,y,z));
   const base=Math.atan2(-lm.site.ux,-lm.site.uz),boxes=subjectBounds();let chosen=null,bestScore=Infinity;
   // Centre-axis first; only step sideways when another monument obstructs that sightline.
-  for(let ring=0;ring<3&&!chosen;ring++)for(let step=0;step<49;step++){
-    const angle=base+(step?Math.ceil(step/2)*(step%2?1:-1)*Math.PI/24:0),dir=new THREE.Vector3(Math.sin(angle),0,Math.cos(angle));
+  for(let ring=0;ring<3&&!chosen;ring++)for(let step=0;step<(lm.butterfly?145:49);step++){
+    const angle=base+(step?Math.ceil(step/2)*(step%2?1:-1)*Math.PI/(lm.butterfly?72:24):0),dir=new THREE.Vector3(Math.sin(angle),0,Math.cos(angle));
     let distance=Math.max(minDistance,size.y*(1.12+ring*.35));
     for(let attempt=0;attempt<24;attempt++,distance*=1.08){
       const position=center.clone().addScaledVector(dir,distance);position.y=surfaceHeight(position.x,position.z)+2.1;
@@ -1223,9 +1354,10 @@ function monumentView(lm){
       if(!fits)continue;
       if(boxes.some(b=>b.clone().expandByScalar(1).containsPoint(position)||segmentHit(position,target,b,1)))break;
       const occluded=corners.filter(c=>boxes.some(b=>b!==box&&segmentHit(position,c,b,1))).length;
-      const turn=Math.ceil(step/2)*Math.PI/24;
+      const turn=Math.ceil(step/2)*Math.PI/(lm.butterfly?72:24);
       // Architecture favours its processional front; distant islands favour an open panorama.
-      const score=turn+occluded*(lm.index>=26?1:.16)+(lm.index<26?Math.max(0,turn-.6)*3:0);
+      const wingOccluded=lm.butterfly?lm.butterfly.observationTargets.filter(point=>[...boxes,...sceneryBounds].some(b=>b!==box&&segmentHit(position,point,b,.2))).length:0;
+      const score=wingOccluded*10+turn+occluded*(lm.index>=26?1:.16)+(lm.index<26?Math.max(0,turn-.6)*3:0);
       if(score<bestScore){chosen={position,target,distance,k};bestScore=score;}break;
     }
   }
@@ -1298,7 +1430,7 @@ function frame(now){
   const raw=lastTime?(now-lastTime)/1000:1/60,dt=Math.min(raw,.035);lastTime=now;elapsed+=dt;
   skyTick(dt);
   if(started&&$('directory').hidden)move(dt);
-  updateLandmarks(dt);updateCamera(dt);layoutLabels();
+  updateLandmarks(dt);updateButterfly(dt,landmarks[23]);updateCamera(dt);layoutLabels();
   particles.visible=!reduced&&fireLevel>.02;starMaterial.uniforms.motion.value=reduced?0:1;
   if(!reduced){for(let i=0;i<(lightQuality?Math.min(16,particleCount):particleCount);i++){const b=particleBase[i];particlePositions[i*3]=b[0]+Math.sin(elapsed*.25+b[3])*.3;particlePositions[i*3+1]=b[1]+Math.sin(elapsed*.6+b[3])*.35;}particleGeometry.attributes.position.needsUpdate=true;}
   mapElapsed+=dt;if(mapElapsed>.08){drawMap();mapElapsed=0;}
@@ -1310,6 +1442,7 @@ function frame(now){
 }
 // Read-mostly handle for automated smoke tests (batch 5 seven-bridge verification).
 window.__garden={WORLD,scene,renderer,camera,composer,cameraLook,subjectBounds,monumentFaces,walkable,surfaceHeight,terrainHeight,teleport,start,player,cameraState,modelLoads,
+  get butterfly(){return landmarks[23].butterfly;},get sharedIvory(){return M.ivory;},BUTTERFLY,
   get landmarks(){return landmarks.map(lm=>({index:lm.index,title:lm.entry.title,bboxHeight:lm.bboxHeight,groundY:lm.groundY,x:lm.entry.x,z:lm.entry.z,bounds:lm.bounds,platformY:lm.site.groundY,targetHeight:lm.targetHeight,entryPoint:lm.entryPoint,site:lm.site,labelY:lm.group.position.y+lm.name.position.y}));},
   get mathMonuments(){return mathMonuments.map(({group,model,lod,fallback,bounds,site,name,...r})=>r);},
   get quality(){return {lightQuality,qualityReduced,pixelRatio:renderer.getPixelRatio(),drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles};},
