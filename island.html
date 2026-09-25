@@ -27,13 +27,27 @@ const TRACKS=[
 :root{color-scheme:dark;--ink:#0c0e10;--paper:#e8e2d5;--muted:#aaa69b;--red:#c0563e;--line:rgba(232,226,213,.16);--serif:"Songti SC","Noto Serif CJK SC","STSong",serif}
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--ink);color:var(--paper)}body{font:13px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}button,a{-webkit-tap-highlight-color:transparent}button{font:inherit;color:inherit;cursor:pointer}button:focus-visible,a:focus-visible{outline:2px solid var(--red);outline-offset:5px}button{border:0;background:none}a{color:inherit}button:disabled{cursor:wait}#world{position:fixed;inset:0;outline:none;touch-action:none}#world canvas{display:block;width:100%;height:100%}.vignette{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 45%,transparent 42%,rgba(7,9,11,.48) 100%)}
 .hud{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .7s}.playing .hud{opacity:1}.hud::before{content:"";position:absolute;inset:0 0 auto;height:150px;background:linear-gradient(#0c0e10c9,transparent);pointer-events:none}.hud button,.hud a,.hud details,.hud canvas,.hud [role="slider"]{pointer-events:auto}.topbar{position:absolute;left:36px;right:36px;top:max(26px,env(safe-area-inset-top));display:flex;align-items:center;justify-content:space-between;gap:22px}.identity{display:flex;align-items:center;gap:14px}.seal{display:grid;place-items:center;width:29px;height:34px;border:1px solid var(--red);color:var(--red);font:18px var(--serif)}.wordmark{font:25px/1 var(--serif);letter-spacing:1px}.subtitle{font-size:10px;color:var(--muted);letter-spacing:3px;margin-top:7px}.districts{display:flex;gap:8px;padding:5px;border:1px solid var(--line);border-radius:30px;background:#0c0e1070}.districts button{padding:6px 16px;border-radius:20px;color:var(--muted);transition:background .2s,color .2s}.districts button.active{background:#e8e2d514;color:var(--paper)}.districts span{font:10px monospace;color:#807e76;margin-left:8px}.tools{display:flex;align-items:center;gap:17px;color:var(--muted);font-size:11px}.tools button{padding:8px 0}.tools button:hover{color:var(--paper)}#visited{font:11px monospace;letter-spacing:1px}.viewpad{position:absolute;right:36px;top:105px;width:94px;height:75px;border:1px solid var(--line);border-radius:10px;background:#0c0e1055;touch-action:none;pointer-events:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);cursor:grab;user-select:none}.viewpad:active{cursor:grabbing}.viewpad .arrows{font:24px var(--serif);line-height:1.2;color:var(--paper)}.viewpad small{font-size:10px;letter-spacing:2px;margin-top:6px}.viewpad:focus-visible{outline:2px solid var(--red)}
-.margin-note{position:absolute;left:39px;top:126px;writing-mode:vertical-rl;letter-spacing:5px;font:13px/2 var(--serif);color:#aaa69b99}.margin-note i{height:40px;width:1px;background:var(--red);display:inline-block;margin-bottom:20px;opacity:.6}.bottom-note{position:absolute;bottom:30px;left:36px;color:var(--muted);font-size:10px;letter-spacing:1px}.bottom-note p{margin:5px 0}.bottom-note kbd{display:inline-block;border:1px solid var(--line);border-radius:3px;padding:0 4px;font:10px/1.6 monospace;color:var(--paper)}#location{color:var(--paper);font-size:12px;letter-spacing:3px;margin-bottom:10px}#location::before{content:"";display:inline-block;width:5px;height:5px;background:var(--red);border-radius:50%;margin-right:9px}.mapbox{position:absolute;right:30px;bottom:24px;text-align:center}.mapbox canvas{width:144px;height:144px;opacity:.9}.mapbox small{display:block;color:var(--muted);font-size:9px;letter-spacing:3px;margin-top:-4px}
+.margin-note{position:absolute;left:39px;top:126px;writing-mode:vertical-rl;letter-spacing:5px;font:13px/2 var(--serif);color:#aaa69b99}.margin-note i{height:40px;width:1px;background:var(--red);display:inline-block;margin-bottom:20px;opacity:.6}.bottom-note{position:absolute;bottom:30px;left:36px;color:var(--muted);font-size:10px;letter-spacing:1px}.bottom-note p{margin:5px 0}.bottom-note kbd{display:inline-block;border:1px solid var(--line);border-radius:3px;padding:0 4px;font:10px/1.6 monospace;color:var(--paper)}#location{color:var(--paper);font-size:9px;line-height:1.6;letter-spacing:1px;margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mapbox{position:absolute;left:24px;top:76px;width:168px;text-align:center}.mapbox canvas{display:block;width:168px;height:168px;border-radius:50%;background:rgba(10,16,20,.58);border:1px solid #aaa69b40;box-shadow:0 0 0 4px #07101466;cursor:pointer}.margin-note{top:284px}
+@media(min-width:768px) and (pointer:coarse){.mapbox{left:24px;top:80px;width:190px}.mapbox canvas{width:190px;height:190px}.margin-note{top:308px}}
+
 #interaction{position:absolute;left:50%;bottom:max(32px,env(safe-area-inset-bottom));width:min(480px,calc(100% - 48px));transform:translate(-50%,12px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .25s,transform .25s,visibility .25s;border:1px solid var(--line);border-top-color:#c0563e88;border-radius:8px;background:rgba(15,18,19,.94);padding:18px 21px;display:flex;align-items:center;gap:20px;box-shadow:0 12px 50px #0004}#interaction.visible{opacity:1;visibility:visible;transform:translate(-50%,0);pointer-events:auto}.entry-copy{flex:1;min-width:0}.eyebrow{font-size:9px;letter-spacing:3px;color:var(--red)}#entry-title{margin:3px 0 4px;font:21px/1.4 var(--serif)}#entry-desc{margin:0;font-size:11px;color:var(--muted)}#enter-link{flex-shrink:0;display:block;text-decoration:none;border-left:1px solid var(--line);padding:10px 0 10px 20px;font-size:12px}#enter-link span{display:block;color:var(--muted);font-size:9px;margin-top:3px}#ambient-hint{position:absolute;left:50%;bottom:41px;transform:translateX(-50%);color:var(--muted);font:13px var(--serif);letter-spacing:3px;white-space:nowrap;transition:opacity .3s}.nearby #ambient-hint{opacity:0}
-#joystick{display:none;position:absolute;left:24px;bottom:150px;width:112px;height:112px;border:1px solid #e8e2d52b;border-radius:50%;background:#e8e2d505;touch-action:none;user-select:none;pointer-events:auto}#joystick::before,#joystick::after{content:"";position:absolute;background:#e8e2d510;left:50%;top:14%;width:1px;height:72%}#joystick::after{transform:rotate(90deg)}#stick{position:absolute;left:35px;top:35px;width:40px;height:40px;background:#e8e2d522;border:1px solid #e8e2d550;border-radius:50%;z-index:1}#joystick small{position:absolute;top:120px;width:100%;text-align:center;color:var(--muted);font-size:9px;letter-spacing:3px}.touch #joystick{display:block}.touch .desktop-help{display:none}
+/* Shared thumb controls; sprint-right is intentionally independent of the map. */
+:root{--joy-size:128px;--knob-size:56px;--joy-bottom:max(42px,calc(12px + env(safe-area-inset-bottom)));--sprint-right:max(28px,env(safe-area-inset-right))}
+#joystick{display:block;position:absolute;left:max(34px,calc(12px + env(safe-area-inset-left)));bottom:var(--joy-bottom);width:var(--joy-size);height:var(--joy-size);border:1px solid #e8e2d580;border-radius:50%;background:#e8e2d518;touch-action:none;user-select:none;pointer-events:auto;opacity:.35;transition:opacity .18s;z-index:2;--safe-left:env(safe-area-inset-left,0px);--safe-bottom:env(safe-area-inset-bottom,0px)}
+#joystick.active{opacity:1}#joystick.returning{opacity:0}
+#joystick::before,#joystick::after{content:"";position:absolute;background:#e8e2d530;left:50%;top:14%;width:1px;height:72%}#joystick::after{transform:rotate(90deg)}
+#stick{position:absolute;left:calc((100% - var(--knob-size))/2);top:calc((100% - var(--knob-size))/2);width:var(--knob-size);height:var(--knob-size);background:#e8e2d555;border:1px solid #e8e2d5aa;border-radius:50%;z-index:1}
+#joystick small{position:absolute;top:calc(100% + 6px);width:100%;text-align:center;color:var(--paper);font-size:9px;letter-spacing:3px}
+#sprint{display:none;position:absolute;right:var(--sprint-right);bottom:max(46px,env(safe-area-inset-bottom));width:78px;height:78px;border-radius:50%;border:1px solid #e8e2d566;background:#14171899;touch-action:none;user-select:none;z-index:3;letter-spacing:3px}
+#sprint.active{background:#c0563e88;border-color:var(--paper)}
+.touch{--joy-size:132px;--joy-bottom:max(46px,calc(12px + env(safe-area-inset-bottom)))}.touch #joystick{opacity:.22}.touch #joystick.active{opacity:1}.touch #joystick.returning{opacity:0}.touch #sprint{display:block}.touch .desktop-help{display:none}
+@media(pointer:coarse){:root{--joy-size:132px;--joy-bottom:max(46px,calc(12px + env(safe-area-inset-bottom)))}#joystick{opacity:.22}#joystick.active{opacity:1}#joystick.returning{opacity:0}#sprint{display:block}}
+@media(min-width:768px) and (pointer:coarse){:root,.touch{--joy-size:168px;--knob-size:68px}#sprint{width:92px;height:92px}}
+
 #intro{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;background:linear-gradient(90deg,#0c0e10e8 0%,#0c0e108a 43%,#0c0e101a 100%);transition:opacity .8s,visibility .8s}#intro.gone{opacity:0;visibility:hidden;pointer-events:none}.intro-inner{width:100%;max-width:1280px;padding:0 8vw}.intro-kicker{color:var(--muted);font-size:10px;letter-spacing:5px;display:flex;align-items:center;gap:15px}.intro-kicker::before{content:"";width:30px;height:1px;background:var(--red)}h1{margin:24px 0 12px;font:clamp(68px,9vw,128px)/1.1 var(--serif);font-weight:400;letter-spacing:-3px}.intro-poem{font:clamp(18px,2.2vw,25px)/1.8 var(--serif);letter-spacing:5px}.intro-line{width:36px;height:1px;background:var(--line);margin:31px 0 25px}.intro-description{color:var(--muted);font-size:12px;line-height:2.2;letter-spacing:1px}.start{display:inline-flex;align-items:center;gap:35px;margin:23px 0 0;padding:13px 0;border-bottom:1px solid #c0563e88;font-size:13px;letter-spacing:3px}.start .arrow{font-size:22px;color:var(--red);letter-spacing:0}.intro-controls{font-size:10px;letter-spacing:1px;color:#99968c;margin-top:25px}.intro-footer{position:absolute;bottom:30px;left:8vw;right:8vw;display:flex;justify-content:space-between;font-size:9px;letter-spacing:3px;color:#aaa69b88}
 #directory{position:fixed;inset:0;z-index:20;background:#080a0bd9;padding:6vh 20px;overflow:auto}#directory[hidden]{display:none}.directory-inner{max-width:800px;margin:auto;background:#141718;border:1px solid var(--line);padding:30px;border-radius:12px}.directory-head{display:flex;justify-content:space-between;align-items:center;gap:20px}.directory-head h2{font:26px var(--serif);margin:0}.directory-head button{font-size:22px;width:42px;height:42px}.directory-sub{color:var(--muted);font-size:12px}.directory-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px 32px}.directory-grid h3{font-size:11px;color:var(--red);letter-spacing:4px;font-weight:400}.directory-grid a{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #e8e2d50e;text-decoration:none}.directory-grid a:hover{color:#fff}.directory-grid a span{color:var(--muted);font-size:10px;text-align:right;flex-shrink:0}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}#error{position:fixed;inset:0;z-index:15;display:grid;place-content:center;padding:30px;background:#0c0e10;text-align:center}#error[hidden]{display:none}#error p{max-width:380px;color:var(--muted)}#error button{padding:12px 24px;border:1px solid var(--line);margin:15px auto}noscript{position:fixed;inset:0;z-index:30;display:grid;place-content:center;background:var(--ink);padding:25px}
-@media(max-width:760px){.topbar{left:20px;right:20px;top:max(20px,env(safe-area-inset-top));flex-wrap:wrap;gap:19px}.wordmark{font-size:22px}.subtitle{font-size:8px}.seal{width:25px;height:30px;font-size:15px}.tools{gap:13px}.districts{order:3;gap:0;padding:3px}.districts button{padding:6px 12px;font-size:11px}.districts span{margin-left:5px;font-size:9px}.viewpad{right:20px;top:139px;width:76px;height:66px}.margin-note{display:none}.bottom-note{left:20px;bottom:25px}.bottom-note .desktop-help{display:none}.mapbox{right:15px;bottom:151px}.mapbox canvas{width:112px;height:112px}.mapbox small{font-size:8px}.touch .bottom-note{bottom:290px;left:26px}#interaction{bottom:max(25px,env(safe-area-inset-bottom));padding:15px 17px;width:calc(100% - 36px);gap:12px}#entry-title{font-size:19px}#entry-desc{font-size:10px}#enter-link{padding-left:14px}#ambient-hint{bottom:68px;font-size:11px;letter-spacing:2px}.intro-inner{padding:0 9vw}.intro-poem{letter-spacing:3px;font-size:17px}.intro-controls{max-width:245px;line-height:2}.intro-footer{font-size:8px;letter-spacing:1px}.intro-description{font-size:11px}.directory-inner{padding:20px}.directory-grid{grid-template-columns:1fr;gap:10px}.intro-kicker{font-size:9px;letter-spacing:3px}}
-@media(max-height:540px){.intro-inner{padding-left:8vw}.intro-kicker,.intro-line,.intro-description,.intro-footer{display:none}h1{font-size:56px;margin-top:0}.intro-poem{font-size:16px}.start{margin-top:5px}.intro-controls{margin-top:12px}.mapbox{bottom:10px}.touch #joystick{bottom:30px;width:100px;height:100px}.touch #stick{left:29px;top:29px}.touch .bottom-note{display:none}.viewpad{top:98px}.topbar{top:15px}.districts{order:initial}.margin-note{display:none}#interaction{max-width:390px;bottom:18px}.mapbox canvas{width:96px;height:96px}}
+@media(max-width:760px){.topbar{left:20px;right:20px;top:max(20px,env(safe-area-inset-top));flex-wrap:wrap;gap:19px}.wordmark{font-size:22px}.subtitle{font-size:8px}.seal{width:25px;height:30px;font-size:15px}.tools{gap:13px}.districts{order:3;gap:0;padding:3px}.districts button{padding:6px 12px;font-size:11px}.districts span{margin-left:5px;font-size:9px}.viewpad{right:20px;top:139px;width:76px;height:66px}.margin-note{display:none}.bottom-note{left:20px;bottom:25px}.bottom-note .desktop-help{display:none}.mapbox{left:14px;top:72px;width:126px}.mapbox canvas{width:126px;height:126px}.touch .bottom-note{bottom:290px;left:26px}#interaction{bottom:max(25px,env(safe-area-inset-bottom));padding:15px 17px;width:calc(100% - 36px);gap:12px}#entry-title{font-size:19px}#entry-desc{font-size:10px}#enter-link{padding-left:14px}#ambient-hint{bottom:max(10px,env(safe-area-inset-bottom));max-width:calc(100% - 32px);font-size:10px;letter-spacing:1px}.intro-inner{padding:0 9vw}.intro-poem{letter-spacing:3px;font-size:17px}.intro-controls{max-width:245px;line-height:2}.intro-footer{font-size:8px;letter-spacing:1px}.intro-description{font-size:11px}.directory-inner{padding:20px}.directory-grid{grid-template-columns:1fr;gap:10px}.intro-kicker{font-size:9px;letter-spacing:3px}}
+@media(max-height:540px){.intro-inner{padding-left:8vw}.intro-kicker,.intro-line,.intro-description,.intro-footer{display:none}h1{font-size:56px;margin-top:0}.intro-poem{font-size:16px}.start{margin-top:5px}.intro-controls{margin-top:12px}.touch .bottom-note{display:none}.viewpad{top:98px}.topbar{top:15px}.districts{order:initial}.margin-note{display:none}#interaction{max-width:390px;bottom:18px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important}}
 #bgm-button{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:28px;height:28px;padding:5px;border:1px solid var(--line);border-radius:5px;background:var(--ink);color:var(--paper)}
 #bgm-button[hidden]{display:none}#bgm-button:hover{border-color:var(--muted)}#bgm-button:focus-visible{outline:2px solid var(--paper);outline-offset:3px}
@@ -66,17 +80,30 @@ const TRACKS=[
 }
 /* D-only portrait clearing: controls stay reachable beneath the monument. */
 @media(max-width:760px) and (orientation:portrait){
-  .sea-palace-view #joystick{bottom:126px;left:14px;width:92px;height:92px}
-  .sea-palace-view #stick{left:25px;top:25px}
-  .sea-palace-view #joystick small{top:98px}
-  .sea-palace-view .mapbox{bottom:126px;right:12px}
-  .sea-palace-view .mapbox canvas{width:86px;height:86px;opacity:.7}
-  .sea-palace-view .mapbox small,.sea-palace-view .bottom-note{display:none}
+  .sea-palace-view .bottom-note{display:none}
   .sea-palace-view .viewpad{top:76px;right:12px;height:48px}
   .sea-palace-view #interaction{padding:10px 14px;bottom:max(10px,env(safe-area-inset-bottom))}
 }
+/* Keep visit cards above both thumb controls, including the sea gate. */
+#interaction{bottom:max(220px,calc(var(--joy-size) + 70px))}
+@media(max-width:760px){#interaction,.sea-palace-view #interaction{bottom:max(300px,calc(12px + env(safe-area-inset-bottom)))}}
+
+/* North-up atlas: independent of the heading-up minimap. */
+#atlas{position:fixed;inset:0;z-index:21;background:#080a0bdb;display:grid;place-items:center;padding:16px}#atlas[hidden]{display:none}
+.atlas-inner{box-sizing:border-box;width:min(720px,100%);height:min(620px,100%);max-height:calc(100dvh - 32px);background:#141718;border:1px solid #b49d7566;border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:12px;overflow:hidden}
+.atlas-head,.atlas-tools{display:flex;align-items:center;gap:10px}.atlas-head h2{font:23px var(--serif);margin:0;flex:1}.atlas-inner button{border:1px solid #b49d7544;border-radius:6px;padding:8px 12px;min-height:38px}.atlas-inner button:focus-visible,.mapbox:focus-visible{outline:2px solid #c9ad78;outline-offset:3px}.atlas-tools output{font-size:12px;min-width:46px}.atlas-tools small{color:var(--muted);font-size:11px}.atlas-body{display:grid;grid-template-columns:minmax(0,1fr) 174px;gap:12px;flex:1;min-height:0}.atlas-chart{position:relative;min-height:0;overflow:hidden;border:1px solid #e8e2d51c;border-radius:8px;background:#0b1216}#atlas-map{display:block;width:100%;height:100%;touch-action:none;cursor:grab}#atlas-map:active{cursor:grabbing}#atlas-list{overflow:auto;min-height:0}#atlas-list h3{margin:12px 0 5px;font-size:12px;color:var(--zone)}#atlas-list button{display:block;width:100%;text-align:left;font-size:11px;padding:6px;border:0;min-height:30px}#atlas-list .visited{color:#c9ad78}#atlas-list .nearest{color:#fff;box-shadow:inset 2px 0 #fff}.atlas-legend{display:flex;flex-wrap:wrap;gap:5px 12px;font-size:10px;color:#aaa69b}.atlas-legend i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--zone);margin-right:4px}.mapbox{cursor:pointer}.mapbox[aria-expanded=true] canvas{border-color:#c9ad78}
+@media(max-width:760px){.atlas-inner{height:100%;padding:14px;gap:10px}.atlas-head h2{font-size:20px}.atlas-body{grid-template-columns:1fr;grid-template-rows:minmax(240px,1fr) minmax(100px,.48fr)}#atlas-list{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.atlas-tools small{font-size:10px}}
 </style>
-<style id="bridge-style">#bridge-count{font:11px monospace;letter-spacing:1px;color:var(--paper)}#bridge-count.done{color:var(--red)}#bridge-toast{position:absolute;left:50%;bottom:120px;transform:translateX(-50%);color:var(--paper);font:13px/1.8 var(--serif);letter-spacing:2px;background:#0c0e10d9;border:1px solid var(--line);border-radius:6px;padding:8px 18px;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}#bridge-toast.show{opacity:1}#euler-card{position:absolute;right:30px;bottom:210px;width:min(360px,calc(100% - 60px));border:1px solid #c0563e88;border-radius:8px;background:rgba(15,18,19,.94);padding:18px 20px;display:flex;align-items:center;gap:16px;box-shadow:0 12px 50px #0004}#euler-card[hidden]{display:none}#euler-card h2{font:18px/1.4 var(--serif);margin:3px 0 4px}#euler-card p{margin:0;font-size:11px;color:var(--muted)}#euler-action{flex-shrink:0;border-left:1px solid var(--line);padding:10px 0 10px 16px;color:var(--paper);letter-spacing:2px;font-size:12px}#euler-action[hidden]{display:none}</style>
+<style id="bridge-style">#bridge-count{font:11px monospace;letter-spacing:1px;color:var(--paper)}#bridge-count.done{color:var(--red)}#bridge-toast{position:absolute;left:50%;bottom:120px;transform:translateX(-50%);color:var(--paper);font:13px/1.8 var(--serif);letter-spacing:2px;background:#0c0e10d9;border:1px solid var(--line);border-radius:6px;padding:8px 18px;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap}#bridge-toast.show{opacity:1}#euler-card{position:absolute;right:30px;bottom:210px;width:min(360px,calc(100% - 60px));border:1px solid #c0563e88;border-radius:8px;background:rgba(15,18,19,.94);padding:18px 20px;display:flex;align-items:center;gap:16px;box-shadow:0 12px 50px #0004}#euler-card[hidden]{display:none}#euler-card h2{font:18px/1.4 var(--serif);margin:3px 0 4px}#euler-card p{margin:0;font-size:11px;color:var(--muted)}#euler-action{flex-shrink:0;border-left:1px solid var(--line);padding:10px 0 10px 16px;color:var(--paper);letter-spacing:2px;font-size:12px}#euler-action[hidden]{display:none}/* Keep visit cards above both thumb controls, including the sea gate. */
+#interaction{bottom:max(220px,calc(var(--joy-size) + 70px))}
+@media(max-width:760px){#interaction,.sea-palace-view #interaction{bottom:max(300px,calc(12px + env(safe-area-inset-bottom)))}}
+
+/* North-up atlas: independent of the heading-up minimap. */
+#atlas{position:fixed;inset:0;z-index:21;background:#080a0bdb;display:grid;place-items:center;padding:16px}#atlas[hidden]{display:none}
+.atlas-inner{box-sizing:border-box;width:min(720px,100%);height:min(620px,100%);max-height:calc(100dvh - 32px);background:#141718;border:1px solid #b49d7566;border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:12px;overflow:hidden}
+.atlas-head,.atlas-tools{display:flex;align-items:center;gap:10px}.atlas-head h2{font:23px var(--serif);margin:0;flex:1}.atlas-inner button{border:1px solid #b49d7544;border-radius:6px;padding:8px 12px;min-height:38px}.atlas-inner button:focus-visible,.mapbox:focus-visible{outline:2px solid #c9ad78;outline-offset:3px}.atlas-tools output{font-size:12px;min-width:46px}.atlas-tools small{color:var(--muted);font-size:11px}.atlas-body{display:grid;grid-template-columns:minmax(0,1fr) 174px;gap:12px;flex:1;min-height:0}.atlas-chart{position:relative;min-height:0;overflow:hidden;border:1px solid #e8e2d51c;border-radius:8px;background:#0b1216}#atlas-map{display:block;width:100%;height:100%;touch-action:none;cursor:grab}#atlas-map:active{cursor:grabbing}#atlas-list{overflow:auto;min-height:0}#atlas-list h3{margin:12px 0 5px;font-size:12px;color:var(--zone)}#atlas-list button{display:block;width:100%;text-align:left;font-size:11px;padding:6px;border:0;min-height:30px}#atlas-list .visited{color:#c9ad78}#atlas-list .nearest{color:#fff;box-shadow:inset 2px 0 #fff}.atlas-legend{display:flex;flex-wrap:wrap;gap:5px 12px;font-size:10px;color:#aaa69b}.atlas-legend i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--zone);margin-right:4px}.mapbox{cursor:pointer}.mapbox[aria-expanded=true] canvas{border-color:#c9ad78}
+@media(max-width:760px){.atlas-inner{height:100%;padding:14px;gap:10px}.atlas-head h2{font-size:20px}.atlas-body{grid-template-columns:1fr;grid-template-rows:minmax(240px,1fr) minmax(100px,.48fr)}#atlas-list{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.atlas-tools small{font-size:10px}}
+</style>
 </head>
 <body>
 <main id="world" tabindex="-1" aria-label="可探索的三维数字庭院。使用 WASD 或方向键行走；靠近建筑后按回车访问。"></main>
@@ -91,9 +118,10 @@ const TRACKS=[
   </header>
   <div class="margin-note" aria-hidden="true"><i></i>灯火所及，皆是来处。</div>
   <div class="viewpad" id="viewpad" tabindex="0" role="group" aria-label="视角控制：拖动旋转视角，聚焦后使用方向键调整，Home 重置"><span class="arrows">↔</span><small>拖动视角</small></div>
-  <div class="bottom-note"><div id="location">庭心</div><div class="desktop-help"><p><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> / 方向键 · 行走</p><p><kbd>↵</kbd> / <kbd>空格</kbd> · 访问　拖动画面 · 环顾</p></div></div>
+  <div class="bottom-note"><div class="desktop-help"><p><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> / 方向键 · 行走</p><p><kbd>↵</kbd> / <kbd>空格</kbd> · 访问　拖动画面 · 环顾</p></div></div>
   <div id="joystick" aria-label="移动摇杆"><div id="stick"></div><small>拖动行走</small></div>
-  <div class="mapbox"><canvas id="map" width="288" height="288" aria-label="庭院地图：朱砂色圆点为当前位置"></canvas><small>一岛 · 二十六盏灯</small></div>
+  <button id="sprint" type="button" aria-label="按住疾行" aria-pressed="false">疾行</button>
+  <div class="mapbox" role="button" tabindex="0" aria-label="打开全岛地图" aria-haspopup="dialog" aria-controls="atlas" aria-expanded="false"><canvas id="map" width="288" height="288" aria-label="航向朝上小地图：中央箭头为当前位置，N 指向北方"></canvas><div id="location">庭心</div></div>
   <div id="ambient-hint">提灯走近，让故事发生。</div>
   <section id="interaction" aria-label="附近的入口">
     <div class="entry-copy" aria-live="polite"><div class="eyebrow" id="entry-zone"></div><h2 id="entry-title"></h2><p id="entry-desc"></p></div>
@@ -106,6 +134,7 @@ const TRACKS=[
   <div class="intro-inner"><div class="intro-kicker">A SMALL ISLAND OF THOUGHTS</div><h1>Lx050<span style="color:var(--red)">.</span></h1><div class="intro-poem">在数字之间，留一点人间</div><div class="intro-line"></div><p class="intro-description">一些作品，一些故事，一些仍在生长的念头。<br>借一盏灯，随意走走。</p><button class="start" id="start" disabled>正在点灯<span class="arrow">↗</span></button><div class="intro-controls" id="intro-controls">WASD / 方向键行走 · 拖动环顾 · 回车访问<br>点击或按任意键，开始夜游</div></div>
   <div class="intro-footer"><span>作品 / 服务 / 项目 / 连接</span><span>慢一点，也没有关系。 &nbsp; © Lx050</span></div>
 </section>
+<section id="atlas" role="dialog" aria-modal="true" aria-labelledby="atlas-title" hidden><div class="atlas-inner"><header class="atlas-head"><h2 id="atlas-title">一岛 · 二十六盏灯</h2><button id="close-atlas" aria-label="关闭大地图">×</button></header><div class="atlas-tools"><button id="atlas-minus" aria-label="缩小地图">−</button><output id="atlas-scale" aria-live="polite"></output><button id="atlas-plus" aria-label="放大地图">+</button><button id="atlas-home">归庭</button><small>拖动地图 · 点名录定位</small></div><div class="atlas-body"><div class="atlas-chart"><canvas id="atlas-map" aria-label="北向上全岛地图，完整名称亦可在下方或右侧名录查找"></canvas></div><nav id="atlas-list" aria-label="四区地标名录"></nav></div><div id="atlas-legend" class="atlas-legend"></div></div></section>
 <section id="directory" role="dialog" aria-modal="true" aria-labelledby="directory-title" hidden><div class="directory-inner"><div class="directory-head"><h2 id="directory-title">庭院目录</h2><button id="close-directory" aria-label="关闭目录">×</button></div><p class="directory-sub">二十六个入口，也可以直接抵达。所有链接在新标签页打开。</p><div id="directory-grid" class="directory-grid"></div><div class="music-credits" id="music-credits"></div></div></section>
 <div id="error" role="alert" hidden><h2 style="font-family:var(--serif);font-weight:400">灯还没有亮起来</h2><p id="error-message">三维场景暂时无法加载，请刷新重试。也可以从目录直接访问全部入口。</p><button id="fallback-list">打开庭院目录 ↗</button></div>
 <noscript>请启用 JavaScript，来这座小岛走走。</noscript>
@@ -128,7 +157,7 @@ const WORLD=Object.freeze({PLAYER_HEIGHT:1.7,ISLAND_RADIUS:150,INNER_RING:70,OUT
   SKY_RADIUS:1800,CELESTIAL_RADIUS:1100,FOG_NIGHT:.0024,FOG_DAY:.0018,
   CAMERA_FOV:40,CAMERA_FAR:2400,CAMERA_DISTANCE:6.5,CAMERA_PITCH:.2,
   CAMERA_CLEARANCE:1.0,VIEW_K:.5,VIEW_K_PORTRAIT:.62,BLOOM_THRESHOLD:2.8,BLOOM_STRENGTH:.18,
-  CAMERA_MIN_PITCH:-.5,CAMERA_MAX_PITCH:.62,SHADOW_RADIUS:70,SHADOW_MOBILE_RADIUS:40,
+  CAMERA_MIN_PITCH:-.62,CAMERA_MAX_PITCH:1.25,CAMERA_MIN_DISTANCE:2.5,CAMERA_MAX_DISTANCE:16,SHADOW_RADIUS:70,SHADOW_MOBILE_RADIUS:40,
   MATH_SCALE:150/31.5,INTERACT_DISTANCE:9,LABEL_DISTANCE:100,LOD_DESKTOP:210,LOD_MOBILE:115});
 // Every destination owns one physical landmark, a Sprite label, and a directory link.
 const LINKS = [
@@ -302,7 +331,8 @@ ZONES.forEach((zone,index)=>{
   });$('directory-grid').append(section);
 });
 $('music-credits').innerHTML='<h3>夜乐 · 背景音乐署名</h3><small class="mc-note">入庭后夜间随机播放，一曲播罢自动接续下一首。以下均为公有领域或 CC0 / CC-BY 授权的演奏录音。</small>'+TRACKS.map(t=>`<small>${t.n} — ${t.a}，${t.l}</small>`).join('');
-function clearInput(){keys.clear();joy.x=joy.y=0;$('stick').style.transform='';}
+function modalOpen(){return !$('directory').hidden||!$('atlas').hidden;}
+function clearInput(){keys.clear();resetJoystick(true);releaseSprint();currentSpeed=6.3;sprinting=false;velocity.set(0,0);}
 function showDirectory(){previousFocus=document.activeElement;clearInput();$('directory').hidden=false;$('hud').inert=true;$('intro').inert=true;$('close-directory').focus();}
 function closeDirectory(){$('directory').hidden=true;$('hud').inert=!started;$('intro').inert=started;previousFocus?.focus();}
 $('list-button').onclick=showDirectory;$('fallback-list').onclick=showDirectory;$('close-directory').onclick=closeDirectory;
@@ -469,12 +499,95 @@ const jitter=n=>{const s=Math.sin(n*127.1+311.7)*43758.5453;return s-Math.floor(
 let seed=504;function random(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;}
 const glbTrees=[],glbRingLanterns=[],glbVisitorProc=[];
 function pathSlab(x,z,y,ry,w=3,l=1.2){instance(G.box,M.path,x,y-.04,z,w,.08,l,ry);}
-// Ring paths connect all 21m processional branches; radial paths preserve an open centre.
-for(const r of [WORLD.INNER_RING-WORLD.TERRACE_RADIUS-WORLD.APPROACH_LENGTH,WORLD.OUTER_RING-WORLD.TERRACE_RADIUS-WORLD.APPROACH_LENGTH]){
-  const n=Math.ceil(2*Math.PI*r/1.2);
-  for(let i=0;i<n;i++){const a=i/n*Math.PI*2,x=Math.sin(a)*r,z=Math.cos(a)*r;pathSlab(x,z,terrainHeight(x,z)+.025,a,3.2,1.3);}
-}
-for(const [ux,uz] of [[0,1],[0,-1],[1,0],[-1,0]])for(let r=4;r<149;r+=1.2){const x=ux*r,z=uz*r;pathSlab(x,z,terrainHeight(x,z)+.03,Math.atan2(ux,uz));}
+// Road 3b: visual-only courses. pathSlab stays untouched for all terrace approaches.
+// These private batches never enter pickables, colliders or cameraBoxes.
+const islandRoads=(()=>{
+  const radii=[WORLD.INNER_RING-WORLD.TERRACE_RADIUS-WORLD.APPROACH_LENGTH,WORLD.OUTER_RING-WORLD.TERRACE_RADIUS-WORLD.APPROACH_LENGTH];
+  let state=310819;const noise=()=>{state=(state*1664525+1013904223)>>>0;return state/4294967296;};
+  const stone=material(0x92998f,{roughness:.93}),edge=material(0x9a9f94,{roughness:.94}),joint=material(0x353e3a);
+  // Same CanvasTexture / seeded LCG vocabulary as seaPavingMaterial: quiet grain,
+  // matte stone, no downloaded image. Physical gaps expose the continuous dark bed.
+  const canvas=document.createElement('canvas');canvas.width=canvas.height=128;
+  const ctx=canvas.getContext('2d');ctx.fillStyle='#eff0ec';ctx.fillRect(0,0,128,128);
+  for(let i=0;i<1600;i++){ctx.fillStyle=noise()<.5?'rgba(55,65,60,.035)':'rgba(255,255,245,.10)';ctx.fillRect(noise()*128,noise()*128,1,1);}
+  stone.map=new THREE.CanvasTexture(canvas);stone.map.encoding=THREE.sRGBEncoding;
+  const surfaces=[],curbs=[],bedPositions=[],bedIndices=[];
+  function tint(){const v=.96+noise()*.07,w=(noise()-.5)*.018;return new THREE.Color().setRGB(v+w,v,v-w);}
+  function quad(points){const n=bedPositions.length/3;for(const [x,z,y] of points)bedPositions.push(x,y===undefined?terrainHeight(x,z)+.018:y,z);bedIndices.push(n,n+1,n+2,n,n+2,n+3);}
+  function slab(x,z,w,l,angle,offset=.035){
+    // Fit each small course to the local slope; the continuous bed seals every joint.
+    const ux=Math.sin(angle),uz=Math.cos(angle),vx=Math.cos(angle),vz=-Math.sin(angle);
+    const y=terrainHeight(x,z),along=(terrainHeight(x+ux*l/2,z+uz*l/2)-terrainHeight(x-ux*l/2,z-uz*l/2))/l;
+    const across=(terrainHeight(x+vx*w/2,z+vz*w/2)-terrainHeight(x-vx*w/2,z-vz*w/2))/w;
+    const q=new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.atan(along),angle,Math.atan(across),'YXZ'));
+    surfaces.push({m:new THREE.Matrix4().compose(new THREE.Vector3(x,y+offset-.006,z),q,new THREE.Vector3(w,.012,l)),color:tint()});
+  }
+  function curb(x1,z1,x2,z2){
+    const x=(x1+x2)/2,z=(z1+z2)/2;
+    // Cut both sides of each junction, each processional branch and each bridgehead.
+    if(Math.min(Math.abs(x),Math.abs(z))<2.8&&radii.some(r=>Math.abs(Math.hypot(x,z)-r)<3))return;
+    if(terraceSites.some(t=>{const dx=x-t.x,dz=z-t.z,along=dx*t.ux+dz*t.uz,side=-dx*t.uz+dz*t.ux;return Math.hypot(dx,dz)<t.radius+1||along< -t.radius&&along> -t.radius-WORLD.APPROACH_LENGTH-1.2&&Math.abs(side)<2.25;}))return;
+    if(glbRingLanterns.some(p=>Math.hypot(p.x-x,p.z-z)<1.5)||colliders.some(c=>Math.hypot(c.x-x,c.z-z)<c.r+1.1))return;
+    if(BRIDGES.some(b=>Math.min(Math.hypot(x-b.x1,z-b.z1),Math.hypot(x-b.x2,z-b.z2))<4))return;
+    const y1=terrainHeight(x1,z1),y2=terrainHeight(x2,z2),length=Math.hypot(x2-x1,z2-z1),angle=Math.atan2(x2-x1,z2-z1);
+    curbs.push({m:new THREE.Matrix4().compose(new THREE.Vector3(x,(y1+y2)/2+.075,z),new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.atan2(y2-y1,length),angle,0,'YXZ')),new THREE.Vector3(.22,.14,Math.hypot(length,y2-y1)-.025)),color:tint()});
+  }
+  function node(x,z,angle=0,size=4.8,top=.041){
+    const point=(u,v)=>[x+Math.cos(angle)*u+Math.sin(angle)*v,z-Math.sin(angle)*u+Math.cos(angle)*v];
+    // A quiet six-by-six carpet with a slightly warmer cross; no raised dais.
+    const n=6,step=size/n;
+    for(let i=0;i<n;i++)for(let j=0;j<n;j++){
+      const u=-size/2+i*step,v=-size/2+j*step;
+      quad([[u,v],[u,v+step],[u+step,v+step],[u+step,v]].map(([a,b])=>{const [px,pz]=point(a,b);return [px,pz,terrainHeight(px,pz)+top-.003];}));
+      const [px,pz]=point(u+step/2,v+step/2);slab(px,pz,step-.045,step-.045,angle,top);
+      if(i===2||i===3||j===2||j===3)surfaces[surfaces.length-1].color.multiplyScalar(1.035);
+    }
+  }
+  function build(){
+    for(const r of radii){
+      const n=Math.ceil(2*Math.PI*r/1.2),da=2*Math.PI/n;
+      for(let i=0;i<n;i++){
+        const a=i*da,b=(i+1)*da,mid=(a+b)/2;
+        quad([[r-1.6,a],[r+1.6,a],[r+1.6,b],[r-1.6,b]].map(([rad,t])=>[Math.sin(t)*rad,Math.cos(t)*rad]));
+        // Shared width splits and 3.5–6cm end joints keep every original centreline.
+        const split=(noise()-.5)*.12;
+        for(const [lo,hi] of [[-1.6,split],[split,1.6]]){
+          const rad=r+(lo+hi)/2,theta=mid;
+          slab(Math.sin(theta)*rad,Math.cos(theta)*rad,hi-lo-.045,da*rad-(.035+noise()*.025),theta+Math.PI/2);
+        }
+        for(const rad of [r-1.79,r+1.79])curb(Math.sin(a)*rad,Math.cos(a)*rad,Math.sin(b)*rad,Math.cos(b)*rad);
+      }
+    }
+    for(const [ux,uz] of [[0,1],[0,-1],[1,0],[-1,0]]){
+      const angle=Math.atan2(ux,uz),vx=uz,vz=-ux;
+      for(let r=4;r<149;r+=1.2){
+        const lo=Math.max(4,r-.6),hi=Math.min(149,r+.6),mid=(lo+hi)/2;
+        const point=(d,s)=>[ux*d+vx*s,uz*d+vz*s];
+        quad([point(lo,-1.5),point(hi,-1.5),point(hi,1.5),point(lo,1.5)]);
+        const split=(noise()-.5)*.12;
+        for(const [left,right] of [[-1.5,split],[split,1.5]]){const [x,z]=point(mid,(left+right)/2);slab(x,z,right-left-.045,hi-lo-(.035+noise()*.025),angle);}
+        for(const side of [-1.69,1.69])curb(...point(lo,side),...point(hi,side));
+      }
+      for(const r of radii)node(ux*r,uz*r,angle);
+    }
+    // Landing carpets live on land beyond the deck ends, using existing terrain only.
+    for(const b of BRIDGES.filter(b=>!b.bonus)){
+      const dx=b.x2-b.x1,dz=b.z2-b.z1,len=Math.hypot(dx,dz),ux=dx/len,uz=dz/len;
+      for(const [x,z,sign] of [[b.x1,b.z1,-1],[b.x2,b.z2,1]]){
+        const px=x+ux*sign*2.52,pz=z+uz*sign*2.52;
+        if(Math.hypot(px,pz)<WORLD.ISLAND_RADIUS-2||MATH_ISLES.some(is=>Math.hypot(px-is.x,pz-is.z)<is.r-2))node(px,pz,Math.atan2(ux,uz),3,.04);
+      }
+    }
+    const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(bedPositions,3));geometry.setIndex(bedIndices);geometry.computeVertexNormals();
+    const bed=new THREE.Mesh(geometry,joint);bed.name='island-road-joint-bed';bed.receiveShadow=true;scene.add(bed);
+    for(const [name,mat,rows] of [['island-road-stone-courses',stone,surfaces],['island-road-low-curbs',edge,curbs]]){
+      const im=new THREE.InstancedMesh(G.box,mat,rows.length);im.name=name;
+      rows.forEach((v,i)=>{im.setMatrixAt(i,v.m);im.setColorAt(i,v.color);});im.instanceMatrix.needsUpdate=true;im.instanceColor.needsUpdate=true;
+      im.frustumCulled=false;im.castShadow=false;im.receiveShadow=true;scene.add(im);
+    }
+  }
+  return {build,stone,noise};
+})();
 function humanTree(x,z,h=6){
   const y=terrainHeight(x,z);glbTrees.push({x,z,y,h,rot:jitter(x+z)*6.28});
 }
@@ -805,7 +918,73 @@ function prepareButterflySea(lm){
   lm.entry.x=sea.x;lm.entry.z=sea.z;lm.group.position.set(sea.x,sea.y,sea.z);
   Object.assign(b,{wings:[],gateLocal:new THREE.Vector3(0,0,25),sea});
   const stone=material(0x8e958d,{roughness:.93}),bronze=material(0x867a60,{metalness:.4,roughness:.69}),timber=material(0x64695e),edge=material(0x575f59,{metalness:.08,roughness:.85});
+  // Visual-only paving: project Canvas joints onto the EXISTING deck vertices.
+  // Neither the deck matrices nor the analytical walking/camera surfaces change.
+  function seaPavingMaterial(base,altar=false){
+    const canvas=document.createElement('canvas');canvas.width=altar?2048:256;canvas.height=altar?2048:4096;
+    const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height,length=sea.end-sea.start;
+    let seed=altar?3103:819;const noise=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
+    ctx.fillStyle='#f0f1ee';ctx.fillRect(0,0,w,h);
+    if(altar){
+      const unit=w/112,c=w/2;
+      // Broad quiet rings, aligned with the approach axis; stagger radial joints.
+      const rings=[0,12,15.5,22,29,36,43,49.65,51.7,53.7,55.1,55.8];
+      for(let k=1;k<rings.length;k++){
+        const inner=rings[k-1],outer=rings[k],count=outer>49?48:24;
+        for(let j=0;j<count;j++){
+          const a=(j+(k%2)*.5)*Math.PI*2/count,b=a+Math.PI*2/count;
+          ctx.beginPath();ctx.arc(c,c,outer*unit,a,b);ctx.arc(c,c,inner*unit,b,a,true);ctx.closePath();
+          const v=235+Math.floor(noise()*12);ctx.fillStyle=`rgb(${v},${v+1},${v})`;ctx.fill();
+        }
+      }
+      ctx.strokeStyle='rgba(37,47,46,.42)';ctx.lineWidth=.065*unit;
+      for(const r of rings.slice(1)){ctx.beginPath();ctx.arc(c,c,r*unit,0,Math.PI*2);ctx.stroke();}
+      for(let k=2;k<rings.length;k++){
+        const count=rings[k]>49?48:24;
+        for(let j=0;j<count;j++){
+          const a=(j+(k%2)*.5)*Math.PI*2/count;
+          ctx.beginPath();ctx.moveTo(c+Math.sin(a)*rings[k-1]*unit,c+Math.cos(a)*rings[k-1]*unit);
+          ctx.lineTo(c+Math.sin(a)*rings[k]*unit,c+Math.cos(a)*rings[k]*unit);ctx.stroke();
+        }
+      }
+      // A quiet axial ribbon joins the transverse bridge stones to the annuli.
+      ctx.strokeStyle='rgba(87,96,91,.12)';ctx.lineWidth=.045*unit;
+      ctx.beginPath();ctx.moveTo(c,c+15.5*unit);ctx.lineTo(c,c+55.8*unit);ctx.stroke();
+    }else{
+      let r=0;while(r<length){
+        const end=Math.min(length,r+1.7+noise()*.6),v=235+Math.floor(noise()*12);
+        ctx.fillStyle=`rgb(${v},${v+1},${v})`;ctx.fillRect(0,r/length*h,w,(end-r)/length*h+1);
+        ctx.fillStyle='rgba(31,42,42,.58)';ctx.fillRect(0,r/length*h,w,.035/length*h);r=end;
+      }
+      ctx.fillStyle='rgba(99,107,99,.10)';ctx.fillRect(w/2-.5,0,1,h);
+      // Two flush threshold joints at either end, without a raised landing.
+      ctx.fillStyle='rgba(45,55,52,.40)';for(const r of [.32,.52,length-.52,length-.32])ctx.fillRect(0,r/length*h,w,.04/length*h);
+    }
+    for(let i=0;i<(altar?38000:18000);i++){ctx.fillStyle=noise()<.5?'rgba(55,65,60,.035)':'rgba(255,255,245,.10)';ctx.fillRect(noise()*w,noise()*h,1+noise(),1+noise());}
+    const texture=new THREE.CanvasTexture(canvas);texture.encoding=THREE.sRGBEncoding;
+    texture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
+    const mat=base.clone();mat.map=texture;mat.roughness=altar?.87:.79;mat.metalness=0;
+    mat.onBeforeCompile=shader=>{
+      shader.vertexShader='varying vec2 vSeaStoneUV;\n'+shader.vertexShader;
+      shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>
+        vec4 stonePoint=vec4(transformed,1.0);
+        #ifdef USE_INSTANCING
+          stonePoint=instanceMatrix*stonePoint;
+        #endif
+        stonePoint=modelMatrix*stonePoint;
+        float stoneAlong=dot(stonePoint.xz,vec2(${ux},${uz}));
+        float stoneSide=dot(stonePoint.xz,vec2(${-uz},${ux}));
+        vSeaStoneUV=${altar?'vec2((stoneSide+56.0)/112.0,(stoneAlong-274.0)/112.0)':`vec2((stoneSide+2.8)/5.6,1.0-(stoneAlong-${sea.start.toFixed(1)})/${length.toFixed(1)})`};`);
+      shader.fragmentShader='varying vec2 vSeaStoneUV;\n'+shader.fragmentShader;
+      shader.fragmentShader=shader.fragmentShader.replace('#include <map_fragment>',
+        'diffuseColor *= mapTexelToLinear(texture2D(map,vSeaStoneUV));');
+    };
+    mat.customProgramCacheKey=()=>altar?'sea-annular-paving-3a':'sea-transverse-paving-3a';return mat;
+  }
+  const bridgeStone=seaPavingMaterial(stone),altarStone=seaPavingMaterial(stone,true);
   const walkStone=material(0x444e4b,{roughness:.98}),roofGlaze=material(0x7e938c,{metalness:.08,roughness:.73,side:THREE.DoubleSide});
+  const innerWalkStone=altarStone.clone();innerWalkStone.color.copy(walkStone.color);
+  innerWalkStone.onBeforeCompile=altarStone.onBeforeCompile;innerWalkStone.customProgramCacheKey=altarStone.customProgramCacheKey;
   const lamp=material(0xb5aa85,{emissive:0xe4b66f,emissiveIntensity:.6});b.lampMaterial=lamp;
   const structure=new THREE.Group();structure.name='four-roof-courts';root.add(structure);b.creature=structure;
   b.left=new THREE.Group();b.right=new THREE.Group();
@@ -825,13 +1004,13 @@ function prepareButterflySea(lm){
   // The round altar sits 3.6m above the sea. Two inset annular treads meet the causeway.
   mesh(new THREE.CylinderGeometry(56,57,3.6,128),stone,root,0,-1.8,0).name='sea-altar-foundation';
   // Matching 128-segment boundaries remove the exposed foundation's sawtooth band.
-  const deckFace=mesh(new THREE.CircleGeometry(55.8,128),stone,root,0,.02,0);deckFace.rotation.x=-Math.PI/2;deckFace.name='unbroken-altar-deck';
+  const deckFace=mesh(new THREE.CircleGeometry(55.8,128),altarStone,root,0,.02,0);deckFace.rotation.x=-Math.PI/2;deckFace.name='unbroken-altar-deck';
   const rim=mesh(new THREE.RingGeometry(55.15,55.5,128),bronze,root,0,.045,0);rim.rotation.x=-Math.PI/2;rim.name='flush-annular-inlay';
   // A shallow water film over the safe continuous altar; dry routes remain legible.
   const pond=mesh(new THREE.CircleGeometry(49.5,128),material(0x293f43,{metalness:.7,roughness:.21}),root,0,.075,0);pond.rotation.x=-Math.PI/2;pond.name='sea-mirror-pond';b.pool=pond;
   // The shore axis ends at the gate apron. An inner ring leads around the body.
   block(paving,0,.10,41,5.8,.20,28);block(paving,0,.10,24,17,.20,8);
-  const innerWalk=mesh(new THREE.RingGeometry(12,15.5,128),walkStone,root,0,.20,0);innerWalk.rotation.x=-Math.PI/2;innerWalk.name='body-circumambulatory-walk';
+  const innerWalk=mesh(new THREE.RingGeometry(12,15.5,128),innerWalkStone,root,0,.20,0);innerWalk.rotation.x=-Math.PI/2;innerWalk.name='body-circumambulatory-walk';
   block(paving,0,.10,18,5,.20,8);
   // A low round lotus court closes the composition without an axial north exit.
   const bodyCourt=mesh(new THREE.CylinderGeometry(7.6,8,.20,64),stone,root,0,.10,-9);bodyCourt.name='lotus-body-court';
@@ -1044,10 +1223,10 @@ function prepareButterflySea(lm){
   for(const z of [-4,4])for(const side of [-1,1])lantern(side*6.3,z);
   for(let i=0;i<12;i++){const a=(i+.5)*Math.PI*2/12;lantern(Math.sin(a)*53.2,Math.cos(a)*53.2);}
   for(let z=34;z<51;z+=14)for(const side of [-1,1])lantern(side*4,z);
-  batch(root,G.box,stone,paving,'axis-and-court-paving');batch(structure,G.box,stone,shoes,'column-shoes-and-lamp-bases');batch(structure,G.box,timber,pillars,'colonnade-columns');batch(structure,G.box,bronze,brackets,'dougong-brackets');batch(structure,G.box,lamp,lamps,'architectural-lights');batch(structure,G.box,bronze,caps,'stone-lamp-caps');
-  // The sea causeway is outside the monument bounds. 4.8m clear walking width.
+  batch(root,G.box,altarStone,paving,'axis-and-court-paving');batch(structure,G.box,stone,shoes,'column-shoes-and-lamp-bases');batch(structure,G.box,timber,pillars,'colonnade-columns');batch(structure,G.box,bronze,brackets,'dougong-brackets');batch(structure,G.box,lamp,lamps,'architectural-lights');batch(structure,G.box,bronze,caps,'stone-lamp-caps');
+  // Visual enclosure stays outside the existing analytical half-width of 2.55m.
   const bridge=new THREE.Group();bridge.name='butterfly-sea-causeway';scene.add(bridge);b.causeway=bridge;
-  const deck=[],posts=[],rails=[],lights=[],pier=[];
+  const deck=[],posts=[],lights=[],pier=[],stonework=[],crowns=[];
   const toWorld=(r,side,y)=>[ux*r-uz*side,y,uz*r+ux*side];
   const angle=Math.atan2(ux,uz),L=sea.end-sea.start,N=Math.ceil(L/2);
   for(let i=0;i<N;i++){const r=sea.start+(i+.5)*L/N,y=butterflySeaDeck(r),next=butterflySeaDeck(r+L/N/2),prev=butterflySeaDeck(r-L/N/2),m=new THREE.Matrix4().compose(new THREE.Vector3(...toWorld(r,0,y-.25)),new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.atan2(next-prev,L/N),angle,0,'YXZ')),new THREE.Vector3(5.6,.5,L/N+.03));deck.push(m);}
@@ -1056,12 +1235,47 @@ function prepareButterflySea(lm){
     for(const side of [-3,3]){
       block(posts,...toWorld(r,side,y+.35),.14,.7,.14);
       block(lights,...toWorld(r,side,y+.79),.24,.18,.24);
-      const end=Math.min(r+14,sea.end);beam(rails,toWorld(r,side,y+.66),toWorld(end,side,butterflySeaDeck(end)+.66),.09);
+
     }
   }
+  // All enclosure is instanced, non-colliding, and absent from cameraBoxes.
+  // Curbs: inner edge 2.66m; posts/plinths: >=2.66m; lamps keep their old places.
+  function stoneSpan(r,end,side,height,width,depth){
+    const y=butterflySeaDeck(r),next=butterflySeaDeck(end),length=end-r;
+    stonework.push(new THREE.Matrix4().compose(new THREE.Vector3(...toWorld((r+end)/2,side,(y+next)/2+height)),
+      new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.atan2(next-y,length),angle,0,'YXZ')),
+      new THREE.Vector3(width,depth,Math.hypot(length,next-y))));
+  }
+  for(const sign of [-1,1]){
+    for(let r=sea.start;r<sea.end;r+=1){
+      const end=Math.min(r+1,sea.end);
+      stoneSpan(r,end,sign*2.82,.075,.32,.15);
+    }
+    // 2.8m bays: lamps (every 14m) fall at bay centres, clear of the posts.
+    const stops=[sea.start];for(let r=sea.start+3.4;r<sea.end-1;r+=2.8)stops.push(r);stops.push(sea.end);
+    for(let i=0;i<stops.length;i++){
+      const r=stops[i],y=butterflySeaDeck(r),terminal=i===0||i===stops.length-1;
+      block(stonework,...toWorld(r,sign*3.3,y+.53),terminal?.46:.36,1.06,terminal?.46:.36,angle);
+      block(stonework,...toWorld(r,sign*3.08,y+.095),.84,.19,.64,angle);
+      block(stonework,...toWorld(r,sign*3.3,y+1.06),.50,.12,.50,angle);
+      // A four-sided, flattened lotus-bud cap; no ornament above eye level.
+      block(crowns,...toWorld(r,sign*3.3,y+1.20),.25,.17,.25,angle+Math.PI/4);
+      if(i===stops.length-1)continue;
+      const end=stops[i+1];
+      for(const height of [.27,.96])stoneSpan(r,end,sign*3.3,height,.19,.16);
+      for(const f of [1/3,2/3]){
+        const q=THREE.MathUtils.lerp(r,end,f);
+        // Leave a little air around the preserved stone lamps.
+        if(Math.abs(((q-sea.start-2)%14+14)%14-7)>6.55)continue;
+        block(stonework,...toWorld(q,sign*3.3,butterflySeaDeck(q)+.60),.14,.58,.14,angle);
+      }
+    }
+  }
+  batch(bridge,G.box,stone,stonework,'stone-curbs-plinths-posts-open-balustrades');
+  batch(bridge,G.cone,stone,crowns,'low-lotus-post-crowns');
   // Four slender, dark supports instead of the repeated heavy pier wall.
   for(let r=sea.start+18;r<sea.end;r+=36){const h=butterflySeaDeck(r)-WORLD.WATER_Y;block(pier,...toWorld(r,0,WORLD.WATER_Y+h/2),.42,h,.42,angle);}
-  batch(bridge,G.box,stone,deck,'continuous-ramped-stone-deck');batch(bridge,G.box,stone,posts,'causeway-balusters');batch(bridge,G.box,bronze,rails,'causeway-handrails');batch(bridge,G.box,lamp,lights,'processional-lights');batch(bridge,G.box,timber,pier,'sea-piers');
+  batch(bridge,G.box,bridgeStone,deck,'continuous-ramped-stone-deck');batch(bridge,G.box,stone,posts,'causeway-balusters');batch(bridge,G.box,lamp,lights,'processional-lights');batch(bridge,G.box,timber,pier,'sea-piers');
   for(const {parent,geo,mat,rows,names} of batches.values()){
     const im=new THREE.InstancedMesh(geo,mat,rows.length);im.name=names.join('+');im.userData.components=names;
     rows.forEach((m,i)=>im.setMatrixAt(i,m));im.instanceMatrix.needsUpdate=true;
@@ -1296,17 +1510,50 @@ function buildBridge(b){
   g.position.set((b.x1+b.x2)/2,0,(b.z1+b.z2)/2);g.rotation.y=ang;
   const geo=new THREE.PlaneGeometry(L,4.4,Math.ceil(L/.5),1);geo.rotateX(-Math.PI/2);
   const pos=geo.attributes.position;for(let i=0;i<pos.count;i++)pos.setY(i,bridgeDeckY(pos.getX(i),L,b.rise));geo.computeVertexNormals();
-  mesh(geo,M.path,g,0,0,0);
-  // Instanced railings live inside each bridge so opening bridge eight toggles all its parts.
-  const mats=[M.stone,M.glow],records=[[],[]];
-  for(let x=-L/2;x<=L/2;x+=3)for(const z of [-2.1,2.1]){
-    const y=bridgeDeckY(x,L,b.rise);records[0].push([x,y+.5,z,.14,1,.14]);records[1].push([x,y+1.06,z,.17,.12,.17]);
+  // Road 3a transverse Canvas joints, now in each bridge's own UV space.
+  // Material-only paving sits exactly on the old sampled arch (zero height offset).
+  const canvas=document.createElement('canvas');canvas.width=2048;canvas.height=256;
+  const ctx=canvas.getContext('2d');let seed=819+b.id*3103;
+  const noise=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;};
+  ctx.fillStyle='#56605a';ctx.fillRect(0,0,2048,256);
+  for(let x=0;x<L;){const end=Math.min(L,x+1.05+noise()*.25),v=233+Math.floor(noise()*12);
+    ctx.fillStyle=`rgb(${v},${v+1},${v})`;ctx.fillRect((x+.025)/L*2048,0,Math.max(0,end-x-.05)/L*2048,256);x=end;}
+  ctx.fillStyle='rgba(45,55,52,.55)';for(const x of [.32,.52,L-.52,L-.32])ctx.fillRect(x/L*2048,0,.04/L*2048,256);
+  const texture=new THREE.CanvasTexture(canvas);texture.encoding=THREE.sRGBEncoding;texture.anisotropy=Math.min(4,renderer.capabilities.getMaxAnisotropy());
+  const paving=islandRoads.stone.clone();paving.map=texture;mesh(geo,paving,g,0,0,0).name='bridge-transverse-stone-deck';
+  // Same wangzhu / xunzhang / intermediate posts / ground sill as the causeway.
+  // Innermost edge >= 2.21m, beyond BOTH walking half-width 2.1 and deck half-width 2.2.
+  const records=[[],[]],colors=[[],[]],mats=[material(b.id===7?0x777d6b:0x92998f,{roughness:.93}),M.glow];
+  function block(x,y,z,w,h,d,rz=0,ry=0,light=false){
+    const i=light?1:0;records[i].push(new THREE.Matrix4().compose(new THREE.Vector3(x,y,z),new THREE.Quaternion().setFromEuler(new THREE.Euler(0,ry,rz)),new THREE.Vector3(w,h,d)));
+    const v=.96+noise()*.07;colors[i].push(new THREE.Color().setRGB(v,v,v));
   }
-  records.forEach((rows,i)=>{const im=new THREE.InstancedMesh(G.box,mats[i],rows.length);rows.forEach((v,n)=>{instanceDummy.position.set(...v.slice(0,3));instanceDummy.scale.set(...v.slice(3));instanceDummy.rotation.set(0,0,0);instanceDummy.updateMatrix();im.setMatrixAt(n,instanceDummy.matrix);});im.receiveShadow=true;g.add(im);});
+  function span(x,end,z,height,width,depth){const y=bridgeDeckY(x,L,b.rise),next=bridgeDeckY(end,L,b.rise);block((x+end)/2,(y+next)/2+height,z,Math.hypot(end-x,next-y)-.012,depth,width,Math.atan2(next-y,end-x));}
+  const bays=Math.ceil(L/2.8),step=L/bays;
+  for(const sign of [-1,1]){
+    for(let x=-L/2;x<L/2;x+=1)span(x,Math.min(x+1,L/2),sign*2.36,.075,.30,.15);
+    for(let i=0;i<=bays;i++){
+      const x=-L/2+i*step,y=bridgeDeckY(x,L,b.rise),terminal=i===0||i===bays,z=sign*2.65;
+      block(x,y+.085,z,terminal?.62:.46,.17,.58);
+      block(x,y+.49,z,terminal?.36:.28,.98,terminal?.36:.28);
+      block(x,y+1.00,z,.44,.10,.44);
+      block(x,y+1.10,z,.23,.12,.23,0,Math.PI/4);
+      // Small stepped drum silhouette at the end; the entire foot stays outside 2.2m.
+      if(terminal){block(x,y+.29,z,.54,.28,.50);block(x,y+.47,z,.42,.10,.42);}
+      if(i===bays)continue;const end=x+step;
+      for(const h of [.26,.89])span(x,end,z,h,.15,.13);
+      for(const f of [1/3,2/3]){const q=x+step*f;block(q,bridgeDeckY(q,L,b.rise)+.56,z,.12,.54,.12);}
+    }
+    // Warm light cadence is retained without putting luminous caps on every post.
+    for(let x=-L/2+step/2;x<L/2;x+=step*3)block(x,bridgeDeckY(x,L,b.rise)+.95,sign*2.65,.16,.10,.18,0,0,true);
+  }
+  records.forEach((rows,i)=>{const im=new THREE.InstancedMesh(G.box,mats[i],rows.length);im.name=i?'bridge-warm-markers':'bridge-posts-sills-open-balustrade';rows.forEach((m,n)=>{im.setMatrixAt(n,m);if(i===0)im.setColorAt(n,colors[i][n]);});im.instanceMatrix.needsUpdate=true;if(im.instanceColor)im.instanceColor.needsUpdate=true;im.frustumCulled=false;im.receiveShadow=true;g.add(im);});
   g.visible=!b.bonus;b.mesh=g;return g;
 }
 
 BRIDGES.forEach(buildBridge);
+islandRoads.build();
+
 function onBridgeSeg(x,z,b,half){
   const dx=b.x2-b.x1,dz=b.z2-b.z1,l2=dx*dx+dz*dz;let t=((x-b.x1)*dx+(z-b.z1)*dz)/l2;t=Math.max(0,Math.min(1,t));
   return Math.hypot(x-(b.x1+dx*t),z-(b.z1+dz*t))<half;
@@ -1377,6 +1624,31 @@ mesh(G.sphere,new THREE.MeshBasicMaterial({color:new THREE.Color(6,3.5,1.2)}),la
 const playerLight=new THREE.PointLight(0xf0bd7e,1.25,6,2);playerLight.position.set(0,-.4,0);lanternSwing.add(playerLight);
 disc(player,0,0,.65,M.shadow);
 ring(player,0,0,.85,0xe8e2d5,.15);
+// Own the visitor's materials: GLB/procedural meshes otherwise share M with scenery.
+// Keep mesh visibility (including replaced placeholders), lights and ground marks intact.
+const avatarMeshes=new WeakSet(),avatarMaterials=[];
+let avatarFade=1,avatarHidden=false;
+function prepareAvatarFade(){
+  body.traverse(o=>{
+    if(!o.isMesh||avatarMeshes.has(o))return;
+    avatarMeshes.add(o);
+    const clone=source=>{const material=source.clone();avatarMaterials.push({material,opacity:source.opacity,
+      transparent:source.transparent,depthWrite:source.depthWrite,visible:source.visible});return material;};
+    o.material=Array.isArray(o.material)?o.material.map(clone):clone(o.material);
+  });
+}
+function updateAvatarFade(dt,distance){
+  if(distance<2.4)avatarHidden=true;else if(distance>2.8)avatarHidden=false;
+  avatarFade=THREE.MathUtils.clamp(avatarFade+(avatarHidden?-1:1)*dt/.15,0,1);
+  const opacity=avatarFade*avatarFade*(3-2*avatarFade);
+  for(const entry of avatarMaterials){
+    const m=entry.material,transparent=entry.transparent||avatarFade<1;
+    if(m.transparent!==transparent){m.transparent=transparent;m.needsUpdate=true;}
+    m.opacity=entry.opacity*opacity;m.depthWrite=entry.depthWrite&&avatarFade===1;
+    m.visible=entry.visible&&avatarFade>0;
+  }
+}
+prepareAvatarFade();
 // ===== GLB 精建模型:加载成功即替换占位基元,失败则静默保留程序化版本 =====
 const gltfLoader=new THREE.GLTFLoader();
 function glbRefine(root,glowOverride){
@@ -1455,6 +1727,7 @@ glbLoad('assets/models/Visitor.glb').then(g=>{
   if(nl){legL=nl;if(fl)nl.attach(fl);}
   if(nr){legR=nr;if(fr)nr.attach(fr);}
   if(pivot)lanternSwing.attach(pivot);
+  prepareAvatarFade();updateAvatarFade(0,cameraState.effectiveDistance);
 }).catch(e=>console.warn('Visitor.glb 未加载',e));
 // Per-entry landmark models (batch 1: zone 0, entries 0-7; batch 2: zone 1, entries 8-12; batch 3: zone 2, entries 13-23; batch 4: zone 3, entries 24-25). Falls back to procedural meshes on failure.
 const glbPerEntry={0:['assets/models/LM01_Moxi.glb','Moxi',1],1:['assets/models/LM02_Huayun.glb','Huayun',1],
@@ -1505,7 +1778,8 @@ const dustPool=[];
 for(let i=0;i<(lightQuality?0:10);i++){const puff=new THREE.Sprite(new THREE.SpriteMaterial({map:glowTexture,color:0x9c9c86,transparent:true,opacity:0,depthWrite:false}));puff.visible=false;puff.userData.life=0;scene.add(puff);dustPool.push(puff);}
 let dustElapsed=0,dustCursor=0,lookActive=0,lastLookAt=-10;
 const velocity=new THREE.Vector2(),desired=new THREE.Vector2(),camTarget=new THREE.Vector3(),camPosition=new THREE.Vector3(),cameraLook=new THREE.Vector3();
-const cameraState={yaw:0,pitch:WORLD.CAMERA_PITCH,distance:WORLD.CAMERA_DISTANCE,framing:0};
+const cameraState={yaw:0,pitch:WORLD.CAMERA_PITCH,distance:WORLD.CAMERA_DISTANCE,framing:0,
+  anchor:camTarget,effectiveDistance:WORLD.CAMERA_DISTANCE,renderYaw:0,renderPitch:WORLD.CAMERA_PITCH,initialized:false};
 const visited=new Set();
 try{const saved=JSON.parse(localStorage.getItem('garden-visited-v1')||'[]');if(Array.isArray(saved))saved.forEach(url=>{const i=LINKS.findIndex(entry=>entry.url===url);if(i>=0)visited.add(i);});}catch(error){/* Storage may be unavailable in private mode. */}
 function updateVisited(){$('visited').textContent=String(visited.size).padStart(2,'0')+' / 26';}
@@ -1523,7 +1797,7 @@ function setNear(next){
   }else $('enter-link').removeAttribute('href');
 }
 function visit(lm){
-  if(!lm||!started||!$('directory').hidden)return;
+  if(!lm||!started||modalOpen())return;
   // Opening a blank window synchronously lets us detect popup blocking before counting a visit.
   const destination=window.open('about:blank','_blank');
   if(destination){destination.opener=null;const meta=destination.document.createElement('meta');meta.name='referrer';meta.content='no-referrer';destination.document.head.append(meta);destination.location.replace(lm.entry.url);markVisited(lm.index);}
@@ -1536,43 +1810,88 @@ function start(){
   bgm.start();
 }
 $('intro').addEventListener('click',start);
-function teleport(x,z){clearInput();velocity.set(0,0);if(!walkable(x,z))return false;player.position.set(x,surfaceHeight(x,z),z);setNear(null);cameraState.yaw=0;cameraState.pitch=WORLD.CAMERA_PITCH;cameraState.framing=0;viewCache=null;camera.position.set(x,surfaceHeight(x,z+cameraState.distance)+2.1,z+cameraState.distance);cameraLook.set(x,player.position.y+1.6,z);if(butterflySea&&butterflySeaSurface(x,z)!==null){cameraState.yaw=Math.atan2(-butterflySea.ux,-butterflySea.uz);camera.position.set(x-butterflySea.ux*cameraState.distance,player.position.y+2.1,z-butterflySea.uz*cameraState.distance);cameraLook.copy(landmarks[23].butterfly.root.localToWorld(new THREE.Vector3(0,8,-9)));camera.lookAt(cameraLook);}if(started)$('world').focus({preventScroll:true});}
+function teleport(x,z){
+  clearInput();velocity.set(0,0);if(!walkable(x,z))return false;
+  player.position.set(x,surfaceHeight(x,z),z);setNear(null);
+  cameraState.yaw=butterflySea&&butterflySeaSurface(x,z)!==null?Math.atan2(-butterflySea.ux,-butterflySea.uz):0;
+  cameraState.pitch=WORLD.CAMERA_PITCH;cameraState.framing=0;cameraState.initialized=false;viewCache=null;
+  // Seed the same shoulder-height orbit used while walking, without a cross-world sweep.
+  updateCamera(0);if(started)$('world').focus({preventScroll:true});
+}
 $('home').onclick=()=>teleport(0,3);
 document.querySelectorAll('[data-zone]').forEach(button=>button.onclick=()=>{const zone=ZONES[Number(button.dataset.zone)];teleport(...zone.spawn);});
 const moveKeys=['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'];
 window.addEventListener('keydown',e=>{
-  if(e.ctrlKey||e.metaKey||e.altKey||!$('directory').hidden||failed)return;
+  if(e.ctrlKey||e.metaKey||e.altKey||modalOpen()||failed)return;
   if(!started){if(!['Shift','Control','Alt','Meta','Tab'].includes(e.key)){e.preventDefault();start();}return;}
   if(e.target.closest('#viewpad'))return;
   if(e.target.closest('button,a')&&(e.code==='Enter'||e.code==='Space'))return;
-  if(moveKeys.includes(e.code)){e.preventDefault();keys.add(e.code);}
+  if(moveKeys.includes(e.code)||e.code==='ShiftLeft'||e.code==='ShiftRight'){e.preventDefault();keys.add(e.code);}
   if((e.code==='Enter'||e.code==='Space')&&!e.repeat){e.preventDefault();visit(nearest);}
   if(e.code==='KeyR'&&!e.repeat)teleport(0,3);
 });
 window.addEventListener('keyup',e=>keys.delete(e.code));
 window.addEventListener('blur',()=>{clearInput();velocity.set(0,0);});
 document.addEventListener('visibilitychange',()=>{clearInput();velocity.set(0,0);lastTime=0;});
-let joyPointer=null;
-function updateJoystick(e){const rect=$('joystick').getBoundingClientRect();let x=e.clientX-rect.left-rect.width/2,y=e.clientY-rect.top-rect.height/2;const max=rect.width*.32,length=Math.hypot(x,y);if(length>max){x*=max/length;y*=max/length;}joy.x=x/max;joy.y=y/max;$('stick').style.transform=`translate(${x}px,${y}px)`;}
-$('joystick').addEventListener('pointerdown',e=>{if(joyPointer!==null)return;e.preventDefault();joyPointer=e.pointerId;$('joystick').setPointerCapture(e.pointerId);updateJoystick(e);});
-$('joystick').addEventListener('pointermove',e=>{if(e.pointerId===joyPointer)updateJoystick(e);});
-function releaseJoystick(e){if(e.pointerId!==joyPointer)return;joyPointer=null;joy.x=joy.y=0;$('stick').style.transform='';}
-['pointerup','pointercancel','lostpointercapture'].forEach(type=>$('joystick').addEventListener(type,releaseJoystick));
+let joyPointer=null,joyReturnTimer=null,sprintPointer=null,currentSpeed=6.3,sprinting=false;
+const joystick=$('joystick'),sprintButton=$('sprint');
+const floatingJoystick=()=>matchMedia('(pointer:coarse)').matches||document.body.classList.contains('touch');
+function resetJoystick(immediate=false){
+  const id=joyPointer;joyPointer=null;joy.x=joy.y=0;$('stick').style.transform='';
+  if(id!==null&&joystick.hasPointerCapture(id))joystick.releasePointerCapture(id);
+  clearTimeout(joyReturnTimer);joystick.classList.remove('active');
+  const home=()=>{joystick.style.left='';joystick.style.top='';joystick.style.bottom='';joystick.classList.remove('returning');};
+  if(immediate||!floatingJoystick())home();else{joystick.classList.add('returning');joyReturnTimer=setTimeout(home,180);}
+}
+function updateJoystick(e){const rect=joystick.getBoundingClientRect();let x=e.clientX-rect.left-rect.width/2,y=e.clientY-rect.top-rect.height/2;const max=rect.width*.34,length=Math.hypot(x,y);if(length>max){x*=max/length;y*=max/length;}joy.x=x/max;joy.y=y/max;$('stick').style.transform=`translate(${x}px,${y}px)`;}
+function inJoystickZone(e){
+  if(e.target.closest('#viewpad,#interaction,.mapbox,#sprint,button,a,input,#directory,#atlas,#intro'))return false;
+  return e.target.closest('#joystick')||floatingJoystick()&&e.clientX<=innerWidth*.52&&e.clientY>=Math.max(96,innerHeight*.28);
+}
+// Capture before the canvas look/pick handlers, only for our owned pointer.
+document.addEventListener('pointerdown',e=>{
+  if(!started||modalOpen()||e.button!==0||!inJoystickZone(e))return;
+  e.preventDefault();e.stopPropagation();if(joyPointer!==null)return;
+  clearTimeout(joyReturnTimer);joystick.classList.remove('returning');
+  if(floatingJoystick()){
+    const r=joystick.getBoundingClientRect().width/2,css=getComputedStyle(joystick);
+    const left=r+12+(parseFloat(css.getPropertyValue('--safe-left'))||0),bottom=r+12+(parseFloat(css.getPropertyValue('--safe-bottom'))||0);
+    const x=Math.max(left,Math.min(innerWidth-r-12,e.clientX));
+    let y=Math.max(96+r,Math.min(innerHeight-bottom,e.clientY));
+    const card=$('interaction').getBoundingClientRect();
+    if($('interaction').classList.contains('visible')&&x+r>card.left&&x-r<card.right&&y+r>card.top&&y-r<card.bottom){
+      y=card.bottom+12+r<=innerHeight-bottom?card.bottom+12+r:Math.max(96+r,card.top-r-12);
+    }
+    joystick.style.left=`${x-r}px`;joystick.style.top=`${y-r}px`;joystick.style.bottom='auto';
+  }
+  joyPointer=e.pointerId;joystick.classList.add('active');
+  try{joystick.setPointerCapture(e.pointerId);}catch(error){/* Synthetic tests have no native capture. */}
+  updateJoystick(e);
+},{capture:true,passive:false});
+for(const type of ['pointermove','pointerup','pointercancel','lostpointercapture'])document.addEventListener(type,e=>{
+  if(e.pointerId!==joyPointer)return;e.stopPropagation();if(e.cancelable)e.preventDefault();
+  if(type==='pointermove')updateJoystick(e);else resetJoystick();
+},{capture:true,passive:false});
+function releaseSprint(){const id=sprintPointer;sprintPointer=null;sprintButton.classList.remove('active');sprintButton.setAttribute('aria-pressed','false');if(id!==null&&sprintButton.hasPointerCapture(id))sprintButton.releasePointerCapture(id);}
+sprintButton.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();if(!started||modalOpen()||sprintPointer!==null||e.button!==0)return;sprintPointer=e.pointerId;sprintButton.classList.add('active');sprintButton.setAttribute('aria-pressed','true');try{sprintButton.setPointerCapture(e.pointerId);}catch(error){/* Synthetic pointer. */}});
+for(const type of ['pointerup','pointercancel','lostpointercapture'])document.addEventListener(type,e=>{if(e.pointerId===sprintPointer){e.stopPropagation();releaseSprint();}},true);
+window.addEventListener('resize',()=>{resetJoystick(true);releaseSprint();});
 const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
 function pick(e){const rect=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);raycaster.setFromCamera(pointer,camera);const hits=raycaster.intersectObjects(pickables,false);return hits.find(hit=>{let o=hit.object;while(o){if(!o.visible)return false;o=o.parent;}return !hit.object.isSprite||hit.object.material.opacity>.2;})?.object.userData.landmark;}
 function bindLook(element,canPick){
   let drag=null;
-  element.addEventListener('pointerdown',e=>{if(!started||e.button!==0||drag)return;e.preventDefault();if(canPick)$('world').focus({preventScroll:true});lookActive++;lastLookAt=elapsed;drag={id:e.pointerId,x:e.clientX,y:e.clientY,travel:0};element.setPointerCapture(e.pointerId);});
+  element.addEventListener('pointerdown',e=>{if(!started||modalOpen()||e.button!==0||drag)return;e.preventDefault();if(canPick)$('world').focus({preventScroll:true});lookActive++;lastLookAt=elapsed;drag={id:e.pointerId,x:e.clientX,y:e.clientY,travel:0};element.setPointerCapture(e.pointerId);});
   element.addEventListener('pointermove',e=>{
+    if(modalOpen()){if(drag){if(element.hasPointerCapture(drag.id))element.releasePointerCapture(drag.id);drag=null;lookActive=Math.max(0,lookActive-1);}return;}
     if(!drag){if(canPick&&e.pointerType==='mouse')element.style.cursor=pick(e)?'pointer':'grab';return;}
-    if(drag.id!==e.pointerId)return;lastLookAt=elapsed;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.travel+=Math.hypot(dx,dy);cameraState.yaw-=dx*.0045;cameraState.pitch=THREE.MathUtils.clamp(cameraState.pitch+dy*.0035,WORLD.CAMERA_MIN_PITCH,WORLD.CAMERA_MAX_PITCH);drag.x=e.clientX;drag.y=e.clientY;
+    if(drag.id!==e.pointerId)return;lastLookAt=elapsed;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.travel+=Math.hypot(dx,dy);cameraState.yaw-=dx*.0045;cameraState.pitch=THREE.MathUtils.clamp(cameraState.pitch-dy*.0035,WORLD.CAMERA_MIN_PITCH,WORLD.CAMERA_MAX_PITCH);drag.x=e.clientX;drag.y=e.clientY;
   });
   element.addEventListener('pointerup',e=>{if(!drag||drag.id!==e.pointerId)return;const click=drag.travel<7;drag=null;lookActive=Math.max(0,lookActive-1);lastLookAt=elapsed;if(canPick&&click)visit(pick(e));});
   ['pointercancel','lostpointercapture'].forEach(type=>element.addEventListener(type,()=>{if(drag)lookActive=Math.max(0,lookActive-1);drag=null;lastLookAt=elapsed;}));
 }
 bindLook(renderer.domElement,true);bindLook($('viewpad'),false);
-renderer.domElement.addEventListener('wheel',e=>{e.preventDefault();lastLookAt=elapsed;cameraState.distance=THREE.MathUtils.clamp(cameraState.distance+e.deltaY*.008,4,12);},{passive:false});
-$('viewpad').addEventListener('keydown',e=>{if(!e.key.startsWith('Arrow')&&e.key!=='Home')return;e.preventDefault();e.stopPropagation();lastLookAt=elapsed;if(e.key==='ArrowLeft')cameraState.yaw+=.14;if(e.key==='ArrowRight')cameraState.yaw-=.14;if(e.key==='ArrowUp')cameraState.pitch=Math.min(WORLD.CAMERA_MAX_PITCH,cameraState.pitch+.08);if(e.key==='ArrowDown')cameraState.pitch=Math.max(WORLD.CAMERA_MIN_PITCH,cameraState.pitch-.08);if(e.key==='Home'){cameraState.yaw=0;cameraState.pitch=WORLD.CAMERA_PITCH;}});
+renderer.domElement.addEventListener('wheel',e=>{e.preventDefault();if(modalOpen())return;lastLookAt=elapsed;cameraState.distance=THREE.MathUtils.clamp(cameraState.distance+e.deltaY*.008,WORLD.CAMERA_MIN_DISTANCE,WORLD.CAMERA_MAX_DISTANCE);},{passive:false});
+$('viewpad').addEventListener('keydown',e=>{if(modalOpen())return;if(!e.key.startsWith('Arrow')&&e.key!=='Home')return;e.preventDefault();e.stopPropagation();lastLookAt=elapsed;if(e.key==='ArrowLeft')cameraState.yaw+=.14;if(e.key==='ArrowRight')cameraState.yaw-=.14;if(e.key==='ArrowUp')cameraState.pitch=Math.min(WORLD.CAMERA_MAX_PITCH,cameraState.pitch+.08);if(e.key==='ArrowDown')cameraState.pitch=Math.max(WORLD.CAMERA_MIN_PITCH,cameraState.pitch-.08);if(e.key==='Home'){cameraState.yaw=0;cameraState.pitch=WORLD.CAMERA_PITCH;}});
 function reduceQuality(){
   if(!lightQuality){lightQuality=true;if(bloom){bloom.enabled=false;composer.removePass(bloom);bloom.dispose();bloom=null;}
     renderer.shadowMap.enabled=false;moon.castShadow=false;sun.castShadow=false;for(const l of [moon,sun])if(l.shadow.map){l.shadow.map.dispose();l.shadow.map=null;}
@@ -1584,8 +1903,9 @@ function reduceQuality(){
   clouds.forEach((cloud,i)=>cloud.visible=i===0);dustPool.forEach(puff=>{puff.visible=false;puff.userData.life=0;});water.material=simpleWater;
   renderer.setPixelRatio(Math.min(devicePixelRatio||1,qualityReduced?1:1.15));composer.setPixelRatio(renderer.getPixelRatio());starMaterial.uniforms.pixelRatio.value=renderer.getPixelRatio();
 }
+// A small upward framing bias puts the standing torso at about 2/3 of the screen.
 function resize(){
-  camera.aspect=innerWidth/innerHeight;camera.setViewOffset(innerWidth,innerHeight,0,-innerHeight*.1,innerWidth,innerHeight);camera.updateProjectionMatrix();
+  camera.aspect=innerWidth/innerHeight;camera.setViewOffset(innerWidth,innerHeight,0,-innerHeight*.025,innerWidth,innerHeight);camera.updateProjectionMatrix();
   if(lightQuality||needsLightQuality()||qualityReduced)reduceQuality();
   renderer.setPixelRatio(Math.min(devicePixelRatio||1,lightQuality?(qualityReduced?1:1.15):1.5));
   renderer.setSize(innerWidth,innerHeight);composer.setPixelRatio(renderer.getPixelRatio());composer.setSize(innerWidth,innerHeight);
@@ -1593,26 +1913,123 @@ function resize(){
 }
 window.addEventListener('resize',resize);resize();
 const mapContext=$('map').getContext('2d');
+// Canvas uses +x right, +z down. Forward=(-sin(yaw),-cos(yaw));
+// R(yaw) maps it to (0,-1). North's counterclockwise bearing is -yaw.
+const mapZoneColors=['#849e96','#939eb1','#ad927e','#a092ad'];
 function drawMap(){
-  const ctx=mapContext;ctx.clearRect(0,0,288,288);ctx.save();ctx.translate(100,160);const scale=.62;
-  ctx.fillStyle='rgba(12,14,16,.55)';ctx.strokeStyle='rgba(232,226,213,.18)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(0,0,WORLD.ISLAND_RADIUS*scale,0,Math.PI*2);ctx.fill();ctx.stroke();
-  ctx.strokeStyle='rgba(232,226,213,.09)';ctx.beginPath();ctx.moveTo(-132,0);ctx.lineTo(132,0);ctx.moveTo(0,-132);ctx.lineTo(0,132);ctx.stroke();
-  for(const is of MATH_ISLES){ctx.fillStyle='rgba(12,14,16,.55)';ctx.strokeStyle='rgba(232,226,213,.18)';ctx.beginPath();ctx.arc(is.x*scale,is.z*scale,is.r*scale,0,Math.PI*2);ctx.fill();ctx.stroke();}
-  ctx.strokeStyle='rgba(180,157,117,.55)';ctx.lineWidth=2;ctx.beginPath();
-  for(const b of BRIDGES){if(b.bonus&&!bridge8Open)continue;ctx.moveTo(b.x1*scale,b.z1*scale);ctx.lineTo(b.x2*scale,b.z2*scale);}
-  ctx.stroke();ctx.lineWidth=1;
-  ctx.font='13px "PingFang SC",sans-serif';ctx.textAlign='center';ctx.fillStyle='#aaa69b';
-  const isleShort={K:'柯洲',L:'叙洲',S:'图洲'};for(const is of MATH_ISLES)ctx.fillText(isleShort[is.key],is.x*scale,is.z*scale-is.r*scale-5);
-  for(const lm of landmarks){ctx.fillStyle=nearest===lm?'#e8e2d5':visited.has(lm.index)?'#b49d75':'#616762';ctx.fillRect(lm.entry.x*scale-2,lm.entry.z*scale-2,4,4);}
-  ctx.font='16px "PingFang SC",sans-serif';ctx.textAlign='center';ctx.fillStyle='#aaa69b';ctx.fillText('作',-29,-48);ctx.fillText('项',29,-48);ctx.fillText('服',-31,47);ctx.fillText('连',32,47);
-  ctx.translate(player.position.x*scale,player.position.z*scale);ctx.rotate(-cameraState.yaw);ctx.fillStyle='rgba(192,86,62,.18)';ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(-13,-24);ctx.lineTo(13,-24);ctx.closePath();ctx.fill();ctx.fillStyle='#c0563e';ctx.beginPath();ctx.arc(0,0,5,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#e8e2d5';ctx.stroke();ctx.restore();
+  const ctx=mapContext,size=288,c=size/2,r=c-18,scale=.62,yaw=cameraState.yaw;
+  ctx.clearRect(0,0,size,size);ctx.save();ctx.translate(c,c);
+  ctx.save();ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.clip();
+  ctx.rotate(yaw);ctx.translate(-player.position.x*scale,-player.position.z*scale);
+  ctx.fillStyle='rgba(42,57,59,.28)';ctx.strokeStyle='rgba(174,190,183,.32)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.arc(0,0,WORLD.ISLAND_RADIUS*scale,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.strokeStyle='rgba(190,198,187,.23)';ctx.beginPath();
+  for(const ring of [WORLD.INNER_RING,WORLD.OUTER_RING]){const radius=(ring-WORLD.TERRACE_RADIUS-WORLD.APPROACH_LENGTH)*scale;ctx.moveTo(radius,0);ctx.arc(0,0,radius,0,Math.PI*2);}
+  const edge=WORLD.ISLAND_RADIUS*scale;ctx.moveTo(-edge,0);ctx.lineTo(edge,0);ctx.moveTo(0,-edge);ctx.lineTo(0,edge);ctx.stroke();
+  ctx.strokeStyle='rgba(180,157,117,.65)';ctx.lineWidth=1.4;ctx.beginPath();
+  for(const b of BRIDGES){if(b.bonus&&!bridge8Open)continue;ctx.moveTo(b.x1*scale,b.z1*scale);ctx.lineTo(b.x2*scale,b.z2*scale);}ctx.stroke();
+  for(const isle of MATH_ISLES){ctx.strokeStyle='rgba(174,190,183,.28)';ctx.beginPath();ctx.arc(isle.x*scale,isle.z*scale,isle.r*scale,0,Math.PI*2);ctx.stroke();ctx.fillStyle='#849e96';ctx.beginPath();ctx.arc(isle.x*scale,isle.z*scale,2,0,Math.PI*2);ctx.fill();}
+  const pulse=reduced?.5:(1+Math.sin(elapsed*1.6))/2;
+  for(const lm of landmarks){const x=lm.entry.x*scale,z=lm.entry.z*scale;
+    ctx.fillStyle=nearest===lm?'#f1eee5':visited.has(lm.index)?'#c9ad78':mapZoneColors[lm.entry.zone];
+    ctx.beginPath();ctx.arc(x,z,nearest===lm?3.6:2.6,0,Math.PI*2);ctx.fill();
+    if(nearest===lm){ctx.strokeStyle=`rgba(241,238,229,${.25+pulse*.3})`;ctx.lineWidth=1;ctx.beginPath();ctx.arc(x,z,6+pulse*3,0,Math.PI*2);ctx.stroke();}
+  }
+  ctx.restore();
+  // A rim marker shares the world rotation, but its letter stays upright.
+  const northX=Math.sin(yaw)*(c-10),northY=-Math.cos(yaw)*(c-10);
+  ctx.font='12px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#c5cec8';ctx.fillText('N',northX,northY);
+  ctx.fillStyle='#c0563e';ctx.strokeStyle='#eee7d9';ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(0,-9);ctx.lineTo(6,7);ctx.lineTo(0,4);ctx.lineTo(-6,7);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
 }
+
+
+const atlasState={scales:[.85,1.1,1.45],level:0,scale:.85,offsetX:0,offsetZ:0,unit:1,focus:null};
+const atlasCanvas=$('atlas-map'),atlasContext=atlasCanvas.getContext('2d'),mapButton=document.querySelector('.mapbox');
+let atlasFocus=null,atlasDrag=null;
+const atlasItems=[];
+ZONES.forEach((zone,index)=>{
+  const section=document.createElement('section');section.style.setProperty('--zone',mapZoneColors[index]);
+  const h=document.createElement('h3');h.textContent=zone.name;section.append(h);
+  landmarks.filter(lm=>lm.entry.zone===index).forEach(lm=>{
+    const button=document.createElement('button');button.type='button';button.textContent=lm.entry.title;button.dataset.index=lm.index;
+    button.onclick=()=>{atlasState.offsetX=lm.entry.x;atlasState.offsetZ=lm.entry.z;atlasState.focus=lm.index;drawAtlas();};
+    section.append(button);atlasItems.push({button,lm});
+  });$('atlas-list').append(section);
+  const legend=document.createElement('span');legend.style.setProperty('--zone',mapZoneColors[index]);const dot=document.createElement('i');legend.append(dot,zone.name);$('atlas-legend').append(legend);
+});
+for(const text of ['━ 七桥（金）','▲ 当前位置','↑ N 北','金点：已访 · 白圈：最近']){const span=document.createElement('span');span.textContent=text;$('atlas-legend').append(span);}
+function showAtlas(){
+  if(!started||modalOpen())return;atlasFocus=document.activeElement;clearInput();
+  // Cancel any look pointer that began before opening the dialog.
+  for(const el of [renderer.domElement,$('viewpad')])el.dispatchEvent(new Event('pointercancel'));
+  $('atlas').hidden=false;$('hud').inert=true;$('intro').inert=true;mapButton.setAttribute('aria-expanded','true');
+  drawAtlas();$('close-atlas').focus();
+}
+function closeAtlas(){
+  if(atlasDrag&&atlasCanvas.hasPointerCapture(atlasDrag.id))atlasCanvas.releasePointerCapture(atlasDrag.id);
+  atlasDrag=null;$('atlas').hidden=true;$('hud').inert=!started;$('intro').inert=started;mapButton.setAttribute('aria-expanded','false');clearInput();atlasFocus?.focus();
+}
+mapButton.onclick=showAtlas;mapButton.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();e.stopPropagation();showAtlas();}});
+$('close-atlas').onclick=closeAtlas;$('atlas-home').onclick=()=>{teleport(0,3);closeAtlas();};
+$('atlas').addEventListener('click',e=>{if(e.target===$('atlas'))closeAtlas();});
+$('atlas').addEventListener('keydown',e=>{
+  if(e.key==='Escape'){e.preventDefault();e.stopPropagation();closeAtlas();}
+  if(e.key==='Tab'){const all=[...$('atlas').querySelectorAll('button:not(:disabled)')],i=all.indexOf(document.activeElement);if(e.shiftKey&&i<=0){e.preventDefault();all.at(-1).focus();}else if(!e.shiftKey&&i===all.length-1){e.preventDefault();all[0].focus();}}
+});
+function zoomAtlas(delta){atlasState.level=Math.max(0,Math.min(2,atlasState.level+delta));atlasState.scale=atlasState.scales[atlasState.level];drawAtlas();}
+$('atlas-plus').onclick=()=>zoomAtlas(1);$('atlas-minus').onclick=()=>zoomAtlas(-1);
+atlasCanvas.addEventListener('pointerdown',e=>{if(e.button!==0||atlasDrag)return;e.preventDefault();atlasDrag={id:e.pointerId,x:e.clientX,y:e.clientY};try{atlasCanvas.setPointerCapture(e.pointerId);}catch(error){/* Synthetic pointer. */}});
+atlasCanvas.addEventListener('pointermove',e=>{if(!atlasDrag||e.pointerId!==atlasDrag.id)return;e.preventDefault();atlasState.offsetX-=(e.clientX-atlasDrag.x)/atlasState.unit;atlasState.offsetZ-=(e.clientY-atlasDrag.y)/atlasState.unit;atlasDrag.x=e.clientX;atlasDrag.y=e.clientY;drawAtlas();});
+for(const type of ['pointerup','pointercancel','lostpointercapture'])atlasCanvas.addEventListener(type,e=>{if(atlasDrag?.id!==e.pointerId)return;atlasDrag=null;if(atlasCanvas.hasPointerCapture(e.pointerId))atlasCanvas.releasePointerCapture(e.pointerId);});
+window.addEventListener('resize',()=>{if(!$('atlas').hidden)drawAtlas();});
+function drawAtlas(){
+  if($('atlas').hidden)return;
+  const ctx=atlasContext,rect=atlasCanvas.getBoundingClientRect(),w=rect.width,h=rect.height,dpr=Math.min(devicePixelRatio||1,2);
+  if(!w||!h)return;
+  if(atlasCanvas.width!==Math.round(w*dpr)||atlasCanvas.height!==Math.round(h*dpr)){atlasCanvas.width=Math.round(w*dpr);atlasCanvas.height=Math.round(h*dpr);}
+  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
+  const extent=Math.max(WORLD.ISLAND_RADIUS,...MATH_ISLES.map(i=>Math.hypot(i.x,i.z)+i.r),...landmarks.map(l=>Math.hypot(l.entry.x,l.entry.z)+45));
+  const unit=Math.min(w,h)/(extent*2+50)*atlasState.scale;atlasState.unit=unit;
+  const px=x=>w/2+(x-atlasState.offsetX)*unit,pz=z=>h/2+(z-atlasState.offsetZ)*unit;
+  const circle=(x,z,r)=>{ctx.beginPath();ctx.arc(px(x),pz(z),r*unit,0,Math.PI*2);};
+  ctx.fillStyle='#243336';ctx.strokeStyle='#73847b';ctx.lineWidth=1;circle(0,0,WORLD.ISLAND_RADIUS);ctx.fill();ctx.stroke();
+  for(const isle of MATH_ISLES){circle(isle.x,isle.z,isle.r);ctx.fill();ctx.stroke();}
+  ctx.strokeStyle='#8f9b8b66';ctx.beginPath();for(const ring of [WORLD.INNER_RING,WORLD.OUTER_RING]){const r=ring-WORLD.TERRACE_RADIUS-WORLD.APPROACH_LENGTH;ctx.moveTo(px(r),pz(0));ctx.arc(px(0),pz(0),r*unit,0,Math.PI*2);}
+  const edge=WORLD.ISLAND_RADIUS;ctx.moveTo(px(-edge),pz(0));ctx.lineTo(px(edge),pz(0));ctx.moveTo(px(0),pz(-edge));ctx.lineTo(px(0),pz(edge));ctx.stroke();
+  ctx.strokeStyle='#c9ad78';ctx.lineWidth=1.6;ctx.beginPath();for(const b of BRIDGES){if(b.bonus)continue;ctx.moveTo(px(b.x1),pz(b.z1));ctx.lineTo(px(b.x2),pz(b.z2));}ctx.stroke();
+  ctx.font='11px sans-serif';ctx.textBaseline='middle';ctx.textAlign='left';
+  const occupied=[],labels=landmarks.slice().sort((a,b)=>(b.index===atlasState.focus)-(a.index===atlasState.focus));
+  for(const lm of labels){const x=px(lm.entry.x),y=pz(lm.entry.z),color=nearest===lm?'#ffffff':visited.has(lm.index)?'#c9ad78':mapZoneColors[lm.entry.zone];
+    ctx.fillStyle=color;ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fill();
+    if(nearest===lm){ctx.strokeStyle=`rgba(255,255,255,${.4+.25*Math.sin(elapsed*1.6)})`;ctx.beginPath();ctx.arc(x,y,6+Math.sin(elapsed*1.6),0,Math.PI*2);ctx.stroke();}
+    const text=lm.entry.title,tw=ctx.measureText(text).width+6;let box;
+    // Greedy label lanes retain every full name; panning and list focus resolve dense views.
+    for(let lane=0;lane<30;lane++){const dy=lane===0?0:Math.ceil(lane/2)*15*(lane%2?1:-1),bx=Math.max(3,Math.min(w-tw-3,x+7)),by=y+dy-7;
+      const candidate={x:bx,y:by,w:tw,h:14};box=candidate;
+      if(!occupied.some(b=>bx<b.x+b.w&&bx+tw>b.x&&by<b.y+b.h&&by+14>b.y))break;
+    }
+    occupied.push(box);ctx.strokeStyle=color+'88';ctx.lineWidth=.6;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(box.x,box.y+7);ctx.stroke();
+    ctx.fillStyle='#0b1216e8';ctx.fillRect(box.x,box.y,box.w,box.h);ctx.fillStyle=color;ctx.fillText(text,box.x+3,box.y+7);
+  }
+  ctx.save();ctx.translate(px(player.position.x),pz(player.position.z));ctx.rotate(-(cameraState.yaw+Math.PI));ctx.fillStyle='#c0563e';ctx.strokeStyle='#eee7d9';ctx.lineWidth=1.2;ctx.beginPath();ctx.moveTo(0,8);ctx.lineTo(5,-6);ctx.lineTo(0,-3);ctx.lineTo(-5,-6);ctx.closePath();ctx.fill();ctx.stroke();ctx.restore();
+  ctx.fillStyle='#eee7d9';ctx.font='bold 12px sans-serif';ctx.fillText('↑ N',12,18);
+  $('atlas-scale').value=atlasState.scale.toFixed(2)+'×';$('atlas-minus').disabled=atlasState.level===0;$('atlas-plus').disabled=atlasState.level===2;
+  for(const {button,lm} of atlasItems){button.classList.toggle('visited',visited.has(lm.index));button.classList.toggle('nearest',nearest===lm);button.setAttribute('aria-label',lm.entry.title+(visited.has(lm.index)?' · 已访':'')+(nearest===lm?' · 最近':''));}
+}
+
 function move(dt){
+  if(!started||modalOpen()){clearInput();return;}
+  const amplitude=Math.min(1,Math.hypot(joy.x,joy.y));
+  const keyboardMoving=moveKeys.some(key=>keys.has(key));
+  sprinting=keys.has('ShiftLeft')||keys.has('ShiftRight')||sprintPointer!==null||amplitude>=.92;
+  const targetSpeed=sprinting?10.6:keyboardMoving||amplitude<.08?6.3:3.2+3.1*THREE.MathUtils.clamp((amplitude-.08)/(.92-.08),0,1);
+  currentSpeed+=(targetSpeed-currentSpeed)*(1-Math.exp(-8*dt));
   const ix=(keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0)+joy.x;
   const iz=(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-(keys.has('KeyW')||keys.has('ArrowUp')?1:0)+joy.y;
-  desired.set(ix,iz);if(desired.length()>1)desired.normalize();if(desired.length()<.08)desired.set(0,0);
+  desired.set(ix,iz);if(desired.length()<.08)desired.set(0,0);else desired.normalize();
   const x=desired.x,z=desired.y,sin=Math.sin(cameraState.yaw),cos=Math.cos(cameraState.yaw);
-  desired.set(x*cos+z*sin,-x*sin+z*cos).multiplyScalar(6.3);
+  desired.set(x*cos+z*sin,-x*sin+z*cos).multiplyScalar(currentSpeed);
   // Exponential acceleration and stronger braking: responsive on both keys and touch.
   velocity.lerp(desired,1-Math.exp(-(desired.lengthSq()?12:22)*dt));if(velocity.lengthSq()<.0005)velocity.set(0,0);
   const oldX=player.position.x,oldZ=player.position.z;
@@ -1655,8 +2072,10 @@ function updateLandmarks(dt){
   for(const m of mathMonuments)if(m.model){const d=Math.hypot(player.position.x-m.x,player.position.z-m.z),limit=lightQuality?WORLD.LOD_MOBILE:WORLD.LOD_DESKTOP,far=!(viewCache?.lm===m&&cameraState.framing>.01)&&d>limit+(m.model.visible?12:-12);m.model.visible=!far;m.model.userData.dressing.visible=!far;m.lod.visible=far;}
   let zone=-1,min=80;ZONES.forEach((item,i)=>{const d=Math.hypot(player.position.x-item.x,player.position.z-item.z);if(d<min){zone=i;min=d;}});
   const inIsle=MATH_ISLES.find(is=>Math.hypot(player.position.x-is.x,player.position.z-is.z)<is.r+2.5);
+  const locationText=nearest?nearest.entry.title:inIsle?inIsle.note:zone<0?'庭心':ZONES[zone].note;
+  if($('location').textContent!==locationText)$('location').textContent=locationText;
   const uiKey=inIsle?'isle:'+inIsle.key:zone;
-  if(uiKey!==lastUIZone){lastUIZone=uiKey;$('location').textContent=inIsle?inIsle.note:zone<0?'庭心':ZONES[zone].note;document.querySelectorAll('[data-zone]').forEach((button,i)=>{const on=!inIsle&&i===zone;button.classList.toggle('active',on);button.setAttribute('aria-pressed',String(on));});}
+  if(uiKey!==lastUIZone){lastUIZone=uiKey;document.querySelectorAll('[data-zone]').forEach((button,i)=>{const on=!inIsle&&i===zone;button.classList.toggle('active',on);button.setAttribute('aria-pressed',String(on));});}
 }
 // AABBs include actual face trim and footing, independent of visual LOD.
 function subjectBounds(){return [...landmarks,...mathMonuments].map(l=>l.bounds).filter(Boolean);}
@@ -1666,21 +2085,43 @@ function segmentHit(a,b,box,margin=0){
   if(length<1e-6)return null;cameraRay.set(a,direction.divideScalar(length));
   const hit=cameraRay.intersectBox(expanded,rayPoint);return hit&&hit.distanceTo(a)<length-1e-5?hit.clone():null;
 }
-function clearCamera(position,target){
-  const boxes=butterflySea?subjectBounds().filter(b=>b!==landmarks[23].bounds).concat(butterflySea.cameraBoxes):subjectBounds(),pad=WORLD.CAMERA_CLEARANCE;
-  position.y=surfaceHeight(position.x,position.z)+2.1;
-  // Retract the boom along target -> camera when an obstacle lies between them.
-  for(const box of boxes){if(box.clone().expandByScalar(pad).containsPoint(target))continue;const hit=segmentHit(target,position,box,pad);if(hit){const dir=position.clone().sub(target).normalize();position.copy(hit).addScaledVector(dir,-.05);}}
-  for(let pass=0;pass<boxes.length;pass++){
-    let moved=false;
-    for(const box of boxes){const expanded=box.clone().expandByScalar(pad);if(!expanded.containsPoint(position))continue;
-      const choices=[[Math.abs(position.x-expanded.min.x),'x',expanded.min.x-.01],[Math.abs(position.x-expanded.max.x),'x',expanded.max.x+.01],[Math.abs(position.z-expanded.min.z),'z',expanded.min.z-.01],[Math.abs(position.z-expanded.max.z),'z',expanded.max.z+.01]].sort((a,b)=>a[0]-b[0]);
-      position[choices[0][1]]=choices[0][2];position.y=surfaceHeight(position.x,position.z)+2.1;moved=true;
-    }if(!moved)break;
+function clearCamera(position,target,pad=WORLD.CAMERA_CLEARANCE){
+  const boxes=butterflySea?subjectBounds().filter(b=>b!==landmarks[23].bounds).concat(butterflySea.cameraBoxes):subjectBounds();
+  const direction=position.clone().sub(target),requested=direction.length();if(requested<1e-6)return 0;
+  direction.divideScalar(requested);let distance=requested;
+  // Expanded AABB sweep: only retract along the boom; never move the shoulder target.
+  for(const box of boxes){
+    const expanded=box.clone().expandByScalar(pad);
+    // These are conservative building masses (including open arches). An embedded
+    // anchor cannot be solved by ejecting the camera or aiming away from the player.
+    if(box.containsPoint(target))continue;
+    if(expanded.containsPoint(target)){
+      // Inside the clearance shell: allow looking away; looking into the wall retracts.
+      if(segmentHit(target,position,box))distance=Math.min(distance,.6);
+      continue;
+    }
+    const hit=segmentHit(target,position,expanded);
+    if(hit)distance=Math.min(distance,Math.max(.6,hit.distanceTo(target)-.05));
   }
-  position.y=surfaceHeight(position.x,position.z)+2.1;
-  // When the player stands inside a conservative AABB, gaze stops just before the facade.
-  for(const box of boxes){const hit=segmentHit(position,target,box,.12);if(hit)target.copy(hit).addScaledVector(position.clone().sub(hit).normalize(),.15);}
+  distance=cameraGroundDistance(target,direction,distance,pad);
+  position.copy(target).addScaledVector(direction,distance);return distance;
+}
+function cameraGroundDistance(target,direction,distance,pad=WORLD.CAMERA_CLEARANCE){
+  // Sweep walkable ground/decks too, so upward looks cannot put the eye underground.
+  // Open sea uses the water plane, never surfaceHeight's off-island fallback of zero.
+  const probe=new THREE.Vector3(),blocked=d=>{
+    probe.copy(target).addScaledVector(direction,d);
+    const floor=walkable(probe.x,probe.z)?surfaceHeight(probe.x,probe.z):WORLD.WATER_Y;
+    // Near-plane padding varies with aspect ratio; ground clearance must not.
+    return probe.y<floor+Math.max(.6,pad);
+  };
+  for(let d=.25;d<distance+.25;d+=.25){
+    const end=Math.min(d,distance);if(!blocked(end))continue;
+    let lo=Math.max(0,d-.25),hi=end;
+    for(let i=0;i<8;i++){const mid=(lo+hi)/2;if(blocked(mid))hi=mid;else lo=mid;}
+    distance=Math.min(distance,Math.max(.6,lo-.05));break;
+  }
+  return distance;
 }
 let viewCache=null;
 function monumentView(lm){
@@ -1749,43 +2190,38 @@ function updateCamera(dt){
     camPosition.set(1.5+Math.sin(elapsed*.045)*.35,2.7,WORLD.TORII_Z+24);
     camTarget.set(0,10,-75);camera.position.copy(camPosition);cameraLook.copy(camTarget);camera.lookAt(camTarget);return;
   }
-  if(butterflySea){
-    const onSea=butterflySeaSurface(player.position.x,player.position.z)!==null;
-    document.body.classList.toggle('sea-palace-view',onSea);
-    if(onSea&&!lookActive&&elapsed-lastLookAt>2.5){
-      const b=landmarks[23].butterfly,local=b.root.worldToLocal(player.position.clone());
-      if(local.z>-16&&Math.abs(local.x)<18){
-        const damping=reduced?1:1-Math.exp(-4*dt),portrait=camera.aspect<1;
-        cameraState.yaw=Math.atan2(-b.sea.ux,-b.sea.uz);cameraState.framing=0;
-        // Retreat continuously at the gate so portrait keeps both wings, with a
-        // narrower distant lens instead of spending most of the frame on sky.
-        const back=Math.max(local.z+cameraState.distance,portrait?104:68);
-        camPosition.copy(b.root.localToWorld(new THREE.Vector3(local.x*.25,0,back)));
-        camPosition.y=surfaceHeight(camPosition.x,camPosition.z)+2.1;
-        camTarget.copy(b.root.localToWorld(new THREE.Vector3(0,22,-9)));
-        const distance=camPosition.distanceTo(camTarget),halfWidth=53;
-        const fit=THREE.MathUtils.radToDeg(2*Math.atan(halfWidth/(distance*camera.aspect*.84)));
-        const fov=THREE.MathUtils.clamp(Math.max(fit,THREE.MathUtils.radToDeg(2*Math.atan(33/(distance*.62)))),38,portrait?104:78);
-        camera.position.lerp(camPosition,damping);cameraLook.lerp(camTarget,damping);
-        camera.fov=THREE.MathUtils.lerp(camera.fov,fov,damping);camera.updateProjectionMatrix();camera.lookAt(cameraLook);return;
-      }
-    }
+  if(butterflySea)document.body.classList.toggle('sea-palace-view',butterflySeaSurface(player.position.x,player.position.z)!==null);
+  // Input owns yaw/pitch/distance forever. Only the rendered orbit is damped.
+  cameraState.framing=0;cameraState.framedPitch=cameraState.pitch;
+  const snap=reduced||!cameraState.initialized,turn=snap?1:1-Math.exp(-18*dt);
+  const yawDelta=Math.atan2(Math.sin(cameraState.yaw-cameraState.renderYaw),Math.cos(cameraState.yaw-cameraState.renderYaw));
+  cameraState.renderYaw+=yawDelta*turn;
+  cameraState.renderPitch+=(cameraState.pitch-cameraState.renderPitch)*turn;
+  const yaw=cameraState.renderYaw,pitch=cameraState.renderPitch,d=cameraState.distance;
+  camTarget.copy(player.position);camTarget.y+=1.55;
+  const direction=new THREE.Vector3(Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),Math.cos(yaw)*Math.cos(pitch));
+  camPosition.copy(camTarget).addScaledVector(direction,d);
+  let softDistance=clearCamera(camPosition,camTarget);
+  // Start retracting for an upward input before the damped pitch reaches the floor.
+  // This keeps fast tilts on the same 20/s spring instead of hitting the safety clamp.
+  if(cameraState.pitch<pitch&&cameraState.pitch<0){
+    const aim=new THREE.Vector3(Math.sin(yaw)*Math.cos(cameraState.pitch),Math.sin(cameraState.pitch),Math.cos(yaw)*Math.cos(cameraState.pitch));
+    softDistance=Math.min(softDistance,cameraGroundDistance(camTarget,aim,d));
   }
-  const d=cameraState.distance,yaw=cameraState.yaw;
-  const subject=framingSubject(),auto=subject&&!lookActive&&elapsed-lastLookAt>2.5,damping=reduced?1:1-Math.exp(-3.5*dt);
-  cameraState.framing+=((auto?1:0)-cameraState.framing)*damping;
-  if(lookActive||elapsed-lastLookAt<2.5)cameraState.framing=0;
-  const f=cameraState.framing,p=THREE.MathUtils.lerp(cameraState.pitch,-.35,f);cameraState.framedPitch=p;
-  camPosition.set(player.position.x+Math.sin(yaw)*d,0,player.position.z+Math.cos(yaw)*d);
-  camPosition.y=surfaceHeight(camPosition.x,camPosition.z)+2.1;
-  camTarget.set(player.position.x,player.position.y+1.6+(Math.sin(WORLD.CAMERA_PITCH)-Math.sin(p))*d,player.position.z);
-  let observationFov=WORLD.CAMERA_FOV;
-  if(subject&&f>0){const view=monumentView(subject);camPosition.lerp(view.position,f);camTarget.lerp(view.target,f);observationFov=THREE.MathUtils.lerp(WORLD.CAMERA_FOV,view.fov||WORLD.CAMERA_FOV,f);}
-  if(Math.abs(camera.fov-observationFov)>.001){camera.fov=observationFov;camera.updateProjectionMatrix();}
-  camera.position.lerp(camPosition,damping);
-  if(lookActive||elapsed-lastLookAt<.15)cameraLook.copy(camTarget);else cameraLook.lerp(camTarget,damping);
-  clearCamera(camera.position,cameraLook);
-  camera.lookAt(cameraLook);
+  // The outer clearance shell starts a fast, smooth pull-in before the near plane
+  // reaches the wall. A tighter safety sweep also protects abrupt turns/teleports.
+  const halfFov=Math.tan(camera.fov*Math.PI/360);
+  const nearPad=Math.min(WORLD.CAMERA_CLEARANCE,camera.near*Math.sqrt(1+halfFov*halfFov*(1+camera.aspect*camera.aspect))+.05);
+  camPosition.copy(camTarget).addScaledVector(direction,d);
+  const safeDistance=clearCamera(camPosition,camTarget,nearPad);
+  const rate=softDistance<cameraState.effectiveDistance?20:4;
+  cameraState.effectiveDistance+=(softDistance-cameraState.effectiveDistance)*(snap?1:1-Math.exp(-rate*dt));
+  cameraState.effectiveDistance=Math.max(.6,Math.min(d,safeDistance,cameraState.effectiveDistance));
+  camera.position.copy(camTarget).addScaledVector(direction,cameraState.effectiveDistance);
+  updateAvatarFade(dt,cameraState.effectiveDistance);
+  cameraLook.copy(camTarget);camera.lookAt(cameraLook);cameraState.initialized=true;
+  const targetFov=sprinting&&!modalOpen()?46:WORLD.CAMERA_FOV;
+  if(Math.abs(camera.fov-targetFov)>.001){camera.fov+=(targetFov-camera.fov)*(1-Math.exp(-8*dt));camera.updateProjectionMatrix();}
 }
 
 const labelWorld=new THREE.Vector3();
@@ -1814,11 +2250,11 @@ function frame(now){
   requestAnimationFrame(frame);if(failed||document.hidden){lastTime=0;return;}
   const raw=lastTime?(now-lastTime)/1000:1/60,dt=Math.min(raw,.035);lastTime=now;elapsed+=dt;
   skyTick(dt);
-  if(started&&$('directory').hidden)move(dt);
+  if(started&&!modalOpen())move(dt);
   updateLandmarks(dt);updateButterflySea(dt,landmarks[23]);updateCamera(dt);layoutLabels();
   particles.visible=!reduced&&fireLevel>.02;starMaterial.uniforms.motion.value=reduced?0:1;
   if(!reduced){for(let i=0;i<(lightQuality?Math.min(16,particleCount):particleCount);i++){const b=particleBase[i];particlePositions[i*3]=b[0]+Math.sin(elapsed*.25+b[3])*.3;particlePositions[i*3+1]=b[1]+Math.sin(elapsed*.6+b[3])*.35;}particleGeometry.attributes.position.needsUpdate=true;}
-  mapElapsed+=dt;if(mapElapsed>.08){drawMap();mapElapsed=0;}
+  mapElapsed+=dt;if(mapElapsed>.08){drawMap();drawAtlas();mapElapsed=0;}
   if(!reduced){starMaterial.uniforms.time.value=elapsed;if(!lightQuality)waterMaterial.uniforms.time.value=elapsed;clouds.forEach((cloud,i)=>{if(cloud.visible)cloud.position.x=cloud.userData.baseX+Math.sin(elapsed*.025+i)*4;});}
   for(const puff of dustPool){if(reduced||lightQuality){puff.visible=false;puff.userData.life=0;continue;}if(puff.userData.life>0){puff.userData.life=Math.max(0,puff.userData.life-dt);const life=puff.userData.life/.65;puff.position.y+=dt*.17;puff.scale.setScalar(.16+(1-life)*.4);puff.material.opacity=life*.15;puff.visible=life>0;}}
   renderer.info.reset();if(butterflySea)updateButterflySeaReflection(dt);composer.render(dt);
@@ -1826,7 +2262,7 @@ function frame(now){
   if(!qualityReduced&&elapsed>3){slowFrames=raw>.029?slowFrames+1:Math.max(0,slowFrames-2);if(slowFrames>90){qualityReduced=true;reduceQuality();}}
 }
 // Read-mostly handle for automated smoke tests (batch 5 seven-bridge verification).
-window.__garden={WORLD,scene,renderer,camera,composer,cameraLook,subjectBounds,monumentFaces,walkable,surfaceHeight,terrainHeight,teleport,start,player,cameraState,modelLoads,
+window.__garden={get atlas(){return {...atlasState,scales:[...atlasState.scales]};},WORLD,scene,renderer,camera,composer,cameraLook,subjectBounds,monumentFaces,walkable,surfaceHeight,terrainHeight,teleport,start,player,cameraState,modelLoads,
   get butterfly(){return landmarks[23].butterfly;},get sharedIvory(){return M.ivory;},BUTTERFLY,
   get landmarks(){return landmarks.map(lm=>({index:lm.index,title:lm.entry.title,bboxHeight:lm.bboxHeight,groundY:lm.groundY,x:lm.entry.x,z:lm.entry.z,bounds:lm.bounds,platformY:lm.site.groundY,targetHeight:lm.targetHeight,entryPoint:lm.entryPoint,...(lm.gatePoint?{gatePoint:lm.gatePoint}:{}),site:lm.site,labelY:lm.group.position.y+lm.name.position.y}));},
   get mathMonuments(){return mathMonuments.map(({group,model,lod,fallback,bounds,site,name,...r})=>r);},
