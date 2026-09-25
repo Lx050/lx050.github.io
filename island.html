@@ -693,51 +693,100 @@ function createHinge(root,partNames,pivot,axis=new THREE.Vector3(0,1,0)){
 }
 function setHingeAngle(hinge,angle){hinge.quaternion.setFromAxisAngle(hinge.userData.axis,angle);hinge.userData.angle=angle;}
 const BUTTERFLY={maxAngle:.42,idlePeriod:16,activePeriod:4.8,palette:[0x365b65,0xa65342,0xb99a52,0x558575,0x78617e]};
+// Both detailed wings and distant silhouettes use these exact root-origin curves.
+function butterflyWingShape(upper){
+  const s=new THREE.Shape();s.moveTo(0,0);
+  if(upper){
+    s.bezierCurveTo(.015,.25,.23,.61,.59,.60); // arched leading edge, broad shoulder
+    s.bezierCurveTo(.65,.63,.68,.56,.66,.49);
+    s.bezierCurveTo(.67,.44,.63,.40,.64,.36);
+    s.bezierCurveTo(.65,.31,.60,.29,.60,.25);
+    s.bezierCurveTo(.59,.19,.53,.14,.46,.12);
+    s.bezierCurveTo(.30,.06,.12,.045,0,0);
+  }else{
+    s.bezierCurveTo(.14,.015,.38,-.015,.49,-.10);
+    s.bezierCurveTo(.57,-.17,.52,-.28,.45,-.32);
+    s.bezierCurveTo(.43,-.35,.43,-.42,.39,-.44); // modest swallowtail lobe
+    s.bezierCurveTo(.37,-.43,.37,-.38,.33,-.39);
+    s.bezierCurveTo(.24,-.43,.15,-.38,.11,-.29);
+    s.bezierCurveTo(.06,-.20,.035,-.07,0,0);
+  }
+  s.closePath();return s;
+}
+function butterflyWingGeometry(shape,side,upper){
+  const source=new THREE.ShapeGeometry(shape,18),flat=source.toNonIndexed(),vertices=[];
+  // Interior subdivision gives the silk a continuous shallow camber, not a bent rim.
+  const subdivide=(a,b,c,depth)=>{
+    if(depth){const ab=a.clone().lerp(b,.5),bc=b.clone().lerp(c,.5),ca=c.clone().lerp(a,.5);subdivide(a,ab,ca,depth-1);subdivide(ab,b,bc,depth-1);subdivide(ca,bc,c,depth-1);subdivide(ab,bc,ca,depth-1);}
+    else for(const v of (side<0?[a,c,b]:[a,b,c]))vertices.push(v.x*side,v.y,.010*Math.sin(v.x/.68*Math.PI)*Math.sin(v.y/(upper?.64:-.46)*Math.PI));
+  };
+  const pos=flat.attributes.position;for(let i=0;i<pos.count;i+=3)subdivide(...[0,1,2].map(j=>new THREE.Vector3().fromBufferAttribute(pos,i+j)),2);
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));
+  const normals=[];for(let i=0;i<vertices.length;i+=3){const x=vertices[i]*side,y=vertices[i+1],h=upper?.64:-.46;const n=new THREE.Vector3(-side*.010*Math.PI/.68*Math.cos(x/.68*Math.PI)*Math.sin(y/h*Math.PI),-.010*Math.PI/h*Math.sin(x/.68*Math.PI)*Math.cos(y/h*Math.PI),1).normalize();normals.push(n.x,n.y,n.z);}
+  g.setAttribute('normal',new THREE.Float32BufferAttribute(normals,3));g.computeBoundingBox();
+  g.userData={proceduralWing:true,contourVertices:shape.getPoints(18).length,surfaceThickness:0,upper,side};source.dispose();flat.dispose();return g;
+}
+// A connected branching graph: central trunk, two levels of side branches, and
+// transverse joins enclosing silk cells. Travel is shortest distance along this graph.
+function butterflyVeinField(){
+  const nodes=[[0,0],[.20,.23],[.43,.46],[.66,.70],[.90,.94],
+    [.29,.08],[.56,.18],[.80,.30],[.94,.49],[.97,.72],
+    [.12,.32],[.29,.53],[.48,.73],[.68,.91],
+    [.33,.27],[.58,.39],[.77,.57],[.82,.79]];
+  const cells=[[0,5,14,1],[5,6,15,14],[6,7,16,15],[7,8,16],[8,9,17,16],
+    [9,4,17],[4,13,3,17],[13,12,2,3],[12,11,1,2],[11,10,0,1],
+    [1,14,15,2],[2,15,16,3],[3,16,17]];
+  const edges=[],seen=new Set();for(const cell of cells)cell.forEach((a,i)=>{const b=cell[(i+1)%cell.length],key=[a,b].sort((a,b)=>a-b).join(':');if(!seen.has(key)){seen.add(key);edges.push([a,b]);}});
+  const distance=nodes.map(()=>Infinity);distance[0]=0;
+  for(let pass=0;pass<nodes.length;pass++)for(const [a,b] of edges){const d=Math.hypot(nodes[a][0]-nodes[b][0],nodes[a][1]-nodes[b][1]);distance[a]=Math.min(distance[a],distance[b]+d);distance[b]=Math.min(distance[b],distance[a]+d);}
+  const f=n=>Number(n).toFixed(5),v=i=>`vec2(${nodes[i].map(f).join(',')})`;
+  const veins=edges.map(([a,b])=>`wingSegment(w,${v(a)},${v(b)},${f(distance[a])},${f(distance[b])},veinDistance,arrival);`).join('\n');
+  // Winding-independent half-plane tests for each convex cell; no image/texture input.
+  const regions=cells.map((cell,i)=>{const crosses=cell.map((a,j)=>`wingCross(${v(cell[(j+1)%cell.length])}-${v(a)},w-${v(a)})`);return `if((${crosses.map(c=>c+'>=0.0').join('&&')})||(${crosses.map(c=>c+'<=0.0').join('&&')}))cellTone=${f((i*7%11)/10)};`;}).join('\n');
+  return {veins,regions,nodes,edges,cells,distance};
+}
+const butterflyVeins=butterflyVeinField();
 function makeRevealWingMaterial({side,upper}){
-  const mat=material(0xaca99e,{side:THREE.DoubleSide,transparent:true,opacity:.96,roughness:.92});
-  mat.name='butterfly-reveal';mat.userData.monument=true;mat.userData.revealWing=true;
-  const uniforms={uReveal:{value:0},uTime:{value:0},uVisited:{value:0},uNight:{value:1},uSide:{value:side},uUpper:{value:upper?1:0},uPalette:{value:BUTTERFLY.palette.map(c=>new THREE.Color(c).convertSRGBToLinear())}};
-  mat.userData.revealUniforms=uniforms;
-  mat.customProgramCacheKey=()=> 'wing-reveal-v1';
+  const mat=material(0xaca99e,{side:THREE.DoubleSide,transparent:true,opacity:.97,roughness:.94,flatShading:false});
+  mat.name='butterfly-cloisonne';mat.userData.monument=true;mat.userData.revealWing=true;
+  const palette=upper?(side<0?[0x365b65,0x558575]:[0xa65342,0xb99a52]):[0x78617e,0x365b65];
+  mat.userData.palette=palette;
+  const uniforms={uReveal:{value:0},uTime:{value:0},uVisited:{value:0},uNight:{value:1},uSide:{value:side},uUpper:{value:upper?1:0},uPigmentA:{value:new THREE.Color(palette[0]).convertSRGBToLinear()},uPigmentB:{value:new THREE.Color(palette[1]).convertSRGBToLinear()}};
+  mat.userData.revealUniforms=uniforms;mat.customProgramCacheKey=()=> 'wing-cloisonne-v2';
   mat.onBeforeCompile=shader=>{
     Object.assign(shader.uniforms,uniforms);
-    // The authored box UV front island: U=.375..625 is height, V=0..25 is width.
-    // Decode each island in the vertex stage, retaining the original UV buffer.
-    shader.vertexShader='varying vec2 vWingUV;\n'+shader.vertexShader;
-    shader.vertexShader=shader.vertexShader.replace('#include <uv_vertex>',`#include <uv_vertex>
-      if(normal.z>.5) vWingUV=vec2(uv.y*4.0,(uv.x-.375)*4.0);
-      else if(normal.z<-.5) vWingUV=vec2((.75-uv.y)*4.0,(uv.x-.375)*4.0);
-      else vWingUV=position.xy+.5;`);
-    shader.fragmentShader=`varying vec2 vWingUV;
+    shader.vertexShader='varying vec2 vWingXY;\n'+shader.vertexShader;
+    shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\n vWingXY=position.xy;');
+    shader.fragmentShader=`varying vec2 vWingXY;
       uniform float uReveal,uTime,uVisited,uNight,uSide,uUpper;
-      uniform vec3 uPalette[5];
-      float wingHash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+      uniform vec3 uPigmentA,uPigmentB;
+      float wingCross(vec2 a,vec2 b){return a.x*b.y-a.y*b.x;}
+      void wingSegment(vec2 p,vec2 a,vec2 b,float da,float db,inout float nearest,inout float arrival){
+        vec2 d=b-a;float t=clamp(dot(p-a,d)/dot(d,d),0.0,1.0);float gap=length(p-a-t*d);
+        if(gap<nearest){nearest=gap;arrival=min(da+t*length(d),db+(1.0-t)*length(d));}
+      }
       `+shader.fragmentShader;
     shader.fragmentShader=shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
-      vec2 w=vWingUV;w.x=mix(1.0-w.x,w.x,step(0.0,uSide));
-      w.y=mix(1.0-w.y,w.y,uUpper);
-      // Five branching paths share an inner root; travel proceeds along the veins first.
-      float rootY=.02,veinDistance=1.0;
-      for(int j=0;j<5;j++){
-        float tip=float(j)*.235+.04;
-        float path=mix(rootY,tip,pow(clamp(w.x,0.0,1.0),.8));
-        path+=.024*sin(w.x*9.0+float(j)*1.7)*w.x;
-        veinDistance=min(veinDistance,abs(w.y-path));
-      }
-      float vein=1.0-smoothstep(.004,.012,veinDistance);
-      float grain=wingHash(floor(w*vec2(135.0,105.0)));
-      float travel=.67*w.x+.26*clamp(veinDistance*6.0,0.0,1.0)+.035*grain;
-      float growth=smoothstep(travel,travel+.10,uReveal)*smoothstep(0.0,.08,uReveal);
-      float memory=uVisited*.055*(1.0-smoothstep(.0,.28,w.x));
-      float field=clamp(w.y*.65+w.x*.25+.035*sin(uTime*.055+w.y*4.0),0.0,1.0)*4.0;
-      vec3 pigment=mix(uPalette[0],uPalette[1],smoothstep(0.0,1.0,field));
-      pigment=mix(pigment,uPalette[2],smoothstep(1.0,2.0,field));
-      pigment=mix(pigment,uPalette[3],smoothstep(2.0,3.0,field));
-      pigment=mix(pigment,uPalette[4],smoothstep(3.0,4.0,field));
-      float ink=.86+.10*grain-.17*vein;
-      diffuseColor.rgb=mix(diffuseColor.rgb*.38*ink,pigment*(.72+.28*grain),max(memory,growth*(.52+.40*uNight)));
-      float dust=step(.975,grain)*(1.0-smoothstep(.10,.24,length(fract(w*vec2(135.0,105.0))-.5)));
-      vec3 wingEmission=pigment*(vein*.85+dust*2.8)*growth*uNight;
+      vec2 w=vec2(vWingXY.x*uSide/.68,vWingXY.y/mix(-.46,.64,uUpper));
+      w+=vec2(.018*sin(w.y*8.0)*w.y,.012*sin(w.x*9.0)*w.x);
+      float veinDistance=2.0,arrival=2.0,cellTone=.45;
+      ${butterflyVeins.veins}
+      ${butterflyVeins.regions}
+      float aa=max(fwidth(veinDistance),.0008);
+      float vein=1.0-smoothstep(.0012,.0012+aa,veinDistance);
+      // Continuous silk grain only modulates reflectance; it never emits sparkles.
+      float silk=.97+.018*sin(w.x*680.0+w.y*210.0)*sin(w.y*590.0);
+      float travel=arrival*.51+veinDistance*1.45+.025*cellTone;
+      float growth=smoothstep(travel,travel+.14,uReveal)*smoothstep(0.0,.08,uReveal);
+      float memory=uVisited*.085*(1.0-smoothstep(.0,.38,length(w)));
+      float tone=clamp(.12+.76*cellTone+.025*sin(uTime*.045+w.y*3.0),0.0,1.0);
+      vec3 pigment=mix(uPigmentA,uPigmentB,tone);
+      float wash=max(memory,growth*(.50+.46*uNight));
+      vec3 silkColor=mix(diffuseColor.rgb*.48,pigment*1.45,wash)*silk;
+      vec3 wire=mix(vec3(.038,.029,.018),vec3(.15,.10,.037),growth);
+      float grazing=pow(1.0-abs(dot(normalize(vNormal),normalize(vViewPosition))),3.0);
+      diffuseColor.rgb=mix(silkColor+pigment*grazing*.045*growth,wire,vein*.68);
+      vec3 wingEmission=vec3(.10,.060,.018)*vein*growth*uNight;
       `);
     shader.fragmentShader=shader.fragmentShader.replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\n totalEmissiveRadiance+=wingEmission;');
   };return mat;
@@ -754,33 +803,44 @@ function advanceReveal(state,dt,activation,wasVisited,night){
 function prepareButterfly(root,lm){
   root.rotation.y=0;root.updateWorldMatrix(true,true);
   const boxes={};root.traverse(o=>{if(o.isMesh)boxes[o.name]=new THREE.Box3().setFromObject(o);});
-  // Move all living parts together: rear wing min Z=-.12986 must clear panel front Z=-.05.
-  const frame=root.getObjectByName('FrameTop');frame.position.y=1.88;frame.scale.x*=1.42/1.5;frame.scale.y*=.12;frame.scale.z*=.83;
-  const base=root.getObjectByName('Base010')||root.getObjectByName('Base.010');base.scale.x*=.84;base.scale.z*=.35;
-  const lift=.22;root.children.forEach(o=>{if(!['Panel','FrameTop','Base010','Base.010'].includes(o.name))o.position.z+=lift;});
-  const y=(boxes.WingLL.max.y+boxes.WingUL.min.y)/2,z=(boxes.WingLL.min.z+boxes.WingLL.max.z)/2+lift;
-  const left=createHinge(root,['WingUL','WingLL','BackUL','BackLL'],new THREE.Vector3(boxes.Body.min.x,y,z));
-  const right=createHinge(root,['WingUR','WingLR','BackUR','BackLR'],new THREE.Vector3(boxes.Body.max.x,y,z));
-  // +Z of the gallery faces the incoming processional axis.
+  // Remove authored panels/body from this clone only; GLB bytes and shared materials stay intact.
+  for(const o of [...root.children])root.remove(o);
+  const dark=material(0x38403b),edge=material(0x5b604e),paper=material(0x919184,{side:THREE.DoubleSide});
+  const base=mesh(G.box,dark,root,0,.10,0,1.36,.10,.45);base.name='Base010';
+  const panel=mesh(G.box,paper,root,0,1.24,-.13,1.40,1.28,.006);panel.name='Panel';
+  const rim=new THREE.Group();rim.name='blank-gallery-border';root.add(rim);
+  for(const x of [-.704,.704])mesh(G.box,edge,rim,x,1.24,-.13,.008,1.296,.012);
+  for(const y of [.596,1.884]){const r=mesh(G.box,edge,rim,0,y,-.13,1.416,.008,.012);if(y>1)r.name='FrameTop';}
+  for(const x of [-.59,.59])mesh(G.box,dark,root,x,.38,-.13,.012,.46,.016);
+  const curve=(points,radius,mat,parent=root)=>mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p))),32,radius,6,false),mat,parent,0,0,0);
+  curve([[.18,.15,.12],[.13,.45,.16],[-.04,.70,.12],[0,.965,.12]],.008,dark).name='perch-branch';
+  curve([[-.015,.68,.12],[.19,.79,.12],[.28,.86,.12]],.003,dark).name='perch-twig';
+  const body=new THREE.Group(),sphere=new THREE.SphereGeometry(1,12,8),bodyMat=dark.clone();bodyMat.flatShading=false;body.name='segmented-body';root.add(body);
+  const thorax=mesh(sphere,bodyMat,body,0,1.24,.24,.024,.068,.023);thorax.name='Body';
+  for(let i=0;i<7;i++){
+    const radius=.020-i*.0018,y=1.17-i*.037;
+    mesh(sphere,bodyMat,body,0,y,.24,radius,.025,radius*.83).name='abdomen-segment';
+    const ring=mesh(new THREE.TorusGeometry(radius*.91,.0009,4,12),edge,body,0,y-.012,.24);ring.rotation.x=Math.PI/2;
+  }
+  mesh(sphere,bodyMat,body,0,1.323,.24,.020,.023,.018).name='Head';
+  for(const side of [-1,1])curve([[side*.009,1.336,.24],[side*.04,1.40,.245],[side*.075,1.49,.23],[side*.102,1.505,.225],[side*.108,1.48,.225]],.0025,edge,body).name=side<0?'AntL':'AntR';
+  const light=mesh(sphere,material(0xb39561,{emissive:0xe3ad64,emissiveIntensity:.24,flatShading:false}),body,0,1.33,.260,.005,.005,.004);light.name='tiny-warm-light';
+  const shapes={upper:butterflyWingShape(true),lower:butterflyWingShape(false)},wings=[];
+  for(const side of [-1,1])for(const upper of [true,false]){
+    const wing=mesh(butterflyWingGeometry(shapes[upper?'upper':'lower'],side,upper),paper,root,side*.023,1.24,.24);
+    wing.name='Wing'+(upper?'U':'L')+(side<0?'L':'R');wing.castShadow=wing.receiveShadow=false;wings.push(wing);
+  }
+  const left=createHinge(root,['WingUL','WingLL'],new THREE.Vector3(-.023,1.24,.24));
+  const right=createHinge(root,['WingUR','WingLR'],new THREE.Vector3(.023,1.24,.24));
+  // Lower the living sculpture into the screen's visual field, leaving 6.7m of air.
+  for(const part of [left,right,body]){part.position.y-=.095;part.position.z-=.12;}
   root.rotation.y=Math.atan2(-lm.site.ux,-lm.site.uz);
-  lm.butterfly={root,left,right,measurements:boxes,phase:0,breath:0,reveal:0,visited:0,night:1,wings:[],lift};
+  lm.butterfly={root,left,right,measurements:boxes,shapes,phase:0,breath:0,reveal:0,visited:0,night:1,wings,lift:.12,veinGraph:butterflyVeins};
   return root;
 }
 function finishButterfly(lm){
   const b=lm.butterfly,root=b.root,wrap=lm.model;
-  for(const name of ['WingUL','WingLL','WingUR','WingLR']){
-    const wing=root.getObjectByName(name);wing.material=makeRevealWingMaterial({side:name.endsWith('L')?-1:1,upper:name.includes('U')});b.wings.push(wing);
-  }
-  const backing=material(0x263b3c,{side:THREE.DoubleSide,transparent:true,opacity:.88});backing.userData.monument=true;
-  for(const name of ['BackUL','BackLL','BackUR','BackLR'])root.getObjectByName(name).material=backing;
-  const paper=material(0x77786f);paper.userData.monument=true;root.getObjectByName('Panel').material=paper;
-  const edge=material(0x263232);edge.userData.monument=true;
-  const frame=root.getObjectByName('FrameTop');frame.material=edge;
-  // Only a narrow perimeter; the full interior of the native gallery panel stays blank.
-  const rim=new THREE.Group();rim.name='blank-gallery-border';root.add(rim);
-  for(const x of [-.705,.705])mesh(G.box,edge,rim,x,1.05,-.038,.012,1.65,.014);
-  mesh(G.box,edge,rim,0,.231,-.038,1.42,.012,.014);
-  const head=root.getObjectByName('Head');head.material=material(0x876c47,{emissive:0xe3ad64,emissiveIntensity:.28});head.material.userData.monument=true;
+  for(const wing of b.wings)wing.material=makeRevealWingMaterial({side:wing.name.endsWith('L')?-1:1,upper:wing.name.includes('U')});
   // A static sweep envelope. 129 poses plus a Lipschitz XZ margin encloses every
   // intermediate angle; Y is unchanged by the vertical hinges. Never rebuilt per frame.
   const bounds=new THREE.Box3();let radius=0;
@@ -788,21 +848,21 @@ function finishButterfly(lm){
   for(let i=0;i<=128;i++){const a=BUTTERFLY.maxAngle*i/128;setHingeAngle(b.left,a);setHingeAngle(b.right,-a);wrap.updateWorldMatrix(true,true);bounds.union(new THREE.Box3().setFromObject(wrap));}
   const margin=radius*BUTTERFLY.maxAngle/256+1e-5;bounds.min.x-=margin;bounds.min.z-=margin;bounds.max.x+=margin;bounds.max.z+=margin;
   setHingeAngle(b.left,0);setHingeAngle(b.right,0);wrap.updateWorldMatrix(true,true);
-  b.observationTargets=b.wings.map(w=>w.getWorldPosition(new THREE.Vector3()));
+  b.observationTargets=b.wings.map(w=>w.localToWorld(w.geometry.boundingBox.getCenter(new THREE.Vector3())));
   wrap.userData.bounds=lm.bounds=bounds;lm.bboxHeight=bounds.max.y-bounds.min.y;lm.groundY=bounds.min.y;b.sweepMargin=margin;
-  // Six inexpensive silhouette meshes, in the same root frame as the live sculpture.
+  // The same curved outlines at a fixed slight opening: four lobes, never four panels.
   const lod=new THREE.Group(),silhouette=new THREE.Group();lod.name='butterfly-silhouette';lm.group.add(lod);lod.add(silhouette);
   silhouette.position.copy(wrap.position);silhouette.scale.copy(wrap.scale);silhouette.rotation.copy(root.rotation);
-  const dark=new THREE.MeshBasicMaterial({color:new THREE.Color(0x19292d).convertSRGBToLinear().multiplyScalar(.38),side:THREE.DoubleSide});
-  for(const side of [-1,1])for(const upper of [false,true]){
-    const points=upper?[[.045,1.16],[.12,1.48],[.49,1.59],[.53,1.26],[.23,1.18]]:[[.045,1.14],[.40,1.08],[.44,.85],[.28,.78],[.12,.98]];
-    const shape=new THREE.Shape(points.map(([x,y])=>new THREE.Vector2(x*side,y)));
-    const wing=mesh(new THREE.ShapeGeometry(shape),dark,silhouette,0,0,.24);wing.name='silhouette-wing';
+  const dark=new THREE.MeshBasicMaterial({color:new THREE.Color(0x293e40).convertSRGBToLinear().multiplyScalar(.48),side:THREE.DoubleSide});
+  for(const side of [-1,1])for(const upper of [true,false]){
+    const wing=mesh(new THREE.ShapeGeometry(b.shapes[upper?'upper':'lower'],18),dark,silhouette,side*.023,1.145,.12,side,1,1);
+    wing.rotation.y=side<0?.10:-.10;wing.name='silhouette-wing';wing.castShadow=wing.receiveShadow=false;
   }
-  mesh(G.box,dark,silhouette,0,1.15,.24,.065,.5,.04);
-  mesh(G.sphere,lodWarm,silhouette,0,1.45,.27,.035,.035,.035);
+  mesh(G.sphere,dark,silhouette,0,1.065,.12,.019,.18,.017);
+  mesh(G.sphere,lodWarm,silhouette,0,1.235,.14,.005,.005,.004);
   lod.visible=false;lm.lod=lod;
 }
+
 function updateButterfly(dt,lm){
   if(!lm.butterfly)return;const b=lm.butterfly;
   advanceReveal(b,dt,lm.activation,visited.has(lm.index),1-Math.min(1,(skyState.sunI||0)/1.3));
@@ -1337,15 +1397,18 @@ function monumentView(lm){
   const k=camera.aspect<1?WORLD.VIEW_K_PORTRAIT:WORLD.VIEW_K;
   const minDistance=Math.max(k*size.y,Math.hypot(size.x,size.z)*.5+2);
   const preview=camera.clone(),corners=[];
+  // A wider observation lens keeps this 50m sculpture on its unobstructed axial
+  // approach; pulling a telephoto portrait camera back enters the inner-ring buildings.
+  const viewFov=lm.butterfly?(camera.aspect<1?132:84):WORLD.CAMERA_FOV;preview.fov=viewFov;preview.updateProjectionMatrix();
   for(const x of [box.min.x,box.max.x])for(const y of [box.min.y,box.max.y])for(const z of [box.min.z,box.max.z])corners.push(new THREE.Vector3(x,y,z));
   const base=Math.atan2(-lm.site.ux,-lm.site.uz),boxes=subjectBounds();let chosen=null,bestScore=Infinity;
   // Centre-axis first; only step sideways when another monument obstructs that sightline.
   for(let ring=0;ring<3&&!chosen;ring++)for(let step=0;step<(lm.butterfly?145:49);step++){
     const angle=base+(step?Math.ceil(step/2)*(step%2?1:-1)*Math.PI/(lm.butterfly?72:24):0),dir=new THREE.Vector3(Math.sin(angle),0,Math.cos(angle));
-    let distance=Math.max(minDistance,size.y*(1.12+ring*.35));
+    let distance=Math.max(minDistance,size.y*((lm.butterfly?.68:1.12)+ring*.35));
     for(let attempt=0;attempt<24;attempt++,distance*=1.08){
       const position=center.clone().addScaledVector(dir,distance);position.y=surfaceHeight(position.x,position.z)+2.1;
-      const focus=center.clone();focus.y=box.min.y+size.y*.42;
+      const focus=center.clone();focus.y=box.min.y+size.y*(lm.butterfly?(camera.aspect<1?.28:.40):.42);
       // Target ends in free space, immediately outside this building's facing surface.
       cameraRay.set(position,focus.clone().sub(position).normalize());const hit=cameraRay.intersectBox(box,rayPoint);
       const target=hit?hit.clone().addScaledVector(position.clone().sub(hit).normalize(),1.3):focus;
@@ -1358,7 +1421,7 @@ function monumentView(lm){
       // Architecture favours its processional front; distant islands favour an open panorama.
       const wingOccluded=lm.butterfly?lm.butterfly.observationTargets.filter(point=>[...boxes,...sceneryBounds].some(b=>b!==box&&segmentHit(position,point,b,.2))).length:0;
       const score=wingOccluded*10+turn+occluded*(lm.index>=26?1:.16)+(lm.index<26?Math.max(0,turn-.6)*3:0);
-      if(score<bestScore){chosen={position,target,distance,k};bestScore=score;}break;
+      if(score<bestScore){chosen={position,target,distance,k,fov:viewFov};bestScore=score;}break;
     }
   }
   if(!chosen){const position=center.clone().add(new THREE.Vector3(-lm.site.ux*size.y*2,0,-lm.site.uz*size.y*2));position.y=surfaceHeight(position.x,position.z)+2.1;const target=center.clone();clearCamera(position,target);chosen={position,target,distance:position.distanceTo(center),k};}
@@ -1399,7 +1462,9 @@ function updateCamera(dt){
   camPosition.set(player.position.x+Math.sin(yaw)*d,0,player.position.z+Math.cos(yaw)*d);
   camPosition.y=surfaceHeight(camPosition.x,camPosition.z)+2.1;
   camTarget.set(player.position.x,player.position.y+1.6+(Math.sin(WORLD.CAMERA_PITCH)-Math.sin(p))*d,player.position.z);
-  if(subject&&f>0){const view=monumentView(subject);camPosition.lerp(view.position,f);camTarget.lerp(view.target,f);}
+  let observationFov=WORLD.CAMERA_FOV;
+  if(subject&&f>0){const view=monumentView(subject);camPosition.lerp(view.position,f);camTarget.lerp(view.target,f);observationFov=THREE.MathUtils.lerp(WORLD.CAMERA_FOV,view.fov||WORLD.CAMERA_FOV,f);}
+  if(Math.abs(camera.fov-observationFov)>.001){camera.fov=observationFov;camera.updateProjectionMatrix();}
   camera.position.lerp(camPosition,damping);
   if(lookActive||elapsed-lastLookAt<.15)cameraLook.copy(camTarget);else cameraLook.lerp(camTarget,damping);
   clearCamera(camera.position,cameraLook);

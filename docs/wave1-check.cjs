@@ -1,10 +1,10 @@
 /* Run against a local static server. Test tooling is external to the shipped single file.
    PLAYWRIGHT_PATH=/path/to/playwright node docs/wave1-check.cjs http://127.0.0.1:8874
-   WAVE1_ARTIFACTS=/tmp/wave2-qa controls screenshots and JSON report. */
+   WAVE1_ARTIFACTS=/tmp/wave2r1-qa controls screenshots and JSON report. */
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),crypto=require('node:crypto');
 const {chromium}=require(process.env.PLAYWRIGHT_PATH||'playwright');
 const url=process.argv[2]||'http://127.0.0.1:8874';
-const out=process.env.WAVE1_ARTIFACTS||'/tmp/wave2-qa';fs.mkdirSync(out,{recursive:true});
+const out=process.env.WAVE1_ARTIFACTS||'/tmp/wave2r1-qa';fs.mkdirSync(out,{recursive:true});
 const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
 assert.equal(html,fs.readFileSync(path.join(__dirname,'../island.html'),'utf8'));
 for(const [pattern,hash] of [[/const LINKS = (\[[\s\S]*?\n\]);/,'ace50acab071aea8f309c15e55bc67c2afc8e17f36b5a4544a980c942c1f1d42'],[/const TRACKS=(\[[\s\S]*?\n\]);/,'da871476abe678cee5e02d374c710a1ec98d904195550ca94ab30d34ee8a558b']])assert.equal(crypto.createHash('sha256').update(html.match(pattern)[1]).digest('hex'),hash);
@@ -69,7 +69,8 @@ async function cameraAudit(p,mobile){
    const corners=[];for(const x of [l.bounds.min.x,l.bounds.max.x])for(const y of [l.bounds.min.y,l.bounds.max.y])for(const z of [l.bounds.min.z,l.bounds.max.z])corners.push(new THREE.Vector3(x,y,z).project(g.camera));
    const fits=corners.every(c=>Math.abs(c.x)<.99&&Math.abs(c.y)<.99&&c.z<1);
    if(inside.length||blocked.length||distance<k*height||!fits)errors.push({index:l.index,inside,blocked,distance,minimum:k*height,fits});
-   rows.push({index:l.index,camera:camera.toArray(),target:target.toArray(),inside,blocked,distance,minimum:k*height,fits});
+   if(l.index!==23&&Math.abs(g.camera.fov-g.WORLD.CAMERA_FOV)>.01)errors.push({index:l.index,unexpectedFov:g.camera.fov});
+   rows.push({index:l.index,fov:g.camera.fov,camera:camera.toArray(),target:target.toArray(),inside,blocked,distance,minimum:k*height,fits});
   }return {errors,rows};
  },mobile);
 }
@@ -115,21 +116,38 @@ async function wingPixels(p){return p.evaluate(()=>{
 async function butterflyAudit(p,mobile){
  const structure=await p.evaluate(()=>{
   const g=__garden,b=g.butterfly,errors=[],wrap=b.root.parent;
-  for(const [h,names] of [[b.left,['WingUL','WingLL','BackUL','BackLL']],[b.right,['WingUR','WingLR','BackUR','BackLR']]])if(!h.isGroup||h.children.map(o=>o.name).sort().join()!==names.sort().join())errors.push('hinge children');
+  for(const [h,names] of [[b.left,['WingUL','WingLL']],[b.right,['WingUR','WingLR']]])if(!h.isGroup||h.children.map(o=>o.name).sort().join()!==names.sort().join())errors.push('hinge children');
   if(wrap.userData.tier!=='butterfly'||wrap.userData.dressing.children.length||wrap.getObjectByName('face-trim'))errors.push('generic dressing');
   const panel=b.root.getObjectByName('Panel');if(panel.material.map||panel.material.emissive.getHex()!==0||panel.material.userData.revealWing)errors.push('blank canvas');
   for(const w of b.wings){const m=w.material,u=m.userData.revealUniforms;if(!m.isMeshStandardMaterial||!m.userData.revealWing||!u.uReveal||!u.uTime||!u.uVisited||!u.uNight||m===g.sharedIvory)errors.push('wing material');}
+  const wingGeometry=b.wings.map(w=>{const geo=w.geometry,box=geo.boundingBox,size=box.getSize(new THREE.Vector3()),info=geo.userData;
+    if(!info.proceduralWing||info.surfaceThickness!==0||info.contourVertices<80||size.z/size.x>.025||w.material.side!==THREE.DoubleSide||w.castShadow||w.receiveShadow)errors.push('procedural thin wing '+w.name);
+    if(w.position.length()>1e-6||Math.abs(w.parent.position.x-info.side*.023)>1e-6||Math.abs(w.parent.position.y-1.145)>1e-6)errors.push('root origin');
+    if(info.upper?box.max.y<.59:box.min.y>-.42)errors.push('four lobe distribution');
+    if(info.side<0?box.max.x>1e-7:box.min.x< -1e-7)errors.push('wing side');
+    if(w.material.userData.palette.length!==2)errors.push('restrained palette');
+    return {name:w.name,vertices:geo.attributes.position.count,contour:info.contourVertices,camberRatio:size.z/size.x,thickness:info.surfaceThickness,palette:w.material.userData.palette};
+  });
+  for(const upper of [true,false]){const left=b.wings.find(w=>w.geometry.userData.upper===upper&&w.geometry.userData.side===-1).geometry.attributes.position,right=b.wings.find(w=>w.geometry.userData.upper===upper&&w.geometry.userData.side===1).geometry.attributes.position;
+    const points=new Set(Array.from({length:right.count},(_,i)=>[right.getX(i),right.getY(i),right.getZ(i)].join(',')));for(let i=0;i<left.count;i++)if(!points.has([-left.getX(i),left.getY(i),left.getZ(i)].join(',')))errors.push('mirror geometry');
+  }
+  if(b.root.getObjectByName('BackUL')||b.root.getObjectByName('BackLL')||b.root.getObjectByName('BackUR')||b.root.getObjectByName('BackLR'))errors.push('legacy panels');
+  if(panel.scale.z*wrap.scale.x>.2||panel.scale.z/panel.scale.x>.01||panel.position.y-panel.scale.y/2<.5)errors.push('thin freestanding screen');
+  if(b.root.getObjectByName('Head').geometry.type!=='SphereGeometry'||b.root.getObjectByName('segmented-body').children.filter(o=>o.name==='abdomen-segment').length!==7||!b.root.getObjectByName('perch-branch')||b.root.getObjectByName('tiny-warm-light').scale.x*wrap.scale.x>.2)errors.push('slender body');
+  const graph=b.veinGraph,degrees=graph.nodes.map(()=>0);graph.edges.forEach(([a,b])=>{degrees[a]++;degrees[b]++;});
+  if(graph.cells.length<10||degrees.filter(d=>d>=3).length<5||graph.distance.some(d=>!Number.isFinite(d)))errors.push('branching connected cells');
   const expected=new THREE.Color(0xe8e2d5).convertSRGBToLinear();if(g.sharedIvory.userData.revealUniforms||g.sharedIvory.onBeforeCompile.toString().includes('wing'))errors.push('shared ivory polluted');
   const shared=g.sharedIvory.color.toArray();if(shared.some((x,i)=>Math.abs(x-expected.toArray()[i])>1e-9))errors.push('shared colour');
   const sample=[];g.scene.traverse(o=>{if(o.isMesh&&o.userData.landmark?.index===0)sample.push({name:o.name,color:o.material.color?.toArray(),reveal:!!o.material.userData.revealWing});});if(sample.some(x=>x.reveal))errors.push('other landmark shader');
   const saved=[b.left.quaternion.clone(),b.right.quaternion.clone()],box=g.landmarks[23].bounds,escaped=[],panelBox=new THREE.Box3().setFromObject(panel);let vertices=0,minPanelClearance=Infinity;
   // Independent random-looking poses plus both limits; sample every actual vertex.
   for(let j=0;j<=40;j++){const a=g.BUTTERFLY.maxAngle*(j===40?1:(j*17%40)/40);b.left.rotation.set(0,a,0);b.right.rotation.set(0,-a,0);g.scene.updateMatrixWorld(true);
-   for(const hinge of [b.left,b.right])for(const mesh of hinge.children){const pos=mesh.geometry.attributes.position;for(let i=0;i<pos.count;i++){const v=new THREE.Vector3().fromBufferAttribute(pos,i).applyMatrix4(mesh.matrixWorld);vertices++;if(!box.containsPoint(v))escaped.push(mesh.name);const local=b.root.worldToLocal(v.clone());minPanelClearance=Math.min(minPanelClearance,local.z-(-.05));}}
+   for(const hinge of [b.left,b.right])for(const mesh of hinge.children){const pos=mesh.geometry.attributes.position;for(let i=0;i<pos.count;i++){const v=new THREE.Vector3().fromBufferAttribute(pos,i).applyMatrix4(mesh.matrixWorld);vertices++;if(!box.containsPoint(v))escaped.push(mesh.name);const local=b.root.worldToLocal(v.clone());minPanelClearance=Math.min(minPanelClearance,local.z-(panel.position.z+panel.scale.z/2));}}
   }
   b.left.quaternion.copy(saved[0]);b.right.quaternion.copy(saved[1]);g.scene.updateMatrixWorld(true);
   const lod=wrap.parent.getObjectByName('butterfly-silhouette');if(!lod||lod.children[0].children.filter(x=>x.name==='silhouette-wing').length!==4)errors.push('silhouette');
-  return {errors,pivots:[b.left.position.toArray(),b.right.position.toArray()],vertices,escaped,minPanelClearance,shared,sample,palette:g.BUTTERFLY.palette,margin:b.sweepMargin,panelSize:panelBox.getSize(new THREE.Vector3()).toArray()};
+  for(const wing of lod.children[0].children.filter(x=>x.name==='silhouette-wing'))if(![b.shapes.upper,b.shapes.lower].includes(wing.geometry.parameters.shapes)||wing.geometry.attributes.position.count<80)errors.push('silhouette shape reuse');
+  return {errors,wingGeometry,veinGraph:{nodes:graph.nodes.length,edges:graph.edges.length,cells:graph.cells.length,degrees},pivots:[b.left.position.toArray(),b.right.position.toArray()],vertices,escaped,minPanelClearance,shared,sample,palette:g.BUTTERFLY.palette,margin:b.sweepMargin,panelSize:panelBox.getSize(new THREE.Vector3()).toArray()};
  });
  assert.deepEqual(structure.errors,[]);assert.deepEqual(structure.escaped,[]);assert(structure.minPanelClearance>0);
  async function collect(ms){return p.evaluate(async ms=>{const rows=[],start=performance.now();while(performance.now()-start<ms){await new Promise(requestAnimationFrame);const b=__garden.butterfly;rows.push({a:b.left.userData.angle,r:b.right.userData.angle,reveal:b.reveal});}return {fps:rows.length*1000/(performance.now()-start),min:Math.min(...rows.map(x=>x.a)),max:Math.max(...rows.map(x=>x.a)),mirrorError:Math.max(...rows.map(x=>Math.abs(x.a+x.r))),frames:rows.length};},ms);}
@@ -138,18 +156,23 @@ async function butterflyAudit(p,mobile){
  const baselineMaterials=await p.evaluate(()=>{const rows=[];__garden.scene.traverse(o=>{if(o.isMesh&&o.userData.landmark?.index!==23&&o.userData.landmark&&o.material.color)rows.push([o.uuid,o.material.color.toArray()]);});return rows;});
  // Establish the real entry-point camera without waiting for activation to colour it.
  await p.evaluate(()=>{const g=__garden,l=g.landmarks[23];g.teleport(l.entryPoint.x,l.entryPoint.z);g.cameraState.yaw=Math.atan2(-l.site.ux,-l.site.uz)});await p.waitForTimeout(3600);
- const fixed=await p.evaluate(()=>({position:__garden.camera.position.toArray(),target:__garden.cameraLook.toArray()}));
+ const fixed=await p.evaluate(()=>({position:__garden.camera.position.toArray(),target:__garden.cameraLook.toArray(),fov:__garden.camera.fov}));
  await p.evaluate(()=>(()=>{const l=__garden.landmarks[23];__garden.teleport(l.x-l.site.ux*36,l.z-l.site.uz*36)})());await p.waitForTimeout(7000);
- async function lock(view=fixed,night=true){if(night){await p.evaluate(()=>__garden.setSky(.55));await p.waitForTimeout(80);}await p.evaluate(view=>{window.__pauseFrames=true;const g=__garden;g.butterfly.left.rotation.set(0,.1,0);g.butterfly.right.rotation.set(0,-.1,0);g.butterfly.wings.forEach(w=>w.material.userData.revealUniforms.uTime.value=20);g.scene.updateMatrixWorld(true);g.camera.position.fromArray(view.position);g.cameraLook.fromArray(view.target);g.camera.lookAt(g.cameraLook);g.camera.updateMatrixWorld(true);g.composer.render(0);},view);}
+ async function lock(view=fixed,night=true){view={fov:fixed.fov,...view};if(night){await p.evaluate(()=>__garden.setSky(.55));await p.waitForTimeout(80);}await p.evaluate(view=>{window.__pauseFrames=true;const g=__garden;g.butterfly.left.rotation.set(0,.1,0);g.butterfly.right.rotation.set(0,-.1,0);g.butterfly.wings.forEach(w=>w.material.userData.revealUniforms.uTime.value=20);g.scene.updateMatrixWorld(true);g.camera.fov=view.fov;g.camera.updateProjectionMatrix();g.camera.position.fromArray(view.position);g.cameraLook.fromArray(view.target);g.camera.lookAt(g.cameraLook);g.camera.updateMatrixWorld(true);g.composer.render(0);},view);}
  const photos={};await lock();const rest=await wingPixels(p);photos.rest=await exposure(p,'butterfly-rest',mobile);await p.evaluate(()=>window.__pauseFrames=false);
  assert(rest.uniformReveal<.01);assert(rest.pixels>100);assert(rest.saturation<.24,JSON.stringify(rest));
  // Fixed processional view: player at the foot of the original stairs, eye on axis.
  await p.evaluate(()=>{const g=__garden,l=g.landmarks[23];g.teleport(l.x-l.site.ux*30,l.z-l.site.uz*30);g.cameraState.yaw=Math.atan2(-l.site.ux,-l.site.uz);});await p.waitForTimeout(3500);
- const axial=await p.evaluate(()=>{const g=__garden,l=g.landmarks[23],x=l.x-l.site.ux*38,z=l.z-l.site.uz*38;return {position:[x,g.surfaceHeight(x,z)+2.1,z],target:[l.x,l.groundY+28,l.z]};});
- await lock(axial);photos.approach=await exposure(p,'butterfly-approach',mobile);await p.evaluate(()=>window.__pauseFrames=false);
+ const axial=await p.evaluate(fov=>{const g=__garden,l=g.landmarks[23],d=38,x=l.x-l.site.ux*d,z=l.z-l.site.uz*d;return {position:[x,g.surfaceHeight(x,z)+2.1,z],target:[l.x,l.groundY+l.bboxHeight*.40,l.z],fov};},fixed.fov);
+ await lock(axial);photos.approach=await exposure(p,'butterfly-approach',mobile);
+ const approach=await p.evaluate(()=>{const g=__garden,b=g.butterfly,parts=[...b.wings,b.root.getObjectByName('Panel')];let outside=0;for(const o of parts){const a=o.geometry.attributes.position;for(let i=0;i<a.count;i++){const n=new THREE.Vector3().fromBufferAttribute(a,i).applyMatrix4(o.matrixWorld).project(g.camera);if(Math.abs(n.x)>.98||Math.abs(n.y)>.98||n.z>=1)outside++;}}return {outside,inside:g.subjectBounds().filter(box=>box.containsPoint(g.camera.position)).length,fov:g.camera.fov};});assert.equal(approach.outside,0);assert.equal(approach.inside,0);
+ await p.evaluate(()=>window.__pauseFrames=false);
  await p.evaluate(()=>{const g=__garden,l=g.landmarks[23];g.teleport(l.entryPoint.x,l.entryPoint.z);g.cameraState.yaw=Math.atan2(-l.site.ux,-l.site.uz)});await p.waitForTimeout(5000);
  const active=await collect(5200);assert(active.min>=.0399&&active.max<=.42001);assert(active.max-active.min>.30);assert(active.mirrorError<1e-9);assert(active.fps>=(mobile?30:55));
  await lock();const peak=await wingPixels(p);photos.peak=await exposure(p,'butterfly-peak',mobile);assert(peak.uniformReveal>.6);assert(peak.saturation>rest.saturation+.12&&peak.colouredRatio>.3,JSON.stringify({rest,peak}));assert(peak.whiteRatio<=(mobile?.04:.02));
+ // Additional close inspection camera; the peak comparison above remains the live observation view.
+ const detail=await p.evaluate(mobile=>{const g=__garden,b=g.butterfly,l=g.landmarks[23],target=b.root.localToWorld(new THREE.Vector3(0,1.24,.12)),position=target.clone().add(new THREE.Vector3(-l.site.ux*30,-3,-l.site.uz*30));return {position:position.toArray(),target:target.toArray(),fov:mobile?112:70};},mobile);
+ await lock(detail);await p.evaluate(()=>document.querySelector('#interaction').style.display='none');photos.detail=await exposure(p,'butterfly-detail',mobile);await p.evaluate(()=>document.querySelector('#interaction').style.removeProperty('display'));
  await p.evaluate(()=>window.__pauseFrames=false);
  // Day/night is driven by the existing sky, not by a test-only uniform override.
  await p.evaluate(()=>__garden.setSky(.1));await p.waitForTimeout(1500);const day=await p.evaluate(()=>__garden.butterfly.wings[0].material.userData.revealUniforms.uNight.value);assert(day<.1);await lock(fixed,false);const dayPixels=await wingPixels(p);await p.evaluate(()=>window.__pauseFrames=false);assert(dayPixels.saturation<peak.saturation);
@@ -158,18 +181,19 @@ async function butterflyAudit(p,mobile){
  assert(faded.uniformReveal<.01&&faded.saturation<peak.saturation-.12);
  // Genuine distance LOD, camera remains aimed at this monument for the fixed shot.
  await p.evaluate(()=>__garden.teleport(0,145));await p.waitForTimeout(100);const lod=await p.evaluate(()=>{const b=__garden.butterfly,lod=b.root.parent.parent.getObjectByName('butterfly-silhouette');return {visible:lod.visible,model:b.root.parent.visible};});assert(lod.visible&&!lod.model);
- await lock({position:[fixed.position[0],fixed.position[1]+18,fixed.position[2]],target:fixed.target});photos.distant=await exposure(p,'butterfly-silhouette',mobile);await p.evaluate(()=>window.__pauseFrames=false);
+ const distant=await p.evaluate(mobile=>{const g=__garden,b=g.butterfly,l=g.landmarks[23],target=b.root.localToWorld(new THREE.Vector3(0,1.24,.12)),distance=mobile?155:230,position=target.clone().add(new THREE.Vector3(-l.site.ux*distance,110,-l.site.uz*distance));return {position:position.toArray(),target:target.toArray(),fov:mobile?45:28};},mobile);
+ await lock(distant);photos.distant=await exposure(p,'butterfly-silhouette',mobile);await p.evaluate(()=>window.__pauseFrames=false);
  // Click the actual entry, intercepting its external destination in the existing harness.
  await p.evaluate(()=>{const g=__garden,l=g.landmarks[23];g.teleport(l.entryPoint.x,l.entryPoint.z)});await p.waitForTimeout(1200);assert.equal(await p.getAttribute('#enter-link','href'),'https://uncolored-butterfly.maniforld.com');
  const popupPromise=p.waitForEvent('popup');await p.click('#enter-link');const popup=await popupPromise;await popup.waitForLoadState('domcontentloaded');assert.equal(popup.url(),'https://uncolored-butterfly.maniforld.com/');await popup.close();await p.bringToFront();
  await p.evaluate(()=>(()=>{const l=__garden.landmarks[23];__garden.teleport(l.x-l.site.ux*36,l.z-l.site.uz*36)})());await p.waitForTimeout(7500);await lock();const memory=await wingPixels(p),visited=await p.evaluate(()=>({uniform:__garden.butterfly.wings[0].material.userData.revealUniforms.uVisited.value,saved:JSON.parse(localStorage.getItem('garden-visited-v1'))}));await p.evaluate(()=>window.__pauseFrames=false);
  assert(visited.uniform>.99&&visited.saved.includes('https://uncolored-butterfly.maniforld.com'));assert(memory.uniformReveal<.01);assert(memory.saturation>faded.saturation&&memory.saturation<peak.saturation);
  const unchanged=await p.evaluate(before=>before.every(([id,color])=>{const m=__garden.scene.getObjectByProperty('uuid',id)?.material;return m&&m.color.toArray().every((v,i)=>v===color[i])&&!m.userData.revealWing;}),baselineMaterials);assert(unchanged);
- return {structure,idle,active,rest,peak,faded,memory,visited,day,dayPixels,night,lod,unchanged,fixed,photos};
+ return {structure,approach,idle,active,rest,peak,faded,memory,visited,day,dayPixels,night,lod,unchanged,fixed,photos};
 }
 
 async function run(){
- const browser=await chromium.launch({channel:'chrome',headless:true});const report={wave:'2A',butterflySource,generatedAt:new Date().toISOString(),sourceSha256:crypto.createHash('sha256').update(html).digest('hex'),complete:false,thresholds:{whiteDesktop:.02,whiteMobile:.04,maxWhiteComponent:.005,nightMean:[.025,.32],bodyMean:[.025,.48],bodyP95:.65,maxUnbrokenPlane:12,viewKDesktop:.5,viewKPortrait:.62}};
+ const browser=await chromium.launch({channel:'chrome',headless:true});const report={wave:'2A-r1',butterflySource,generatedAt:new Date().toISOString(),sourceSha256:crypto.createHash('sha256').update(html).digest('hex'),complete:false,thresholds:{whiteDesktop:.02,whiteMobile:.04,maxWhiteComponent:.005,nightMean:[.025,.32],bodyMean:[.025,.48],bodyP95:.65,maxUnbrokenPlane:12,viewKDesktop:.5,viewKPortrait:.62}};
  try{
  for(const mobile of [false,true]){
   const context=await browser.newContext({viewport:mobile?{width:390,height:844}:{width:1440,height:900},deviceScaleFactor:mobile?3:1,isMobile:mobile,hasTouch:mobile});
@@ -227,7 +251,8 @@ async function run(){
   const sky=[];for(const t of [.1,.3,.55,.86]){await p.evaluate(t=>__garden.setSky(t),t);await p.waitForFunction(t=>Math.abs(__garden.skyInfo().t-t)<.01,t);await p.waitForFunction(()=>!document.hidden);await p.waitForTimeout(100);sky.push(await p.evaluate(()=>({name:__garden.skyInfo().name,fog:__garden.scene.fog.density})));}assert.deepEqual(sky.map(s=>s.name),['白天','黄昏','夜','清晨']);assert(sky.every(s=>s.fog>=.0016&&s.fog<=.0028));
   if(!mobile){const before=await p.evaluate(()=>window.__testAudio[0].src);await p.evaluate(()=>window.__testAudio[0].dispatchEvent(new Event('ended')));await p.waitForTimeout(700);assert.notEqual(await p.evaluate(()=>window.__testAudio[0].src),before);await p.click('#bgm-button');assert.equal(await p.getAttribute('#bgm-button','aria-pressed'),'false');await p.click('#bgm-button');}
   await p.evaluate(()=>{__garden.teleport(0,3);__garden.setSky(.55);});await p.keyboard.press('Tab');await p.locator('#world').focus();
-  await p.keyboard.down('KeyW');await p.waitForTimeout(700);await p.keyboard.up('KeyW');assert(await p.evaluate(()=>__garden.player.position.z<1));
+  const mapBefore=await p.locator('#map').evaluate(c=>c.toDataURL());assert(await p.locator('#map').isVisible());
+  await p.keyboard.down('KeyW');await p.waitForTimeout(700);await p.keyboard.up('KeyW');assert(await p.evaluate(()=>__garden.player.position.z<1));assert.notEqual(await p.locator('#map').evaluate(c=>c.toDataURL()),mapBefore);
   if(mobile){const j=await p.locator('#joystick').boundingBox();const before=await p.evaluate(()=>__garden.player.position.z);await p.mouse.move(j.x+j.width/2,j.y+j.height/2);await p.mouse.down();await p.mouse.move(j.x+j.width/2,j.y+12);await p.waitForTimeout(600);await p.mouse.up();assert(await p.evaluate(before=>__garden.player.position.z<before-.5,before));}
   await p.keyboard.down('KeyD');
   const performanceResult=await p.evaluate(async()=>{const samples=[];let last=performance.now(),start=last;await new Promise(resolve=>{function frame(t){samples.push(t-last);last=t;if(t-start<6000)requestAnimationFrame(frame);else resolve();}requestAnimationFrame(frame)});samples.sort((a,b)=>a-b);return {fps:1000/(samples.reduce((a,b)=>a+b,0)/samples.length),p95:samples[Math.floor(samples.length*.95)],quality:__garden.quality,overflow:document.documentElement.scrollWidth>innerWidth};});
