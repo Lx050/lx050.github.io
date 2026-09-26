@@ -1926,14 +1926,14 @@ function bindLook(element,canPick){
   element.addEventListener('pointermove',e=>{
     if(worldInputBlocked()){if(drag){if(element.hasPointerCapture(drag.id))element.releasePointerCapture(drag.id);drag=null;lookActive=Math.max(0,lookActive-1);}return;}
     if(!drag){if(canPick&&e.pointerType==='mouse')element.style.cursor=pick(e)?'pointer':'grab';return;}
-    if(drag.id!==e.pointerId)return;lastLookAt=elapsed;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.travel+=Math.hypot(dx,dy);cameraState.yaw-=dx*.0045;cameraState.pitch=THREE.MathUtils.clamp(cameraState.pitch-dy*.0035,orbitMinPitch(),WORLD.CAMERA_MAX_PITCH);drag.x=e.clientX;drag.y=e.clientY;
+    if(drag.id!==e.pointerId)return;lastLookAt=elapsed;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.travel+=Math.hypot(dx,dy);cameraState.yaw-=dx*.0045;cameraState.pitch=THREE.MathUtils.clamp(cameraState.pitch+dy*.0035,orbitMinPitch(),WORLD.CAMERA_MAX_PITCH);drag.x=e.clientX;drag.y=e.clientY;
   });
   element.addEventListener('pointerup',e=>{if(!drag||drag.id!==e.pointerId)return;const click=drag.travel<7;drag=null;lookActive=Math.max(0,lookActive-1);lastLookAt=elapsed;if(canPick&&click)visit(pick(e));});
   ['pointercancel','lostpointercapture'].forEach(type=>element.addEventListener(type,()=>{if(drag)lookActive=Math.max(0,lookActive-1);drag=null;lastLookAt=elapsed;}));
 }
 bindLook(renderer.domElement,true);bindLook($('viewpad'),false);
 renderer.domElement.addEventListener('wheel',e=>{e.preventDefault();if(worldInputBlocked())return;interruptWorldReveal();lastLookAt=elapsed;cameraState.distance=THREE.MathUtils.clamp(cameraState.distance+e.deltaY*.008,WORLD.CAMERA_MIN_DISTANCE,WORLD.CAMERA_MAX_DISTANCE);},{passive:false});
-$('viewpad').addEventListener('keydown',e=>{if(worldInputBlocked())return;if(!e.key.startsWith('Arrow')&&e.key!=='Home')return;e.preventDefault();e.stopPropagation();interruptWorldReveal();lastLookAt=elapsed;if(e.key==='ArrowLeft')cameraState.yaw+=.14;if(e.key==='ArrowRight')cameraState.yaw-=.14;if(e.key==='ArrowUp')cameraState.pitch=Math.min(WORLD.CAMERA_MAX_PITCH,cameraState.pitch+.08);if(e.key==='ArrowDown')cameraState.pitch=Math.max(orbitMinPitch(),cameraState.pitch-.08);if(e.key==='Home'){cameraState.yaw=0;cameraState.pitch=WORLD.CAMERA_PITCH;}});
+$('viewpad').addEventListener('keydown',e=>{if(worldInputBlocked())return;if(!e.key.startsWith('Arrow')&&e.key!=='Home')return;e.preventDefault();e.stopPropagation();interruptWorldReveal();lastLookAt=elapsed;if(e.key==='ArrowLeft')cameraState.yaw+=.14;if(e.key==='ArrowRight')cameraState.yaw-=.14;if(e.key==='ArrowUp')cameraState.pitch=Math.max(orbitMinPitch(),cameraState.pitch-.08);if(e.key==='ArrowDown')cameraState.pitch=Math.min(WORLD.CAMERA_MAX_PITCH,cameraState.pitch+.08);if(e.key==='Home'){cameraState.yaw=0;cameraState.pitch=WORLD.CAMERA_PITCH;}});
 function reduceQuality(){
   if(!lightQuality){lightQuality=true;if(bloom){bloom.enabled=false;composer.removePass(bloom);bloom.dispose();bloom=null;}
     renderer.shadowMap.enabled=false;moon.castShadow=false;sun.castShadow=false;for(const l of [moon,sun])if(l.shadow.map){l.shadow.map.dispose();l.shadow.map=null;}
