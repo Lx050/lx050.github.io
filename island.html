@@ -104,6 +104,35 @@ const TRACKS=[
 .atlas-head,.atlas-tools{display:flex;align-items:center;gap:10px}.atlas-head h2{font:23px var(--serif);margin:0;flex:1}.atlas-inner button{border:1px solid #b49d7544;border-radius:6px;padding:8px 12px;min-height:38px}.atlas-inner button:focus-visible,.mapbox:focus-visible{outline:2px solid #c9ad78;outline-offset:3px}.atlas-tools output{font-size:12px;min-width:46px}.atlas-tools small{color:var(--muted);font-size:11px}.atlas-body{display:grid;grid-template-columns:minmax(0,1fr) 174px;gap:12px;flex:1;min-height:0}.atlas-chart{position:relative;min-height:0;overflow:hidden;border:1px solid #e8e2d51c;border-radius:8px;background:#0b1216}#atlas-map{display:block;width:100%;height:100%;touch-action:none;cursor:grab}#atlas-map:active{cursor:grabbing}#atlas-list{overflow:auto;min-height:0}#atlas-list h3{margin:12px 0 5px;font-size:12px;color:var(--zone)}#atlas-list button{display:block;width:100%;text-align:left;font-size:11px;padding:6px;border:0;min-height:30px}#atlas-list .visited{color:#c9ad78}#atlas-list .nearest{color:#fff;box-shadow:inset 2px 0 #fff}.atlas-legend{display:flex;flex-wrap:wrap;gap:5px 12px;font-size:10px;color:#aaa69b}.atlas-legend i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--zone);margin-right:4px}.mapbox{cursor:pointer}.mapbox[aria-expanded=true] canvas{border-color:#c9ad78}
 @media(max-width:760px){.atlas-inner{height:100%;padding:14px;gap:10px}.atlas-head h2{font-size:20px}.atlas-body{grid-template-columns:1fr;grid-template-rows:minmax(240px,1fr) minmax(100px,.48fr)}#atlas-list{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}.atlas-tools small{font-size:10px}}
 </style>
+<style>
+/* World host owns only these additive classes; removing them restores the hub HUD. */
+#world-enter[hidden],#world-hud[hidden],#world-scroll[hidden]{display:none}
+#world-enter{flex:1;text-align:left;font:14px/1.7 var(--serif);border-left:1px solid var(--line);padding:7px 0 7px 15px;color:var(--paper)}
+#world-enter small{display:block;font:10px/1.7 sans-serif;color:var(--muted)}
+#interaction.world-gate{flex-wrap:wrap;gap:8px 16px}#interaction.world-gate .entry-copy{flex-basis:100%}
+#interaction.world-gate #enter-link{font-size:10px;border:0;padding:6px;color:var(--muted)}
+.world-active .mapbox,.world-active .topbar .identity,.world-active .topbar .districts,.world-active .topbar .tools>:not(#bgm-button),.world-active #interaction,.world-active #ambient-hint,.world-active .bottom-note,.world-active .margin-note,.world-active #euler-card,.world-active #bridge-toast,.world-active .vignette{display:none!important}
+.world-active .topbar{justify-content:flex-end}.world-active .viewpad{color:#4d4941;border-color:#84745166;top:125px}
+#world-hud{position:absolute;inset:0;pointer-events:none;color:#504a3d;font-family:var(--serif)}
+.world-title{position:absolute;top:max(30px,env(safe-area-inset-top));left:max(28px,calc(12px + env(safe-area-inset-left)));writing-mode:vertical-rl;font-size:22px;letter-spacing:5px;border-left:1px solid #99845477;padding-left:14px}
+.world-title small{font-size:10px;letter-spacing:3px;margin-right:10px;color:#7d715d}
+#world-exit{position:absolute;pointer-events:auto;right:max(24px,calc(12px + env(safe-area-inset-right)));bottom:max(34px,calc(12px + env(safe-area-inset-bottom)));padding:12px 20px;border:1px solid #9c895577;background:#e5decbe8;font:15px var(--serif);color:#504a3d}
+/* Keep the return action above the sprint footprint and outside the left touch zone. */
+.world-active{--world-sprint-size:78px}
+.touch.world-active #world-exit{right:var(--sprint-right);bottom:calc(max(46px,env(safe-area-inset-bottom)) + var(--world-sprint-size) + 18px)}
+@media(pointer:coarse){.world-active #world-exit{right:var(--sprint-right);bottom:calc(max(46px,env(safe-area-inset-bottom)) + var(--world-sprint-size) + 18px)}}
+@media(min-width:768px) and (pointer:coarse){.world-active{--world-sprint-size:92px}}
+#world-exit-hint{position:absolute;bottom:95px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:12px;letter-spacing:3px}
+#world-scroll{position:fixed;inset:0;z-index:40;pointer-events:auto;overflow:hidden;--spread:0;--ink:0}
+.scroll-silk{position:absolute;inset:-2px;background:repeating-linear-gradient(0deg,#78633806 0 1px,transparent 1px 4px),repeating-linear-gradient(90deg,#fff8de15 0 1px,transparent 1px 3px),radial-gradient(ellipse at 35% 48%,#f5edd8,#e1d5b8 75%,#c5b48d);clip-path:inset(0 calc((1 - var(--spread))*var(--right)) 0 calc((1 - var(--spread))*var(--left)));}
+.scroll-ink{position:absolute;inset:0;background:radial-gradient(ellipse at 12% 83%,#45484055,transparent 40%),radial-gradient(ellipse at 83% 20%,#74715d44,transparent 44%);opacity:var(--ink);filter:blur(16px);transform:scale(calc(.6 + var(--ink)*.4))}
+.scroll-rod{position:absolute;top:-4%;bottom:-4%;width:17px;transform:translateX(-50%);background:linear-gradient(90deg,#554a32,#b9a16a 28%,#e4d6a5 46%,#8b7448 76%,#473f2f);border-radius:8px;box-shadow:0 0 0 1px #dbcb99,6px 0 20px #3f39294d}
+.scroll-rod.left{left:calc((1 - var(--spread))*var(--left))}.scroll-rod.right{left:calc(100% - (1 - var(--spread))*var(--right))}
+.scroll-inscription{position:absolute;inset:25% 0;text-align:center;color:#605843;font:24px/2.4 var(--serif);letter-spacing:9px;opacity:var(--ink)}
+.scroll-inscription small{display:block;font-size:11px;letter-spacing:5px}
+#world-notice{position:fixed;z-index:41;left:50%;top:42%;transform:translateX(-50%);font:16px var(--serif);letter-spacing:4px;color:#655d4b;pointer-events:none}#world-notice:not(:empty){background:#e5decbe8;padding:10px 18px}
+@media(max-width:760px){.world-title{left:20px;font-size:18px}#world-exit{bottom:max(24px,env(safe-area-inset-bottom));right:20px}.scroll-inscription{font-size:19px;letter-spacing:4px}}
+</style>
 </head>
 <body>
 <main id="world" tabindex="-1" aria-label="可探索的三维数字庭院。使用 WASD 或方向键行走；靠近建筑后按回车访问。"></main>
@@ -125,11 +154,15 @@ const TRACKS=[
   <div id="ambient-hint">提灯走近，让故事发生。</div>
   <section id="interaction" aria-label="附近的入口">
     <div class="entry-copy" aria-live="polite"><div class="eyebrow" id="entry-zone"></div><h2 id="entry-title"></h2><p id="entry-desc"></p></div>
+    <button id="world-enter" type="button" hidden>展卷 · 入《未上色的蝴蝶》<small>按 E 展卷</small></button>
     <a id="enter-link" target="_blank" rel="noopener noreferrer">访问 ↗<span>ENTER / 空格</span></a>
   </section>
+  <section id="world-hud" hidden aria-label="卷中行走"><div class="world-title">未上色的蝴蝶<small>空卷 · 一灯行</small></div><div id="world-exit-hint">卷尽处，亦是来处</div><button id="world-exit" type="button">合卷归途 · E</button></section>
   <div id="bridge-toast" aria-live="polite"></div>
   <section id="euler-card" aria-label="七桥挑战" hidden><div class="entry-copy"><div class="eyebrow">1736 · 柯尼斯堡</div><h2 id="euler-title">七桥 · 欧拉的判定</h2><p id="euler-text"></p></div><button id="euler-action">架设新桥 ↗</button></section>
 </div>
+<div id="world-scroll" hidden aria-hidden="true"><div class="scroll-silk"><div class="scroll-ink"></div><div class="scroll-inscription"><span id="scroll-title">未上色的蝴蝶</span><small id="scroll-verse">一灯入卷 · 万象未生</small></div></div><i class="scroll-rod left"></i><i class="scroll-rod right"></i></div>
+<div id="world-notice" role="status"></div>
 <section id="intro" aria-label="进入数字庭院">
   <div class="intro-inner"><div class="intro-kicker">A SMALL ISLAND OF THOUGHTS</div><h1>Lx050<span style="color:var(--red)">.</span></h1><div class="intro-poem">在数字之间，留一点人间</div><div class="intro-line"></div><p class="intro-description">一些作品，一些故事，一些仍在生长的念头。<br>借一盏灯，随意走走。</p><button class="start" id="start" disabled>正在点灯<span class="arrow">↗</span></button><div class="intro-controls" id="intro-controls">WASD / 方向键行走 · 拖动环顾 · 回车访问<br>点击或按任意键，开始夜游</div></div>
   <div class="intro-footer"><span>作品 / 服务 / 项目 / 连接</span><span>慢一点，也没有关系。 &nbsp; © Lx050</span></div>
@@ -333,7 +366,7 @@ ZONES.forEach((zone,index)=>{
 $('music-credits').innerHTML='<h3>夜乐 · 背景音乐署名</h3><small class="mc-note">入庭后夜间随机播放，一曲播罢自动接续下一首。以下均为公有领域或 CC0 / CC-BY 授权的演奏录音。</small>'+TRACKS.map(t=>`<small>${t.n} — ${t.a}，${t.l}</small>`).join('');
 function modalOpen(){return !$('directory').hidden||!$('atlas').hidden;}
 function clearInput(){keys.clear();resetJoystick(true);releaseSprint();currentSpeed=6.3;sprinting=false;velocity.set(0,0);}
-function showDirectory(){previousFocus=document.activeElement;clearInput();$('directory').hidden=false;$('hud').inert=true;$('intro').inert=true;$('close-directory').focus();}
+function showDirectory(){if(worldActive())return;previousFocus=document.activeElement;clearInput();$('directory').hidden=false;$('hud').inert=true;$('intro').inert=true;$('close-directory').focus();}
 function closeDirectory(){$('directory').hidden=true;$('hud').inert=!started;$('intro').inert=started;previousFocus?.focus();}
 $('list-button').onclick=showDirectory;$('fallback-list').onclick=showDirectory;$('close-directory').onclick=closeDirectory;
 $('directory').addEventListener('click',e=>{if(e.target===$('directory'))closeDirectory();});
@@ -365,7 +398,8 @@ const target=new THREE.WebGLRenderTarget(innerWidth,innerHeight,{type:supportsHD
 // r128's default renderbuffer is 16-bit: a depth texture prevents coplanar path/ground banding.
 if(renderer.capabilities.isWebGL2||renderer.extensions.has('WEBGL_depth_texture'))target.depthTexture=new THREE.DepthTexture(innerWidth,innerHeight,THREE.UnsignedIntType);
 const composer=new THREE.EffectComposer(renderer,target);
-composer.setPixelRatio(renderer.getPixelRatio());composer.addPass(new THREE.RenderPass(scene,camera));
+const mainRenderPass=new THREE.RenderPass(scene,camera);
+composer.setPixelRatio(renderer.getPixelRatio());composer.addPass(mainRenderPass);
 let bloom=null;
 if(!lightQuality){
   bloom=new THREE.UnrealBloomPass(new THREE.Vector2(innerWidth,innerHeight),WORLD.BLOOM_STRENGTH,.35,WORLD.BLOOM_THRESHOLD);
@@ -731,7 +765,7 @@ function skyTick(dt){
   Object.assign(skyState,{sunEl:+sunEl.toFixed(1),moonEl:+moonEl.toFixed(1),sunI:+sunI.toFixed(2),moonI:+moonI.toFixed(2)});
   if(a.name!==lastSkyName){lastSkyName=a.name;$('sky-button').textContent='天时 · '+a.name;}
 }
-$('sky-button').onclick=()=>{const nx=b=>b.t===0?.0001:b.t;skyTarget=nx(SKY[(SKY.findIndex(s=>s.name===lastSkyName)+1)%SKY.length]);};
+$('sky-button').onclick=()=>{if(worldActive())return;const nx=b=>b.t===0?.0001:b.t;skyTarget=nx(SKY[(SKY.findIndex(s=>s.name===lastSkyName)+1)%SKY.length]);};
 
 function label(text){
   const canvas=document.createElement('canvas');const ctx=canvas.getContext('2d');
@@ -1797,7 +1831,7 @@ function setNear(next){
   }else $('enter-link').removeAttribute('href');
 }
 function visit(lm){
-  if(!lm||!started||modalOpen())return;
+  if(!lm||!started||modalOpen()||worldActive())return;
   // Opening a blank window synchronously lets us detect popup blocking before counting a visit.
   const destination=window.open('about:blank','_blank');
   if(destination){destination.opener=null;const meta=destination.document.createElement('meta');meta.name='referrer';meta.content='no-referrer';destination.document.head.append(meta);destination.location.replace(lm.entry.url);markVisited(lm.index);}
@@ -1811,6 +1845,7 @@ function start(){
 }
 $('intro').addEventListener('click',start);
 function teleport(x,z){
+  if(worldActive())return false;
   clearInput();velocity.set(0,0);if(!walkable(x,z))return false;
   player.position.set(x,surfaceHeight(x,z),z);setNear(null);
   cameraState.yaw=butterflySea&&butterflySeaSurface(x,z)!==null?Math.atan2(-butterflySea.ux,-butterflySea.uz):0;
@@ -1824,9 +1859,11 @@ const moveKeys=['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','A
 window.addEventListener('keydown',e=>{
   if(e.ctrlKey||e.metaKey||e.altKey||modalOpen()||failed)return;
   if(!started){if(!['Shift','Control','Alt','Meta','Tab'].includes(e.key)){e.preventDefault();start();}return;}
+  if(e.code==='KeyE'&&!e.repeat){e.preventDefault();if(WorldHost.state==='WORLD')WorldHost.current?.requestExit();else if(atButterflyGate())WorldHost.enter('butterfly');return;}
+  if(worldActive()&&WorldHost.state!=='WORLD')return;
   if(e.target.closest('#viewpad'))return;
   if(e.target.closest('button,a')&&(e.code==='Enter'||e.code==='Space'))return;
-  if(moveKeys.includes(e.code)||e.code==='ShiftLeft'||e.code==='ShiftRight'){e.preventDefault();keys.add(e.code);}
+  if(moveKeys.includes(e.code)||e.code==='ShiftLeft'||e.code==='ShiftRight'){e.preventDefault();if(!e.repeat)interruptWorldReveal();keys.add(e.code);}
   if((e.code==='Enter'||e.code==='Space')&&!e.repeat){e.preventDefault();visit(nearest);}
   if(e.code==='KeyR'&&!e.repeat)teleport(0,3);
 });
@@ -1843,21 +1880,24 @@ function resetJoystick(immediate=false){
   const home=()=>{joystick.style.left='';joystick.style.top='';joystick.style.bottom='';joystick.classList.remove('returning');};
   if(immediate||!floatingJoystick())home();else{joystick.classList.add('returning');joyReturnTimer=setTimeout(home,180);}
 }
-function updateJoystick(e){const rect=joystick.getBoundingClientRect();let x=e.clientX-rect.left-rect.width/2,y=e.clientY-rect.top-rect.height/2;const max=rect.width*.34,length=Math.hypot(x,y);if(length>max){x*=max/length;y*=max/length;}joy.x=x/max;joy.y=y/max;$('stick').style.transform=`translate(${x}px,${y}px)`;}
+function updateJoystick(e){interruptWorldReveal();const rect=joystick.getBoundingClientRect();let x=e.clientX-rect.left-rect.width/2,y=e.clientY-rect.top-rect.height/2;const max=rect.width*.34,length=Math.hypot(x,y);if(length>max){x*=max/length;y*=max/length;}joy.x=x/max;joy.y=y/max;$('stick').style.transform=`translate(${x}px,${y}px)`;}
+function joystickZoneTop(){return Math.max(96,innerHeight*.28,worldActive()?$('world-hud').querySelector('.world-title').getBoundingClientRect().bottom+14:0);}
 function inJoystickZone(e){
   if(e.target.closest('#viewpad,#interaction,.mapbox,#sprint,button,a,input,#directory,#atlas,#intro'))return false;
-  return e.target.closest('#joystick')||floatingJoystick()&&e.clientX<=innerWidth*.52&&e.clientY>=Math.max(96,innerHeight*.28);
+  return e.target.closest('#joystick')||floatingJoystick()&&e.clientX<=innerWidth*.52&&e.clientY>=joystickZoneTop();
 }
 // Capture before the canvas look/pick handlers, only for our owned pointer.
 document.addEventListener('pointerdown',e=>{
-  if(!started||modalOpen()||e.button!==0||!inJoystickZone(e))return;
+  if(!started||worldInputBlocked()||e.button!==0||!inJoystickZone(e))return;
   e.preventDefault();e.stopPropagation();if(joyPointer!==null)return;
   clearTimeout(joyReturnTimer);joystick.classList.remove('returning');
   if(floatingJoystick()){
     const r=joystick.getBoundingClientRect().width/2,css=getComputedStyle(joystick);
     const left=r+12+(parseFloat(css.getPropertyValue('--safe-left'))||0),bottom=r+12+(parseFloat(css.getPropertyValue('--safe-bottom'))||0);
-    const x=Math.max(left,Math.min(innerWidth-r-12,e.clientX));
-    let y=Math.max(96+r,Math.min(innerHeight-bottom,e.clientY));
+    // In the scroll, keep the entire floating base inside its left-hand hot zone.
+    const worldZone=worldActive(),right=(worldZone?innerWidth*.52:innerWidth)-r-12;
+    const x=Math.max(left,Math.min(right,e.clientX));
+    let y=Math.max((worldZone?joystickZoneTop():96)+r,Math.min(innerHeight-bottom,e.clientY));
     const card=$('interaction').getBoundingClientRect();
     if($('interaction').classList.contains('visible')&&x+r>card.left&&x-r<card.right&&y+r>card.top&&y-r<card.bottom){
       y=card.bottom+12+r<=innerHeight-bottom?card.bottom+12+r:Math.max(96+r,card.top-r-12);
@@ -1873,25 +1913,27 @@ for(const type of ['pointermove','pointerup','pointercancel','lostpointercapture
   if(type==='pointermove')updateJoystick(e);else resetJoystick();
 },{capture:true,passive:false});
 function releaseSprint(){const id=sprintPointer;sprintPointer=null;sprintButton.classList.remove('active');sprintButton.setAttribute('aria-pressed','false');if(id!==null&&sprintButton.hasPointerCapture(id))sprintButton.releasePointerCapture(id);}
-sprintButton.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();if(!started||modalOpen()||sprintPointer!==null||e.button!==0)return;sprintPointer=e.pointerId;sprintButton.classList.add('active');sprintButton.setAttribute('aria-pressed','true');try{sprintButton.setPointerCapture(e.pointerId);}catch(error){/* Synthetic pointer. */}});
+sprintButton.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();if(!started||worldInputBlocked()||sprintPointer!==null||e.button!==0)return;sprintPointer=e.pointerId;sprintButton.classList.add('active');sprintButton.setAttribute('aria-pressed','true');try{sprintButton.setPointerCapture(e.pointerId);}catch(error){/* Synthetic pointer. */}});
 for(const type of ['pointerup','pointercancel','lostpointercapture'])document.addEventListener(type,e=>{if(e.pointerId===sprintPointer){e.stopPropagation();releaseSprint();}},true);
 window.addEventListener('resize',()=>{resetJoystick(true);releaseSprint();});
 const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
-function pick(e){const rect=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);raycaster.setFromCamera(pointer,camera);const hits=raycaster.intersectObjects(pickables,false);return hits.find(hit=>{let o=hit.object;while(o){if(!o.visible)return false;o=o.parent;}return !hit.object.isSprite||hit.object.material.opacity>.2;})?.object.userData.landmark;}
+function pick(e){if(worldActive())return null;const rect=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);raycaster.setFromCamera(pointer,camera);const hits=raycaster.intersectObjects(pickables,false);return hits.find(hit=>{let o=hit.object;while(o){if(!o.visible)return false;o=o.parent;}return !hit.object.isSprite||hit.object.material.opacity>.2;})?.object.userData.landmark;}
+function interruptWorldReveal(){if(WorldHost.state==='WORLD')WorldHost.current.interruptReveal?.();}
+function orbitMinPitch(){return WorldHost.state==='WORLD'?WorldHost.current.minPitch:WORLD.CAMERA_MIN_PITCH;}
 function bindLook(element,canPick){
   let drag=null;
-  element.addEventListener('pointerdown',e=>{if(!started||modalOpen()||e.button!==0||drag)return;e.preventDefault();if(canPick)$('world').focus({preventScroll:true});lookActive++;lastLookAt=elapsed;drag={id:e.pointerId,x:e.clientX,y:e.clientY,travel:0};element.setPointerCapture(e.pointerId);});
+  element.addEventListener('pointerdown',e=>{if(!started||worldInputBlocked()||e.button!==0||drag)return;e.preventDefault();interruptWorldReveal();if(canPick)$('world').focus({preventScroll:true});lookActive++;lastLookAt=elapsed;drag={id:e.pointerId,x:e.clientX,y:e.clientY,travel:0};element.setPointerCapture(e.pointerId);});
   element.addEventListener('pointermove',e=>{
-    if(modalOpen()){if(drag){if(element.hasPointerCapture(drag.id))element.releasePointerCapture(drag.id);drag=null;lookActive=Math.max(0,lookActive-1);}return;}
+    if(worldInputBlocked()){if(drag){if(element.hasPointerCapture(drag.id))element.releasePointerCapture(drag.id);drag=null;lookActive=Math.max(0,lookActive-1);}return;}
     if(!drag){if(canPick&&e.pointerType==='mouse')element.style.cursor=pick(e)?'pointer':'grab';return;}
-    if(drag.id!==e.pointerId)return;lastLookAt=elapsed;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.travel+=Math.hypot(dx,dy);cameraState.yaw-=dx*.0045;cameraState.pitch=THREE.MathUtils.clamp(cameraState.pitch-dy*.0035,WORLD.CAMERA_MIN_PITCH,WORLD.CAMERA_MAX_PITCH);drag.x=e.clientX;drag.y=e.clientY;
+    if(drag.id!==e.pointerId)return;lastLookAt=elapsed;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.travel+=Math.hypot(dx,dy);cameraState.yaw-=dx*.0045;cameraState.pitch=THREE.MathUtils.clamp(cameraState.pitch-dy*.0035,orbitMinPitch(),WORLD.CAMERA_MAX_PITCH);drag.x=e.clientX;drag.y=e.clientY;
   });
   element.addEventListener('pointerup',e=>{if(!drag||drag.id!==e.pointerId)return;const click=drag.travel<7;drag=null;lookActive=Math.max(0,lookActive-1);lastLookAt=elapsed;if(canPick&&click)visit(pick(e));});
   ['pointercancel','lostpointercapture'].forEach(type=>element.addEventListener(type,()=>{if(drag)lookActive=Math.max(0,lookActive-1);drag=null;lastLookAt=elapsed;}));
 }
 bindLook(renderer.domElement,true);bindLook($('viewpad'),false);
-renderer.domElement.addEventListener('wheel',e=>{e.preventDefault();if(modalOpen())return;lastLookAt=elapsed;cameraState.distance=THREE.MathUtils.clamp(cameraState.distance+e.deltaY*.008,WORLD.CAMERA_MIN_DISTANCE,WORLD.CAMERA_MAX_DISTANCE);},{passive:false});
-$('viewpad').addEventListener('keydown',e=>{if(modalOpen())return;if(!e.key.startsWith('Arrow')&&e.key!=='Home')return;e.preventDefault();e.stopPropagation();lastLookAt=elapsed;if(e.key==='ArrowLeft')cameraState.yaw+=.14;if(e.key==='ArrowRight')cameraState.yaw-=.14;if(e.key==='ArrowUp')cameraState.pitch=Math.min(WORLD.CAMERA_MAX_PITCH,cameraState.pitch+.08);if(e.key==='ArrowDown')cameraState.pitch=Math.max(WORLD.CAMERA_MIN_PITCH,cameraState.pitch-.08);if(e.key==='Home'){cameraState.yaw=0;cameraState.pitch=WORLD.CAMERA_PITCH;}});
+renderer.domElement.addEventListener('wheel',e=>{e.preventDefault();if(worldInputBlocked())return;interruptWorldReveal();lastLookAt=elapsed;cameraState.distance=THREE.MathUtils.clamp(cameraState.distance+e.deltaY*.008,WORLD.CAMERA_MIN_DISTANCE,WORLD.CAMERA_MAX_DISTANCE);},{passive:false});
+$('viewpad').addEventListener('keydown',e=>{if(worldInputBlocked())return;if(!e.key.startsWith('Arrow')&&e.key!=='Home')return;e.preventDefault();e.stopPropagation();interruptWorldReveal();lastLookAt=elapsed;if(e.key==='ArrowLeft')cameraState.yaw+=.14;if(e.key==='ArrowRight')cameraState.yaw-=.14;if(e.key==='ArrowUp')cameraState.pitch=Math.min(WORLD.CAMERA_MAX_PITCH,cameraState.pitch+.08);if(e.key==='ArrowDown')cameraState.pitch=Math.max(orbitMinPitch(),cameraState.pitch-.08);if(e.key==='Home'){cameraState.yaw=0;cameraState.pitch=WORLD.CAMERA_PITCH;}});
 function reduceQuality(){
   if(!lightQuality){lightQuality=true;if(bloom){bloom.enabled=false;composer.removePass(bloom);bloom.dispose();bloom=null;}
     renderer.shadowMap.enabled=false;moon.castShadow=false;sun.castShadow=false;for(const l of [moon,sun])if(l.shadow.map){l.shadow.map.dispose();l.shadow.map=null;}
@@ -1960,7 +2002,7 @@ ZONES.forEach((zone,index)=>{
 });
 for(const text of ['━ 七桥（金）','▲ 当前位置','↑ N 北','金点：已访 · 白圈：最近']){const span=document.createElement('span');span.textContent=text;$('atlas-legend').append(span);}
 function showAtlas(){
-  if(!started||modalOpen())return;atlasFocus=document.activeElement;clearInput();
+  if(!started||modalOpen()||worldActive())return;atlasFocus=document.activeElement;clearInput();
   // Cancel any look pointer that began before opening the dialog.
   for(const el of [renderer.domElement,$('viewpad')])el.dispatchEvent(new Event('pointercancel'));
   $('atlas').hidden=false;$('hud').inert=true;$('intro').inert=true;mapButton.setAttribute('aria-expanded','true');
@@ -2018,7 +2060,10 @@ function drawAtlas(){
   for(const {button,lm} of atlasItems){button.classList.toggle('visited',visited.has(lm.index));button.classList.toggle('nearest',nearest===lm);button.setAttribute('aria-label',lm.entry.title+(visited.has(lm.index)?' · 已访':'')+(nearest===lm?' · 最近':''));}
 }
 
-function move(dt){
+function move(dt){stepWalker(dt);}
+// Shared motor: the hub keeps its original surface, collision and bridge behavior.
+function stepWalker(dt,space=null){
+  const floor=space?space.surfaceHeight:surfaceHeight,allowed=space?space.walkable:walkable;
   if(!started||modalOpen()){clearInput();return;}
   const amplitude=Math.min(1,Math.hypot(joy.x,joy.y));
   const keyboardMoving=moveKeys.some(key=>keys.has(key));
@@ -2030,21 +2075,23 @@ function move(dt){
   desired.set(ix,iz);if(desired.length()<.08)desired.set(0,0);else desired.normalize();
   const x=desired.x,z=desired.y,sin=Math.sin(cameraState.yaw),cos=Math.cos(cameraState.yaw);
   desired.set(x*cos+z*sin,-x*sin+z*cos).multiplyScalar(currentSpeed);
+  space?.easeArrival?.(desired);
   // Exponential acceleration and stronger braking: responsive on both keys and touch.
   velocity.lerp(desired,1-Math.exp(-(desired.lengthSq()?12:22)*dt));if(velocity.lengthSq()<.0005)velocity.set(0,0);
   const oldX=player.position.x,oldZ=player.position.z;
   player.position.x+=velocity.x*dt;player.position.z+=velocity.y*dt;
-  for(const c of colliders){const dx=player.position.x-c.x,dz=player.position.z-c.z,d=Math.hypot(dx,dz),r=c.r+.38;if(d<r){const nx=d>1e-5?dx/d:1,nz=d>1e-5?dz/d:0;player.position.x=c.x+nx*r;player.position.z=c.z+nz*r;const inward=velocity.x*nx+velocity.y*nz;if(inward<0){velocity.x-=nx*inward;velocity.y-=nz*inward;}}}
+  for(const c of (space?space.colliders:colliders)){const dx=player.position.x-c.x,dz=player.position.z-c.z,d=Math.hypot(dx,dz),r=c.r+.38;if(d<r){const nx=d>1e-5?dx/d:1,nz=d>1e-5?dz/d:0;player.position.x=c.x+nx*r;player.position.z=c.z+nz*r;const inward=velocity.x*nx+velocity.y*nz;if(inward<0){velocity.x-=nx*inward;velocity.y-=nz*inward;}}}
   // Walkable = mainland ∪ bridge decks ∪ isle disks (batch 5); outside that is water — roll back.
-  if(!walkable(player.position.x,player.position.z)){player.position.x=oldX;player.position.z=oldZ;velocity.multiplyScalar(0);}
-  const ty=surfaceHeight(player.position.x,player.position.z),oldY=surfaceHeight(oldX,oldZ);
+  if(!allowed(player.position.x,player.position.z)){player.position.x=oldX;player.position.z=oldZ;velocity.multiplyScalar(0);}
+  const ty=floor(player.position.x,player.position.z),oldY=floor(oldX,oldZ);
   // A vertical plinth is not a ramp. Only the 0.15m treads permit ascending it.
   if(Math.abs(ty-oldY)>.32){player.position.x=oldX;player.position.z=oldZ;velocity.set(0,0);}
-  player.position.y=surfaceHeight(player.position.x,player.position.z);
+  player.position.y=floor(player.position.x,player.position.z);
 
   const speed=velocity.length();if(speed>.05){const target=Math.atan2(velocity.x,velocity.y);let diff=target-body.rotation.y;diff=Math.atan2(Math.sin(diff),Math.cos(diff));body.rotation.y+=diff*(reduced?1:1-Math.exp(-16*dt));}
   walkPhase+=speed*dt*2.5;body.position.y=reduced?0:Math.abs(Math.sin(walkPhase))*.065*Math.min(speed,1);legL.rotation.x=reduced?0:Math.sin(walkPhase)*.45*Math.min(speed,1);legR.rotation.x=-legL.rotation.x;
   lanternSwing.rotation.z=reduced?0:Math.sin(walkPhase+.65)*.13*Math.min(speed/3,1);lanternSwing.rotation.x=reduced?0:Math.cos(walkPhase*.5)*.06*Math.min(speed,1);
+  if(space)return;
   dustElapsed+=dt;
   if(!reduced&&!lightQuality&&speed>1&&dustElapsed>.46){dustElapsed=0;const count=random()>.7?2:1;for(let i=0;i<count;i++){const puff=dustPool[dustCursor++%dustPool.length];puff.position.set(player.position.x+(random()-.5)*.3,player.position.y+.09,player.position.z+(random()-.5)*.3);puff.userData.life=.65;puff.visible=true;}}
   bridgeTick();
@@ -2053,6 +2100,7 @@ function updateLandmarks(dt){
   let closest=null,best=WORLD.INTERACT_DISTANCE;
   for(const lm of landmarks){const entryDistance=Math.hypot(player.position.x-lm.entryPoint.x,player.position.z-lm.entryPoint.z),d=lm.gatePoint?Math.min(entryDistance,Math.hypot(player.position.x-lm.gatePoint.x,player.position.z-lm.gatePoint.z)):entryDistance;if(d<best){best=d;closest=lm;}}
   setNear(started?closest:null);
+  updateWorldGate();
   for(const lm of landmarks){
     const d=Math.hypot(player.position.x-lm.entry.x,player.position.z-lm.entry.z),active=lm===nearest;
     lm.name.visible=started&&d<WORLD.LABEL_DISTANCE;lm.name.material.opacity=active?1:!started?.75:THREE.MathUtils.clamp(1-(d-20)/100,.2,.85);
@@ -2085,8 +2133,8 @@ function segmentHit(a,b,box,margin=0){
   if(length<1e-6)return null;cameraRay.set(a,direction.divideScalar(length));
   const hit=cameraRay.intersectBox(expanded,rayPoint);return hit&&hit.distanceTo(a)<length-1e-5?hit.clone():null;
 }
-function clearCamera(position,target,pad=WORLD.CAMERA_CLEARANCE){
-  const boxes=butterflySea?subjectBounds().filter(b=>b!==landmarks[23].bounds).concat(butterflySea.cameraBoxes):subjectBounds();
+function clearCamera(position,target,pad=WORLD.CAMERA_CLEARANCE,space=null){
+  const boxes=space?space.cameraBoxes:butterflySea?subjectBounds().filter(b=>b!==landmarks[23].bounds).concat(butterflySea.cameraBoxes):subjectBounds();
   const direction=position.clone().sub(target),requested=direction.length();if(requested<1e-6)return 0;
   direction.divideScalar(requested);let distance=requested;
   // Expanded AABB sweep: only retract along the boom; never move the shoulder target.
@@ -2103,15 +2151,15 @@ function clearCamera(position,target,pad=WORLD.CAMERA_CLEARANCE){
     const hit=segmentHit(target,position,expanded);
     if(hit)distance=Math.min(distance,Math.max(.6,hit.distanceTo(target)-.05));
   }
-  distance=cameraGroundDistance(target,direction,distance,pad);
+  distance=cameraGroundDistance(target,direction,distance,pad,space);
   position.copy(target).addScaledVector(direction,distance);return distance;
 }
-function cameraGroundDistance(target,direction,distance,pad=WORLD.CAMERA_CLEARANCE){
+function cameraGroundDistance(target,direction,distance,pad=WORLD.CAMERA_CLEARANCE,space=null){
   // Sweep walkable ground/decks too, so upward looks cannot put the eye underground.
   // Open sea uses the water plane, never surfaceHeight's off-island fallback of zero.
   const probe=new THREE.Vector3(),blocked=d=>{
     probe.copy(target).addScaledVector(direction,d);
-    const floor=walkable(probe.x,probe.z)?surfaceHeight(probe.x,probe.z):WORLD.WATER_Y;
+    const floor=space?space.surfaceHeight(probe.x,probe.z):walkable(probe.x,probe.z)?surfaceHeight(probe.x,probe.z):WORLD.WATER_Y;
     // Near-plane padding varies with aspect ratio; ground clearance must not.
     return probe.y<floor+Math.max(.6,pad);
   };
@@ -2185,12 +2233,14 @@ function framingSubject(){
   }
   return chosen;
 }
-function updateCamera(dt){
+function updateCamera(dt){stepOrbit(dt);}
+function stepOrbit(dt,space=null){
   if(!started){
     camPosition.set(1.5+Math.sin(elapsed*.045)*.35,2.7,WORLD.TORII_Z+24);
     camTarget.set(0,10,-75);camera.position.copy(camPosition);cameraLook.copy(camTarget);camera.lookAt(camTarget);return;
   }
-  if(butterflySea)document.body.classList.toggle('sea-palace-view',butterflySeaSurface(player.position.x,player.position.z)!==null);
+  if(!space&&butterflySea)document.body.classList.toggle('sea-palace-view',butterflySeaSurface(player.position.x,player.position.z)!==null);
+  if(space)cameraState.pitch=THREE.MathUtils.clamp(cameraState.pitch,space.minPitch,WORLD.CAMERA_MAX_PITCH);
   // Input owns yaw/pitch/distance forever. Only the rendered orbit is damped.
   cameraState.framing=0;cameraState.framedPitch=cameraState.pitch;
   const snap=reduced||!cameraState.initialized,turn=snap?1:1-Math.exp(-18*dt);
@@ -2201,27 +2251,32 @@ function updateCamera(dt){
   camTarget.copy(player.position);camTarget.y+=1.55;
   const direction=new THREE.Vector3(Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),Math.cos(yaw)*Math.cos(pitch));
   camPosition.copy(camTarget).addScaledVector(direction,d);
-  let softDistance=clearCamera(camPosition,camTarget);
+  let softDistance=clearCamera(camPosition,camTarget,WORLD.CAMERA_CLEARANCE,space);
   // Start retracting for an upward input before the damped pitch reaches the floor.
   // This keeps fast tilts on the same 20/s spring instead of hitting the safety clamp.
   if(cameraState.pitch<pitch&&cameraState.pitch<0){
     const aim=new THREE.Vector3(Math.sin(yaw)*Math.cos(cameraState.pitch),Math.sin(cameraState.pitch),Math.cos(yaw)*Math.cos(cameraState.pitch));
-    softDistance=Math.min(softDistance,cameraGroundDistance(camTarget,aim,d));
+    softDistance=Math.min(softDistance,cameraGroundDistance(camTarget,aim,d,WORLD.CAMERA_CLEARANCE,space));
   }
   // The outer clearance shell starts a fast, smooth pull-in before the near plane
   // reaches the wall. A tighter safety sweep also protects abrupt turns/teleports.
   const halfFov=Math.tan(camera.fov*Math.PI/360);
   const nearPad=Math.min(WORLD.CAMERA_CLEARANCE,camera.near*Math.sqrt(1+halfFov*halfFov*(1+camera.aspect*camera.aspect))+.05);
   camPosition.copy(camTarget).addScaledVector(direction,d);
-  const safeDistance=clearCamera(camPosition,camTarget,nearPad);
+  const safeDistance=clearCamera(camPosition,camTarget,nearPad,space);
   const rate=softDistance<cameraState.effectiveDistance?20:4;
   cameraState.effectiveDistance+=(softDistance-cameraState.effectiveDistance)*(snap?1:1-Math.exp(-rate*dt));
   cameraState.effectiveDistance=Math.max(.6,Math.min(d,safeDistance,cameraState.effectiveDistance));
   camera.position.copy(camTarget).addScaledVector(direction,cameraState.effectiveDistance);
   updateAvatarFade(dt,cameraState.effectiveDistance);
   cameraLook.copy(camTarget);camera.lookAt(cameraLook);cameraState.initialized=true;
-  const targetFov=sprinting&&!modalOpen()?46:WORLD.CAMERA_FOV;
-  if(Math.abs(camera.fov-targetFov)>.001){camera.fov+=(targetFov-camera.fov)*(1-Math.exp(-8*dt));camera.updateProjectionMatrix();}
+  // Portrait WORLD preserves a 56-degree horizontal window for the 40m+ terminal wings.
+  // HUB retains its original vertical FOV and sprint behavior exactly.
+  const portraitFov=space&&camera.aspect<1?Math.max(WORLD.CAMERA_FOV,THREE.MathUtils.radToDeg(2*Math.atan(Math.tan(THREE.MathUtils.degToRad(28))/camera.aspect))):WORLD.CAMERA_FOV;
+  const baseFov=space?THREE.MathUtils.lerp(WORLD.CAMERA_FOV,portraitFov,THREE.MathUtils.smoothstep(-player.position.z,76,100)):WORLD.CAMERA_FOV;
+  const viewFov=space?.viewFov?space.viewFov(baseFov):baseFov;
+  const targetFov=sprinting&&!modalOpen()?viewFov+6:viewFov;
+  if(Math.abs(camera.fov-targetFov)>.001){camera.fov+=(targetFov-camera.fov)*(space&&reduced?1:1-Math.exp(-8*dt));camera.updateProjectionMatrix();}
 }
 
 const labelWorld=new THREE.Vector3();
@@ -2246,9 +2301,600 @@ function layoutLabels(){
   }
 }
 
+// ===== Wave2B: scene ownership, scroll transition, and the deliberately empty first world =====
+function worldActive(){return WorldHost.state!=='HUB';}
+function worldInputBlocked(){return modalOpen()||(worldActive()&&WorldHost.state!=='WORLD');}
+function atButterflyGate(){const g=landmarks[23].gatePoint;return started&&!worldActive()&&g&&Math.hypot(player.position.x-g.x,player.position.z-g.z)<=3.6;}
+function updateWorldGate(){
+  const active=nearest?.index===23&&atButterflyGate();
+  $('world-enter').hidden=!active;$('interaction').classList.toggle('world-gate',active);
+}
+const TransitionDirector=(()=>{
+  let phase='idle',time=0,cover=0,failedLoad=false;
+  const el=$('world-scroll');
+  function paint(v){cover=v;el.style.setProperty('--spread',v);el.style.setProperty('--ink',THREE.MathUtils.smoothstep(v,.15,.95));}
+  return {
+    get phase(){return phase;},get cover(){return cover;},
+    begin(out=false,gate=null){
+      reduced=motionQuery.matches;
+      phase='cover';time=0;failedLoad=false;el.hidden=false;el.style.transform='';
+      const g=gate,p=g?new THREE.Vector3(g.x,g.y+2,g.z).project(camera):new THREE.Vector3();
+      const origin=out?50:THREE.MathUtils.clamp((p.x+1)*50,20,80);
+      el.style.setProperty('--left',origin+'%');el.style.setProperty('--right',(100-origin)+'%');
+      $('scroll-verse').textContent=out?'合卷归途 · 灯火仍在':'一灯入卷 · 万象未生';paint(0);
+    },
+    tick(dt,ready,swap,done,onFailure){
+      time+=dt;
+      if(phase==='cover'){
+        paint(THREE.MathUtils.smoothstep(Math.min(1,time/(reduced?.28:1.7)),0,1));
+        if(cover===1){phase='hold';time=0;}
+      }else if(phase==='hold'){
+        if(ready==='failed'||time>20){failedLoad=true;onFailure();$('world-notice').textContent='稍后再试';phase='failure';time=0;}
+        else if(ready===true){try{swap();phase='reveal';time=0;}catch(error){failedLoad=true;onFailure();$('world-notice').textContent='稍后再试';phase='failure';time=0;}}
+      }else if(phase==='reveal'){
+        paint(1-THREE.MathUtils.smoothstep(Math.min(1,time/(reduced?.22:.8)),0,1));
+        if(cover===0){phase='idle';el.hidden=true;done(!failedLoad);}
+      }else if(phase==='failure'){
+        // A failed scroll remains open: lift the entire sheet away instead of closing it.
+        el.style.transform=`translateY(${-Math.max(0,Math.min(1,(time-.8)/.8))*105}%)`;
+        if(time>=1.6){phase='idle';el.hidden=true;done(false);}
+      }
+    }
+  };
+})();
+window.WorldS=window.WorldS||{};
+window.WorldS.butterfly=(()=>{
+  let ownScene=null,ctx=null,moonCopy=null,moonDirection=null,moonBaseScale=null,owned=[],exitSign=null,paint=null,monument=null,reveal=null,homeward=null;
+  // At [0,0,-120], the 64m sightline frames the full flap envelope with a gentle upward look.
+  const terminal={z:-184,y:22,inner:26,outer:65,viewZ:-120};
+  const space={minPitch:-1.45,surfaceHeight:()=>0,walkable:(x,z)=>{
+    const r=Math.hypot(x,z-terminal.z);
+    const platform=Math.abs(x)<=15&&z<=-113&&z>=terminal.viewZ;
+    const shoulder=Math.abs(x)>=10&&Math.abs(x)<=15&&z<=-113&&z>=-139;
+    const sideCourt=shoulder||r<=terminal.outer&&(z<=-148||z>=terminal.viewZ||Math.abs(x)>=10);
+    return r>=terminal.inner&&((Math.abs(x)<=3.8&&z<=2&&z>=terminal.viewZ)||platform||sideCourt);
+  },colliders:[{x:0,z:terminal.z,r:terminal.inner-.38}],cameraBoxes:[],
+    easeArrival(v){
+      // A low rim ends the axial walk; the two open shoulders lead into the court.
+      if(Math.abs(player.position.x)<10&&player.position.z>=terminal.viewZ&&v.y<0)
+        v.y*=Math.min(1,Math.sqrt(Math.max(0,player.position.z-terminal.viewZ)/8));
+    },
+    viewFov(base){
+      // The wide arrival lens keeps torso + lower wings in view even if the invitation is declined.
+      // Looking up restores the already verified full-butterfly lens. This never writes look input.
+      const arrival=THREE.MathUtils.smoothstep(-player.position.z,92,114)*(1-THREE.MathUtils.smoothstep(-player.position.z,124,140));
+      const level=THREE.MathUtils.smoothstep(cameraState.renderPitch,-.30,.12);
+      return THREE.MathUtils.lerp(base,Math.max(base,70),arrival*level);
+    }};
+  function interruptReveal(){
+    if(!reveal?.active)return;
+    reveal.active=false;reveal.interrupted=true;
+    // Hand off the visible pose, not the ahead-of-spring target; no residual automated tilt.
+    cameraState.yaw=cameraState.renderYaw;cameraState.pitch=cameraState.renderPitch;
+  }
+  function updateReveal(dt){
+    if(!reveal.seen&&Math.abs(player.position.x)<9&&player.position.z<-118.5&&player.position.z>=terminal.viewZ-.1){
+      reveal.seen=true;
+      if(lookActive){reveal.interrupted=true;return;}
+      Object.assign(reveal,{active:true,time:0,duration:reduced?.32:3.2,
+        yaw:cameraState.yaw,pitch:cameraState.pitch});
+      monument.awakened=1;
+    }
+    if(!reveal.active)return;
+    reveal.time+=Math.max(0,dt);
+    if(reduced)reveal.duration=Math.min(reveal.duration,.32);
+    const t=Math.min(1,reveal.time/reveal.duration),ease=t*t*t*(t*(t*6-15)+10);
+    const turn=Math.atan2(Math.sin(-reveal.yaw),Math.cos(-reveal.yaw));
+    cameraState.yaw=reveal.yaw+turn*ease;
+    cameraState.pitch=THREE.MathUtils.lerp(reveal.pitch,-.36,ease);
+    if(reduced){monument.awakened=1;monument.bloom=Math.max(monument.bloom,.12+.88*ease);}
+    if(t===1)reveal.active=false;
+  }
+  const own=o=>{owned.push(o);return o;};
+  const pigments=['#345c99','#38998e','#b29152','#9d4c70'];
+  // Wave2B-3b — 月白 / 暖萤 / 朱砂, four owned batches, no textures or camera writes.
+  // Gate: 18x8m additive, distance transmission >=.72; soft HDR jambs feed existing bloom and clear the distant avatar.
+  // Near compensation and zero-alpha borders keep the moonlight soft when walking into it.
+  // Guide: four open lobes, 1.33m wingspan at y=4.1..4.5; warm tips share its single mesh.
+  // Thread: .24m feathered ribbon at y=.04, meanders +/-1.05m past the avatar silhouette.
+  // Fireflies: 120 desktop / 48 mobile, one Points, slow +Z flow. Reduced holds all motion.
+  // Finite nonvisual QA: /tmp/w2b3b-check.cjs -> /tmp/w2b3-report.json; no rAF/server/capture.
+  function createHomeward(){
+    const mobile=paint.settings.mobile,fade={value:0},time={value:0};
+    const material=(vertexShader,fragmentShader,extra={})=>own(new THREE.ShaderMaterial({
+      uniforms:{fade,time,...extra},vertexShader,fragmentShader,
+      transparent:true,depthWrite:false,side:THREE.DoubleSide,toneMapped:false,fog:false
+    }));
+    const vertex=`varying vec3 vPaper;varying vec2 vUv;varying float vDistance;
+      void main(){vPaper=position;vUv=uv;vec4 mvPosition=modelViewMatrix*vec4(position,1.);
+        vDistance=length(mvPosition.xyz);gl_Position=projectionMatrix*mvPosition;}`;
+    // Four leaf-shaped open strokes plus five soft warm tips, all in the same geometry/material.
+    const strokes=[],colors=[],halos=[],uvs=[],blue=new THREE.Color(pigments[0]).convertSRGBToLinear(),gold=new THREE.Color(2.6,1.8,.72);
+    function stroke(a,b,width=.010,warm=false){
+      const dx=b[0]-a[0],dy=b[1]-a[1],s=width/Math.max(.001,Math.hypot(dx,dy)),d=[-dy*s,dx*s,0];
+      const A=a.map((v,i)=>v+d[i]),B=a.map((v,i)=>v-d[i]),C=b.map((v,i)=>v+d[i]),D=b.map((v,i)=>v-d[i]);
+      for(const p of [A,B,C,B,D,C]){strokes.push(...p);colors.push(...(warm?gold:blue).toArray());halos.push(0);uvs.push(0,0);}
+    }
+    function glow(x,y,r){
+      for(const [u,v] of [[-1,-1],[1,-1],[-1,1],[1,-1],[1,1],[-1,1]]){
+        strokes.push(x+u*r,y+v*r,-.015);colors.push(2.6,1.8,.72);halos.push(1);uvs.push(u,v);
+      }
+    }
+    for(const side of [-1,1])for(const upper of [false,true]){
+      let last=[0,0,0];
+      for(let j=1;j<=18;j++){
+        const t=j/18*Math.PI,next=[side*Math.sin(t)*(upper?.35:.25),Math.sin(t)*(upper?.29:-.22)+Math.sin(2*t)*.076,0];
+        if(j%8!==0&&j<18)stroke(last,next,.009,j>=7&&j<=10);last=next;
+      }
+      stroke([0,0,0],[side*.20,upper?.15:-.09,0],.005);
+      glow(side*(upper?.34:.24),upper?.29:-.22,.065);
+    }
+    stroke([0,-.09,0],[0,.10,0],.012,true);glow(0,0,.09);
+    for(const side of [-1,1])stroke([0,.075,0],[side*.065,.18,0],.005,true);
+    const guideGeometry=own(new THREE.BufferGeometry());
+    for(const [name,data,size] of [['position',strokes,3],['color',colors,3],['halo',halos,1],['uv',uvs,2]])guideGeometry.setAttribute(name,new THREE.Float32BufferAttribute(data,size));
+    const guide=new THREE.Mesh(guideGeometry,material(`uniform float time;attribute vec3 color;attribute float halo;varying vec3 vColor;varying float vHalo;varying vec2 vUv;
+      void main(){vColor=color;vHalo=halo;vUv=uv;vec3 p=position;float flap=.25+.22*sin(time*3.4);p.x*=cos(flap);p.z+=abs(position.x)*sin(flap);
+        gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);
+      }`,`uniform float fade;varying vec3 vColor;varying float vHalo;varying vec2 vUv;
+      void main(){float soft=1.-smoothstep(.05,1.,length(vUv));
+        gl_FragColor=vec4(vColor,fade*mix(.94,soft*.68,vHalo));
+        #include <encodings_fragment>
+      }`));guide.name='scroll-return-guide';guide.scale.setScalar(1.9);
+    const ribbon=[],ribbonUV=[];
+    for(let i=0;i<240;i++)for(const [step,side] of [[0,-1],[0,1],[1,-1],[0,1],[1,1],[1,-1]]){
+      const z=1+(terminal.z+3)*(i+step)/240;
+      ribbon.push(Math.cos(z*.14)*1.05*THREE.MathUtils.smoothstep(Math.abs(z-1),0,8)+side*.12,.04,z);ribbonUV.push((side+1)/2,(i+step)/240);
+    }
+    const threadGeometry=own(new THREE.BufferGeometry());threadGeometry.setAttribute('position',new THREE.Float32BufferAttribute(ribbon,3));threadGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(ribbonUV,2));
+    const thread=new THREE.Mesh(threadGeometry,material(vertex,`uniform float fade;uniform float time;varying vec3 vPaper;varying vec2 vUv;varying float vDistance;
+      void main(){float edge=1.-smoothstep(.20,.5,abs(vUv.x-.5));
+        float breath=.68+.20*sin(vPaper.z*2.7-time*.45);
+        float transmission=.40+.60*exp(-.016*.016*vDistance*vDistance);
+        gl_FragColor=vec4(1.6,.13,.045,fade*.58*edge*breath*transmission);
+        #include <encodings_fragment>
+      }`));thread.name='scroll-return-thread';thread.material.blending=THREE.AdditiveBlending;
+    const count=mobile?48:120,points=[];
+    for(let i=0;i<count;i++)points.push((i%2?1:-1)*(1.15+(i%9)*.19),.50+(i%7)*.17,-120+(i+.5)*121/count);
+    const flyGeometry=own(new THREE.BufferGeometry());flyGeometry.setAttribute('position',new THREE.Float32BufferAttribute(points,3));
+    const fireflies=new THREE.Points(flyGeometry,material(`uniform float time;uniform float pixels;varying float vGlow;varying float vDistance;
+      void main(){vec3 p=position;p.z=-120.+mod(position.z+120.+time*.62,121.);p.x+=sin(time*.43+position.z)*.12;p.y+=sin(time*.65+position.z*.3)*.16;
+        vGlow=.58+.16*sin(time*.85+position.z);vec4 mvPosition=modelViewMatrix*vec4(p,1.);vDistance=length(mvPosition.xyz);gl_Position=projectionMatrix*mvPosition;
+        gl_PointSize=pixels*clamp(160./max(1.,-mvPosition.z),4.5,12.);
+      }`,`uniform float fade;varying float vGlow;varying float vDistance;
+      void main(){float a=1.-smoothstep(.02,.5,length(gl_PointCoord-.5));
+        float transmission=.35+.65*exp(-.016*.016*vDistance*vDistance);
+        gl_FragColor=vec4(1.7,1.08,.34,fade*vGlow*a*transmission);
+        #include <encodings_fragment>
+      }`,{pixels:{value:Math.min(renderer.getPixelRatio(),mobile?1.25:2)}}));fireflies.name='scroll-return-fireflies';fireflies.frustumCulled=false;fireflies.material.blending=THREE.AdditiveBlending;
+    const homeGate=new THREE.Mesh(own(new THREE.PlaneGeometry(18,8)),material(vertex,`uniform float fade;varying vec2 vUv;varying float vDistance;
+      void main(){vec2 p=vUv*2.-1.;
+        float edge=(1.-smoothstep(.52,1.,abs(p.x)))*(1.-smoothstep(.58,1.,abs(p.y)));
+        float veil=.52*exp(-1.7*p.x*p.x-1.1*p.y*p.y);
+        float curtain=3.15*exp(-.65*p.x*p.x-2.4*p.y*p.y);
+        float foot=.22*exp(-2.2*p.x*p.x-45.*(p.y+.70)*(p.y+.70));
+        // Distance loss has a floor. The approach softens the core without a temporal pulse.
+        float transmission=.72+.28*exp(-vDistance*.025);
+        float approach=.55+.45*smoothstep(8.,35.,vDistance);
+        gl_FragColor=vec4(vec3(1.,.94,.78)*(veil+curtain+foot)*transmission*approach,fade*edge);
+        #include <encodings_fragment>
+      }`));homeGate.name='scroll-return-home-gate';homeGate.position.set(0,4,1);homeGate.material.blending=THREE.AdditiveBlending;
+    // Paper is transparent too: explicit ordering preserves the light, depth test preserves the avatar.
+    for(const o of [guide,thread,fireflies,homeGate]){o.visible=false;o.renderOrder=o===homeGate?2:3;ownScene.add(o);}
+    homeward={returning:false,exiting:false,elapsed:0,front:-Infinity,launch:null,guide,thread,fireflies,homeGate,fade,time};
+  }
+  function beginHomeward(){
+    const h=homeward;h.returning=true;h.front=player.position.z;
+    h.launch=new THREE.Vector3(.55,4.3,player.position.z+5);
+    h.guide.position.copy(h.launch);
+    for(const o of [h.guide,h.thread,h.fireflies,h.homeGate])o.visible=true;
+    // Returning cannot start a deferred reveal or write any camera pose, even if E interrupted arrival.
+    if(reveal.active){reveal.active=false;reveal.interrupted=true;}reveal.seen=true;
+    $('world-exit-hint').textContent='随蝶归来 · 至月白处合卷';$('world-exit').textContent='即刻合卷 · E';
+    updateHomeward(0);
+  }
+  function updateHomeward(dt){
+    const h=homeward;if(!h?.returning||h.exiting)return;
+    h.elapsed+=Math.max(0,dt);h.fade.value=THREE.MathUtils.smoothstep(h.elapsed,0,reduced?.3:1.6);
+    if(!reduced)h.time.value+=Math.max(0,dt);
+    const t=reduced?0:h.time.value;h.front=Math.max(h.front,player.position.z);
+    // Monotone progress: wait for a backtracking walker instead of following them to the far end.
+    const near=h.front>-7;
+    const x=reduced?.55:.55+Math.sin(t*.62)*.16+Math.sin(t*.21)*.03,y=near?3.4:4.3;
+    const arrival=reduced?1:THREE.MathUtils.smoothstep(h.elapsed,0,1.8);
+    h.guide.position.set(THREE.MathUtils.lerp(h.launch.x,x,arrival),THREE.MathUtils.lerp(h.launch.y,y+(reduced?0:Math.sin(t*.9)*.20),arrival),Math.min(h.homeGate.position.z,h.front+THREE.MathUtils.lerp(5,6,arrival)));
+    h.guide.rotation.set(0,reduced?0:Math.sin(t*.55)*.22,reduced?0:Math.sin(t*.62)*.12);
+    // Armed only at the far end; the enter spawn at z=0 can never close an outbound scroll.
+    if(player.position.z>=-.8&&Math.abs(player.position.x)<=3.8){h.exiting=true;ctx.requestExit();}
+  }
+  // The history is spatial, shared by every brush mark, and belongs only to this scroll.
+  function createInkScroll(){
+    const mobile=touch||matchMedia('(pointer:coarse)').matches;
+    // Portrait sightlines meet the margins farther ahead: extend the brush length, not the camera.
+    const settings={mobile,radius:mobile?7:11,stretchZ:mobile?3.2:1.4,extent:mobile?12:20,width:mobile?32:64,height:mobile?72:144,canvas:mobile?256:512,
+      mountainLayers:mobile?2:3,plantClusters:mobile?108:156,butterflies:mobile?34:48,retention:.54,retentionMax:.68,progress:0};
+    // Cover every reachable lamp footprint; tighter lateral texels preserve the mobile edge wash.
+    const {width,height}=settings,data=new Uint8Array(width*height*4),peak=new Float32Array(width*height),stored=new Float32Array(width*height);
+    const texture=own(new THREE.DataTexture(data,width,height,THREE.RGBAFormat));
+    texture.minFilter=texture.magFilter=THREE.LinearFilter;texture.generateMipmaps=false;texture.needsUpdate=true;
+    const lamp=new THREE.Vector3(),colors=pigments.map(c=>new THREE.Color(c).convertSRGBToLinear());
+    const uniforms=THREE.UniformsUtils.merge([THREE.UniformsLib.fog]);
+    Object.assign(uniforms,{scrollHistory:{value:texture},scrollLamp:{value:lamp},scrollRadius:{value:settings.radius},scrollStretchZ:{value:settings.stretchZ},scrollExtent:{value:settings.extent}});
+    const material=own(new THREE.ShaderMaterial({uniforms,transparent:true,depthWrite:false,side:THREE.DoubleSide,fog:true,toneMapped:false,
+      vertexShader:`attribute vec3 ink;attribute vec3 pigment;attribute float wash;attribute float receptive;
+        varying vec3 vInk;varying vec3 vPigment;varying float vWash;varying float vReceptive;varying vec3 vPaper;
+        #include <fog_pars_vertex>
+        void main(){vInk=ink;vPigment=pigment;vWash=wash;vReceptive=receptive;vPaper=(modelMatrix*vec4(position,1.)).xyz;
+          vec4 mvPosition=modelViewMatrix*vec4(position,1.);gl_Position=projectionMatrix*mvPosition;
+          #include <fog_vertex>
+        }`,
+      fragmentShader:`uniform sampler2D scrollHistory;uniform vec3 scrollLamp;uniform float scrollRadius;uniform float scrollStretchZ;uniform float scrollExtent;
+        varying vec3 vInk;varying vec3 vPigment;varying float vWash;varying float vReceptive;varying vec3 vPaper;
+        #include <fog_pars_fragment>
+        void main(){vec2 uv=vec2((vPaper.x+scrollExtent)/(scrollExtent*2.),(8.-vPaper.z)/144.);
+          float memory=texture2D(scrollHistory,uv).r;
+          // Broad near-road core, feathered along the paper; identical metric in updateInk/inkAt.
+          float light=1.-smoothstep(scrollRadius*.62,scrollRadius,length((vPaper.xz-scrollLamp.xz)/vec2(1.3,scrollStretchZ)));
+          float painted=max(memory,light)*vReceptive;
+          float alpha=mix(vWash*.78,min(.98,vWash*1.75+.22),painted);
+          gl_FragColor=vec4(mix(vInk,vPigment,painted),alpha);
+          #include <tonemapping_fragment>
+          #include <encodings_fragment>
+          #include <fog_fragment>
+        }` }));
+    const batches=[{name:'scroll-mountain-washes',p:[],ink:[],pigment:[],wash:[],receptive:[]},{name:'scroll-brush-lines',p:[],ink:[],pigment:[],wash:[],receptive:[]}];
+    const marks=[];let receptive=0;
+    let seed=2381;const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
+    function vertex(batch,p,tone,color,alpha){batch.p.push(...p);batch.ink.push(tone,tone,tone);batch.pigment.push(...colors[color].toArray());batch.wash.push(alpha);batch.receptive.push(receptive);}
+    function triangle(batch,a,b,c,tone,color,alpha){for(const [i,p]of [a,b,c].entries())vertex(batch,p,tone,color,Array.isArray(alpha)?alpha[i]:alpha);}
+    function stroke(a,b,width,color=0,alpha=.65,tone=.10){
+      const dx=b[0]-a[0],dy=b[1]-a[1],dz=b[2]-a[2];
+      // Upright strokes spread in XY; ground calligraphy spreads in XZ.
+      const ground=Math.abs(dy)<.001&&a[1]<.15,scale=width/Math.max(.001,Math.hypot(dx,ground?dz:dy));
+      const d=ground?[-dz*scale,0,dx*scale]:[-dy*scale,dx*scale,0];
+      const A=a.map((v,i)=>v+d[i]),B=a.map((v,i)=>v-d[i]),C=b.map((v,i)=>v+d[i]),D=b.map((v,i)=>v-d[i]);
+      triangle(batches[1],A,B,C,tone,color,alpha);triangle(batches[1],B,D,C,tone,color,alpha*.88);
+    }
+    // Broken ridges, broad empty intervals, and washes that disappear toward their feet.
+    for(let layer=settings.mountainLayers-1;layer>=0;layer--)for(const side of [-1,1])for(let bay=0;bay<5;bay++){
+      const start=7-bay*29-random()*7,length=19+random()*13,ridge=[];
+      for(let j=0;j<=12;j++){
+        const t=j/12,z=start-t*length,x=side*(5.8+layer*8+Math.sin(t*4+bay)*1.1);
+        const y=.12+Math.pow(Math.sin(t*Math.PI),.8)*(2.4+layer*2.8)*( .65+random()*.65 );ridge.push([x,y,z]);
+      }
+      for(let j=0;j<12;j++){
+        const A=ridge[j],B=ridge[j+1],C=[A[0]+side*3,-.035,A[2]],D=[B[0]+side*3,-.035,B[2]],alpha=.27-layer*.065;
+        triangle(batches[0],A,C,B,.13+layer*.05,0,[alpha,0,alpha]);triangle(batches[0],C,D,B,.13+layer*.05,0,[0,0,alpha]);
+        if(j%5!==3)stroke(A,B,.016-layer*.003,0,.30-layer*.055,.12+layer*.06);
+      }
+      marks.push({kind:'mountain',position:ridge[6],color:0});
+    }
+    // Nearby brushwork stays in the same two batches; distant ridges remain unpainted.
+    // On phones the low hems and open butterflies sit nearer the visible paper center.
+    receptive=1;
+    for(let i=0;i<settings.plantClusters;i++){
+      const z=1-i*118/settings.plantClusters+(random()-.5)*1.8,side=i%2?1:-1,x=side*(settings.mobile?2.8+random()*.8:3.65+random()*1.6),color=i%7===0?3:i%5===0?0:i%3===0?2:1;
+      const h=.4+random()*1.45,base=[x,.025,z];
+      for(let twig=0;twig<3+Math.floor(random()*3);twig++){
+        const tip=[x+(random()-.5)*1.3,h*(.45+random()*.7),z+(random()-.5)*.6];
+        const mid=base.map((v,k)=>v+(tip[k]-v)*.52);mid[0]+=side*.12;
+        stroke(base,mid,.024,color,.66);stroke(mid,tip,.016,color,.53);
+        const leaf=[tip[0]+side*.20,tip[1]-.16,tip[2]+.10];stroke(mid,leaf,.029,color,.54);
+        // Tapered leaf washes give the awakened ink area, without closing the open butterflies.
+        const blade=[leaf[0]+side*.28,leaf[1]+.13,leaf[2]],belly=[mid[0]+side*.16,mid[1]+.16,mid[2]+.02];
+        triangle(batches[1],mid,belly,blade,.13,color,[.24,.40,.22]);
+      }
+      if(i%8===0){const tip=[x+side*.65,h+1.4,z];stroke(base,tip,.035,color,.48);for(let k=1;k<5;k++){
+        const node=base.map((v,j)=>v+(tip[j]-v)*k/5);stroke(node,[node[0]-side*.6,node[1]+.35,node[2]+.12],.013,color,.5);
+      }}
+      marks.push({kind:'plant',position:[x,h*.5,z],color});
+    }
+    // Four open lobes, missing pen strokes and a few unfinished veins; never solid wings.
+    for(let i=0;i<settings.butterflies;i++){
+      const z=-3-i*111/settings.butterflies,x=(i%2?1:-1)*(settings.mobile?1.25+random()*.85:2.65+random()*1.6),y=1.0+random()*1.5,size=.48+random()*.48,color=i%4===0?3:i%3===0?2:0;
+      const point=(u,v)=>[x+u*size,y+v*size,z+u*size*.25];
+      for(const side of [-1,1])for(const upper of [false,true]){
+        let last=point(0,0);
+        for(let j=1;j<=18;j++){
+          const t=j/18*Math.PI,spread=Math.sin(t)*(upper?1.15:.82),lift=Math.sin(t)*(upper?.95:-.70)+Math.sin(2*t)*.25;
+          const next=point(side*spread,lift);if((j+i)%8!==0&&j<18)stroke(last,next,.019,color,.60);last=next;
+        }
+        if((i+side)%3!==0)stroke(point(0,0),point(side*.65,upper?.5:-.3),.011,color,.40);
+      }
+      stroke(point(0,-.30),point(0,.32),.012,color,.58);
+      stroke(point(0,.25),point(-.22,.58),.007,color,.37);
+      marks.push({kind:'butterfly',position:[x,y,z],color});
+    }
+    // Broken ochre hems and paired leaves stitch the corridor together, with breathing gaps.
+    for(let i=0;i<120;i++)for(const side of [-1,1]){
+      if(i%9>6)continue;const z=1-i,x=side*((settings.mobile?2.7:3.79)+Math.sin(i*.34)*.08);
+      stroke([x,.014,z],[x+side*.035,.014,z-.72],.027,2,.44);
+      if(i%3===0)for(const k of [0,1])stroke([x,.018,z-k*.26],[x+side*.24,.018,z-k*.26-.18],.042,i%4,.38);
+      marks.push({kind:'edge',position:[x,.014,z],color:2});
+    }
+    for(const batch of batches){
+      const geometry=own(new THREE.BufferGeometry());
+      for(const [name,values,size]of [['position',batch.p,3],['ink',batch.ink,3],['pigment',batch.pigment,3],['wash',batch.wash,1],['receptive',batch.receptive,1]])geometry.setAttribute(name,new THREE.Float32BufferAttribute(values,size));
+      geometry.computeBoundingSphere();const mesh=new THREE.Mesh(geometry,material);mesh.name=batch.name;mesh.renderOrder=batch===batches[0]?1:2;ownScene.add(mesh);
+    }
+    paint={settings,data,peak,stored,texture,lamp,marks,material};
+  }
+  function updateInk(dt){
+    player.updateWorldMatrix(true,true);playerLight.getWorldPosition(paint.lamp);
+    const {settings:s,peak,stored,data,lamp}=paint;let dirty=false;
+    // Only touched texels mature: the unvisited paper stays exactly ink, even at the finale.
+    s.progress=Math.max(s.progress,THREE.MathUtils.clamp(-player.position.z/118,0,1));
+    const retention=THREE.MathUtils.lerp(s.retention,s.retentionMax,Math.pow(s.progress,1.4));
+    for(let row=0;row<s.height;row++)for(let col=0;col<s.width;col++){
+      const i=row*s.width+col,x=(col+.5)*s.extent*2/s.width-s.extent,z=8-(row+.5)*144/s.height;
+      const light=1-THREE.MathUtils.smoothstep(Math.hypot((x-lamp.x)/1.3,(z-lamp.z)/s.stretchZ),s.radius*.62,s.radius);
+      peak[i]=Math.max(peak[i],light);
+      stored[i]=Math.max(light,Math.min(retention,peak[i]),stored[i]-Math.max(0,dt)*.38);
+      const value=Math.round(stored[i]*255);if(value!==data[i*4]){data[i*4]=value;dirty=true;}
+    }
+    if(dirty)paint.texture.needsUpdate=true;
+  }
+  // LM24 is loaded but not retained by the hub; its authored wings are boxes on a panel.
+  // Use the permitted sculptural placeholder, sharing only the immutable outline/vein graph.
+  // Four low-poly lobes + one merged body + one silk court = six additional draws.
+  function createMonument(){
+    const mobile=paint.settings.mobile,size=mobile?128:256,field=new Uint8Array(size*size*4);
+    const {nodes,edges,cells,distance}=butterflyVeins;
+    for(let y=0;y<size;y++)for(let x=0;x<size;x++){
+      const u=(x+.5)/size,v=(y+.5)/size;let gap=2,arrival=2,tone=.45;
+      for(const [a,b]of edges){
+        const A=nodes[a],B=nodes[b],dx=B[0]-A[0],dy=B[1]-A[1],length=Math.hypot(dx,dy);
+        const t=THREE.MathUtils.clamp(((u-A[0])*dx+(v-A[1])*dy)/(length*length),0,1),d=Math.hypot(u-A[0]-t*dx,v-A[1]-t*dy);
+        if(d<gap){gap=d;arrival=Math.min(distance[a]+t*length,distance[b]+(1-t)*length);}
+      }
+      cells.forEach((cell,i)=>{const crosses=cell.map((a,j)=>{const A=nodes[a],B=nodes[cell[(j+1)%cell.length]];return (B[0]-A[0])*(v-A[1])-(B[1]-A[1])*(u-A[0]);});if(crosses.every(c=>c>=0)||crosses.every(c=>c<=0))tone=(i*7%11)/10;});
+      const i=(y*size+x)*4;field[i]=Math.round(Math.min(1,gap*8)*255);field[i+1]=Math.round(Math.min(1,arrival/2)*255);field[i+2]=Math.round(tone*255);field[i+3]=255;
+    }
+    const map=own(new THREE.DataTexture(field,size,size,THREE.RGBAFormat));map.minFilter=map.magFilter=THREE.LinearFilter;map.generateMipmaps=false;map.needsUpdate=true;
+    const uniforms=THREE.UniformsUtils.merge([THREE.UniformsLib.fog]);
+    Object.assign(uniforms,{veinField:{value:map},bloom:{value:.12},time:{value:0},veinWidth:{value:mobile?.008:.005}});
+    const enamel=own(new THREE.ShaderMaterial({uniforms,side:THREE.DoubleSide,fog:true,toneMapped:false,
+      vertexShader:`attribute vec3 pigment;attribute float facet;varying vec2 vWing;varying vec3 vPigment;varying float vFacet;
+        #include <fog_pars_vertex>
+        void main(){vWing=uv;vPigment=pigment;vFacet=facet;vec4 mvPosition=modelViewMatrix*vec4(position,1.);gl_Position=projectionMatrix*mvPosition;
+          #include <fog_vertex>
+        }`,
+      fragmentShader:`uniform sampler2D veinField;uniform float bloom,time,veinWidth;varying vec2 vWing;varying vec3 vPigment;varying float vFacet;
+        #include <fog_pars_fragment>
+        void main(){vec3 field=texture2D(veinField,vWing).rgb;float gap=field.r/8.,arrival=field.g*2.;
+          float vein=1.-smoothstep(veinWidth,veinWidth+.006,gap);
+          float travel=arrival*.49+gap*1.45+field.b*.025;
+          float growth=smoothstep(travel,travel+.18,bloom*1.5);
+          // A twenty-second tide travels root -> veins -> cells, never flashing or changing hue.
+          float tide=.94+.045*sin(time*.30-arrival*4.-gap*12.);
+          vec3 silk=vec3(.36,.345,.31)*vFacet;
+          vec3 color=mix(silk,vPigment*(.86+field.b*.18)*vFacet*tide,growth);
+          vec3 wire=mix(vec3(.095,.082,.064),vec3(.23,.16,.065)*tide,growth);
+          color=mix(color,wire,vein*.64)+vPigment*growth*.016*pow(max(0.,sin(time*.30-arrival*4.)),4.);
+          gl_FragColor=vec4(color,1.);
+          #include <encodings_fragment>
+          #ifdef USE_FOG
+            float silkFog=1.-exp(-fogDensity*fogDensity*fogDepth*fogDepth*.05);
+            gl_FragColor.rgb=mix(gl_FragColor.rgb,fogColor,silkFog);
+          #endif
+        }` }));
+    enamel.name='scroll-monument-enamel';enamel.userData.palette=[...pigments];
+    const root=new THREE.Group();root.name='scroll-myriad-butterfly';root.position.set(0,terminal.y,terminal.z);ownScene.add(root);
+    const wings=[];
+    for(const side of [-1,1])for(const upper of [true,false]){
+      const contour=butterflyWingShape(upper).getPoints(mobile?5:9);contour.pop();
+      const center=new THREE.Vector2(upper?.31:.25,upper?.28:-.21),p=[],uv=[],color=[],facet=[];
+      const pigment=new THREE.Color(pigments[(side<0?0:2)+(upper?0:1)]).convertSRGBToLinear().toArray();
+      const point=(q,r)=>new THREE.Vector2().copy(center).lerp(q,r);
+      const vertex=(q,f)=>{p.push(side*q.x*32,q.y*32,.8*Math.sin(q.x/.68*Math.PI)*Math.sin(Math.abs(q.y)/.64*Math.PI));uv.push(q.x/.68,q.y/(upper?.64:-.46));color.push(...pigment);facet.push(f);};
+      const tri=(a,b,c,i)=>{const f=.94+(i%5)*.025;for(const q of [a,b,c])vertex(q,f);};
+      for(let i=0;i<contour.length;i++){
+        const a=contour[i],b=contour[(i+1)%contour.length];tri(center,point(a,.38),point(b,.38),i);
+        for(const [lo,hi]of [[.38,.72],[.72,1]]){const A=point(a,lo),B=point(b,lo),C=point(a,hi),D=point(b,hi);tri(A,C,D,i+1);tri(A,D,B,i+2);}
+      }
+      const geometry=own(new THREE.BufferGeometry());geometry.setAttribute('position',new THREE.Float32BufferAttribute(p,3));geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));geometry.setAttribute('pigment',new THREE.Float32BufferAttribute(color,3));geometry.setAttribute('facet',new THREE.Float32BufferAttribute(facet,1));geometry.computeVertexNormals();geometry.computeBoundingSphere();
+      const wing=new THREE.Mesh(geometry,enamel);wing.name='scroll-monument-'+(side<0?'left-':'right-')+(upper?'upper':'lower');wing.userData.side=side;wing.userData.upper=upper;root.add(wing);wings.push(wing);
+    }
+    // Tapered octagonal stem, small crown and drawn antennae, merged before upload.
+    const parts=[],addPart=(geometry,x,y,z,rz=0)=>{geometry.rotateZ(rz);geometry.translate(x,y,z);const flat=geometry.index?geometry.toNonIndexed():geometry;parts.push(...flat.attributes.position.array);if(flat!==geometry)flat.dispose();geometry.dispose();};
+    addPart(new THREE.CylinderGeometry(.55,.16,17,8),0,-3,.7);
+    addPart(new THREE.CylinderGeometry(.36,.65,4,8),0,7.5,.7);
+    addPart(new THREE.IcosahedronGeometry(.72,0),0,10,.7);
+    for(const side of [-1,1])addPart(new THREE.CylinderGeometry(.045,.10,5.5,5),side*1.05,12.7,.7,-side*.38);
+    const bodyGeometry=own(new THREE.BufferGeometry());bodyGeometry.setAttribute('position',new THREE.Float32BufferAttribute(parts,3));bodyGeometry.computeVertexNormals();
+    const bodyMaterial=own(new THREE.MeshStandardMaterial({color:0x716148,roughness:.69,metalness:.18,flatShading:true}));const stem=new THREE.Mesh(bodyGeometry,bodyMaterial);stem.name='scroll-monument-stem';root.add(stem);
+    const courtMaterial=own(new THREE.MeshBasicMaterial({color:0xded4b9,transparent:true,depthWrite:false,side:THREE.DoubleSide}));
+    courtMaterial.onBeforeCompile=shader=>{shader.vertexShader='varying vec2 vCourt;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\n vCourt=uv*2.-1.;');shader.fragmentShader='varying vec2 vCourt;\n'+shader.fragmentShader;shader.fragmentShader=shader.fragmentShader.replace('#include <dithering_fragment>','gl_FragColor.a*=1.-smoothstep(.88,1.,length(vCourt));\n#include <dithering_fragment>');};
+    const court=new THREE.Mesh(own(new THREE.RingGeometry(terminal.inner,terminal.outer+.6,mobile?48:80)),courtMaterial);court.name='scroll-terminal-silk';court.rotation.x=-Math.PI/2;court.position.set(0,-.018,terminal.z);ownScene.add(court);
+    const platform=new THREE.Mesh(own(new THREE.CircleGeometry(1,mobile?48:80)),courtMaterial);
+    platform.name='scroll-observation-platform';platform.rotation.x=-Math.PI/2;platform.scale.set(15,5,1);platform.position.set(0,-.006,-116);ownScene.add(platform);
+    const rim=[];
+    for(let i=0;i<32;i++){const a=-9+i*18/32,b=-9+(i+1)*18/32;rim.push(a,.16,-120,b,.16,-120);}
+    const rimGeometry=own(new THREE.BufferGeometry());rimGeometry.setAttribute('position',new THREE.Float32BufferAttribute(rim,3));
+    const rimLines=new THREE.LineSegments(rimGeometry,own(new THREE.LineBasicMaterial({color:0xa89875,transparent:true,opacity:.55})));
+    rimLines.name='scroll-platform-rim';ownScene.add(rimLines);
+    monument={root,wings,enamel,map,time:0,bloom:.12,awakened:0,clock:0,period:16,source:'procedural-low-poly',textureSize:size};
+  }
+  function updateMonument(dt){
+    const m=monument;m.time+=Math.max(0,dt);m.clock+=Math.max(0,dt);
+    const proximity=1-THREE.MathUtils.smoothstep(Math.hypot(player.position.x,player.position.z-terminal.z),65,88);
+    // Once kindled, the final color remains on a return walk; smooth arrival over about three seconds.
+    m.awakened=Math.max(m.awakened,proximity);const target=.12+.88*m.awakened;
+    m.bloom+=(target-m.bloom)*(1-Math.exp(-Math.max(0,dt)*1.6));
+    m.enamel.uniforms.bloom.value=m.bloom;
+    if(m.clock>=(paint.settings.mobile?1/24:1/60)||dt===0){
+      m.clock=0;m.enamel.uniforms.time.value=reduced?0:m.time;
+      const breath=reduced?0:(1-Math.cos(m.time*2*Math.PI/m.period))*.5;
+      for(const wing of m.wings)wing.rotation.y=wing.userData.side*(.035+.09*breath)*(wing.userData.upper?1:.78);
+    }
+  }
+  function updateInscription(){
+    // Aspect-only world placement: the title rests centered below the wings, above the silk.
+    // It never follows the camera pose; all aspects share the same arrival axis.
+    const compact=THREE.MathUtils.smoothstep(camera.aspect,.75,1);
+    exitSign.scale.setScalar(1-.4*compact);
+    exitSign.position.set(0,3.4+2.3*compact,terminal.z+3);
+  }
+  function updateScrollMoon(){
+    // Only this owned sky moves to the butterfly's upper-right; HUB sky is untouched.
+    moonCopy.position.copy(camera.position).add(moonDirection);
+    moonCopy.scale.copy(moonBaseScale);
+  }
+  // Read-only evidence uses the same texel interpolation and pigment values as the GPU.
+  function inkAt(x,z,color=0){
+    if(!paint)return null;const {settings:s,data,lamp}=paint;
+    const u=THREE.MathUtils.clamp((x+s.extent)/(s.extent*2)*s.width-.5,0,s.width-1),v=THREE.MathUtils.clamp((8-z)/144*s.height-.5,0,s.height-1);
+    const a=Math.floor(u),b=Math.floor(v),sample=(c,r)=>data[(Math.min(s.height-1,r)*s.width+Math.min(s.width-1,c))*4]/255;
+    const memory=THREE.MathUtils.lerp(THREE.MathUtils.lerp(sample(a,b),sample(a+1,b),u-a),THREE.MathUtils.lerp(sample(a,b+1),sample(a+1,b+1),u-a),v-b);
+    const light=1-THREE.MathUtils.smoothstep(Math.hypot((x-lamp.x)/1.3,(z-lamp.z)/s.stretchZ),s.radius*.62,s.radius),amount=Math.max(memory,light);
+    const target=new THREE.Color(pigments[color]).convertSRGBToLinear(),rgb=new THREE.Color(.10,.10,.10).lerp(target,amount).convertLinearToSRGB().toArray().map(v=>Math.round(v*255));
+    return {x,z,memory,light,amount,pigment:pigments[color],rgb};
+  }
+  return {
+    get minPitch(){return space.minPitch;},title:'素墨长卷',get gatePoint(){return landmarks[23].gatePoint;},
+    get scene(){return ownScene;},get resources(){return owned.length;},interruptReveal,
+    get ink(){return paint?{settings:{...paint.settings},lamp:paint.lamp.toArray(),marks:paint.marks.map(m=>({...m,position:[...m.position]}))}:null;},inkAt,
+    preload(onProgress){onProgress?.(1);return Promise.resolve();},
+    enter(context){
+      ctx=context;reveal={seen:false,active:false,interrupted:false,time:0,input:''};ownScene=new THREE.Scene();ownScene.name='butterfly-ink-scroll';
+      ownScene.background=new THREE.Color(0xd4cfbd).convertSRGBToLinear();ownScene.fog=new THREE.FogExp2(ownScene.background,.016);
+      createInkScroll();createMonument();createHomeward();
+      $('world-exit').textContent='合卷归途 · E';$('world-exit-hint').textContent='卷尽处，亦是来处';
+      const paper=document.createElement('canvas');paper.width=paper.height=paint.settings.canvas;const pc=paper.getContext('2d');
+      pc.fillStyle='#ded4b9';pc.fillRect(0,0,paper.width,paper.height);
+      for(let i=0;i<2600;i++){const x=(i*73.31)%paper.width,y=(i*137.17)%paper.height;pc.fillStyle=i%3?'rgba(84,77,62,.025)':'rgba(255,252,239,.12)';pc.fillRect(x,y,1,i%4+1);}
+      const paperMap=own(new THREE.CanvasTexture(paper));paperMap.encoding=THREE.sRGBEncoding;paperMap.wrapS=paperMap.wrapT=THREE.RepeatWrapping;paperMap.repeat.set(1,16);
+      const road=new THREE.Mesh(own(new THREE.PlaneGeometry(8,124)),own(new THREE.MeshStandardMaterial({color:0xffffff,map:paperMap,roughness:1,metalness:0,side:THREE.DoubleSide,transparent:true,depthWrite:false})));
+      road.material.onBeforeCompile=shader=>{
+        shader.vertexShader='varying float vScrollEdge;\n'+shader.vertexShader;
+        shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\n vScrollEdge=uv.x;');
+        shader.fragmentShader='varying float vScrollEdge;\n'+shader.fragmentShader;
+        shader.fragmentShader=shader.fragmentShader.replace('#include <dithering_fragment>','gl_FragColor.a*=1.0-smoothstep(.34,.5,abs(vScrollEdge-.5));\n#include <dithering_fragment>');
+      };
+      road.rotation.x=-Math.PI/2;road.position.set(0,-.012,-59);ownScene.add(road);
+      // An unmarked paper floor dissolves the road's outer edge into the same mist.
+      const mistFloor=new THREE.Mesh(own(new THREE.PlaneGeometry(600,600)),own(new THREE.MeshBasicMaterial({color:0xc7c2b1})));
+      mistFloor.rotation.x=-Math.PI/2;mistFloor.position.y=-.055;ownScene.add(mistFloor);
+      ownScene.add(new THREE.HemisphereLight(0xebe7d9,0x77766d,1.05));
+      const key=new THREE.DirectionalLight(moon.color.clone(),.75);key.position.copy(moon.position).sub(player.position);ownScene.add(key);
+      // The scroll runs toward -Z, independent of the hub's changing celestial azimuth.
+      // Keep the same moon image/color in owned GPU copies, above the far end of the road.
+      // Camera-relative translation gives a fixed sky direction without travel parallax.
+      moonCopy=moonOrb.clone();moonCopy.geometry=own(moonOrb.geometry.clone());moonCopy.material=own(moonOrb.material.clone());
+      moonCopy.material.map=own(moonOrb.material.map.clone());moonCopy.material.map.needsUpdate=true;moonCopy.material.fog=false;moonCopy.visible=true;
+      moonCopy.name='scroll-moon';moonBaseScale=moonCopy.scale.clone();
+      moonDirection=new THREE.Vector3(.38,.64,-1).normalize().multiplyScalar(WORLD.CELESTIAL_RADIUS);ownScene.add(moonCopy);
+      const canvas=document.createElement('canvas');canvas.width=1024;canvas.height=256;const c=canvas.getContext('2d');c.scale(canvas.width/512,canvas.height/128);
+      c.fillStyle='#534e40';c.textAlign='center';c.font='52px serif';c.fillText('合卷归途',256,55);c.font='46px serif';c.fillText('灯火仍在',256,114);
+      const map=own(new THREE.CanvasTexture(canvas));map.encoding=THREE.sRGBEncoding;
+      // Fixed one-sided silk inscription: readable on arrival, culled from the return view.
+      exitSign=new THREE.Mesh(own(new THREE.PlaneGeometry(paint.settings.mobile?25.2:18,paint.settings.mobile?6.3:4.5)),own(new THREE.MeshBasicMaterial({map,transparent:true,depthWrite:false,color:0xffffff,fog:false,side:THREE.FrontSide})));
+      exitSign.name='scroll-exit-inscription';exitSign.position.set(-16,8.5,terminal.z+3);ownScene.add(exitSign);
+      // The return inscription rests off the corridor axis, facing +Z travel from the far ring.
+      const returnSign=new THREE.Mesh(exitSign.geometry,exitSign.material);
+      returnSign.name='scroll-return-inscription';returnSign.rotation.y=Math.PI;
+      returnSign.position.set(21,4,terminal.z+25);ownScene.add(returnSign);
+      ownScene.add(player);player.position.set(0,0,0);body.rotation.y=Math.PI;
+      cameraState.yaw=0;cameraState.pitch=WORLD.CAMERA_PITCH;cameraState.distance=WORLD.CAMERA_DISTANCE;cameraState.initialized=false;
+      stepOrbit(0,space);updateInscription();updateScrollMoon();updateInk(0);updateMonument(0);return ownScene;
+    },
+    update(dt,input){
+      // Live controls already populate the shared input bus; explicit input is for deterministic tests.
+      if(input){
+        const signature=JSON.stringify([input.keys||[],input.x||0,input.y||0]);
+        if(reveal.active&&signature!==reveal.input&&((input.keys||[]).length||input.x||input.y))interruptReveal();
+        reveal.input=signature;keys.clear();for(const key of input.keys||[])keys.add(key);joy.x=input.x||0;joy.y=input.y||0;
+      }
+      stepWalker(dt,space);updateReveal(dt);stepOrbit(dt,space);updateInscription();updateScrollMoon();updateInk(dt);updateMonument(dt);updateHomeward(dt);
+      if(!homeward.returning)$('world-exit-hint').textContent=player.position.z<-113?'合卷归途 · 按 E':'卷尽处，亦是来处';
+    },
+    requestExit(){
+      if(!ctx)return Promise.resolve(false);
+      if(!homeward.returning&&player.position.z<-113){beginHomeward();return Promise.resolve(false);}
+      homeward.exiting=true;return ctx.requestExit();
+    },
+    dispose(){
+      if(player.parent===ownScene)ownScene.remove(player);
+      for(const resource of owned)resource.dispose();owned=[];
+      ownScene?.clear();ownScene=null;ctx=null;moonCopy=null;moonDirection=null;moonBaseScale=null;exitSign=null;paint=null;monument=null;reveal=null;homeward=null;
+    }
+  };
+})();
+const WorldHost=(()=>{
+  let state='HUB',key=null,current=null,saved=null,loadReady=false,operation=null,resolveOperation=null,generation=0;
+  function saveHub(){
+    const pose=[];player.traverse(o=>pose.push({o,p:o.position.clone(),q:o.quaternion.clone(),s:o.scale.clone(),visible:o.visible}));
+    const materials=avatarMaterials.map(({material:m})=>({m,opacity:m.opacity,visible:m.visible,transparent:m.transparent,depthWrite:m.depthWrite}));
+    const orbit={};for(const [k,v] of Object.entries(cameraState))orbit[k]=v?.isVector3?v.clone():v;
+    return {pose,materials,orbit,position:camera.position.clone(),quaternion:camera.quaternion.clone(),look:cameraLook.clone(),fov:camera.fov,
+      parent:player.parent,index:player.parent.children.indexOf(player),fade:avatarFade,hidden:avatarHidden,walkPhase,camPosition:camPosition.clone()};
+  }
+  function restoreHub(){
+    if(!saved)return;
+    saved.parent.add(player);const children=saved.parent.children;children.splice(children.indexOf(player),1);children.splice(saved.index,0,player);
+    for(const p of saved.pose){p.o.position.copy(p.p);p.o.quaternion.copy(p.q);p.o.scale.copy(p.s);p.o.visible=p.visible;}
+    // Return precisely to the registered gate, retaining the hub orbit and its relative shoulder pose.
+    const g=saved.gatePoint;
+    const shift=new THREE.Vector3();if(g){shift.set(g.x,g.y,g.z).sub(player.position);player.position.set(g.x,g.y,g.z);}
+    for(const [k,v] of Object.entries(saved.orbit)){if(v?.isVector3)cameraState[k].copy(v);else cameraState[k]=v;}
+    camTarget.add(shift);camera.position.copy(saved.position).add(shift);camera.quaternion.copy(saved.quaternion);cameraLook.copy(saved.look).add(shift);camPosition.copy(saved.camPosition).add(shift);
+    camera.fov=saved.fov;camera.updateProjectionMatrix();avatarFade=saved.fade;avatarHidden=saved.hidden;walkPhase=saved.walkPhase;
+    for(const {m,...values} of saved.materials){if(m.transparent!==values.transparent)m.needsUpdate=true;Object.assign(m,values);}
+    mainRenderPass.scene=scene;mainRenderPass.camera=camera;clearInput();
+  }
+  function cleanup(){current?.dispose();renderer.renderLists.dispose();}
+  function finish(ok){
+    if(state==='TRANSITION_IN'&&ok){state='WORLD';$('world-hud').hidden=false;$('world-exit').focus({preventScroll:true});}
+    else{state='HUB';document.body.classList.remove('world-active');$('world-hud').hidden=true;current=null;key=null;saved=null;$('world').focus({preventScroll:true});updateWorldGate();}
+    clearInput();const resolve=resolveOperation;resolveOperation=null;resolve?.(ok);
+  }
+  const api={
+    get state(){return state;},get key(){return key;},get scene(){return current?.scene||null;},get current(){return current;},get promise(){return operation;},
+    enter(nextKey){
+      if(state!=='HUB')return operation||Promise.resolve(false);
+      const next=window.WorldS[nextKey];if(!started||!next)return Promise.resolve(false);
+      if(!$('directory').hidden)closeDirectory();if(!$('atlas').hidden)closeAtlas();
+      saved=saveHub();saved.gatePoint=next.gatePoint?{...next.gatePoint}:null;clearInput();for(const el of [renderer.domElement,$('viewpad')])el.dispatchEvent(new Event('pointercancel'));
+      key=nextKey;current=next;state='TRANSITION_IN';loadReady=false;const token=++generation;
+      document.body.classList.add('world-active');$('world-notice').textContent='';$('world-hud').hidden=true;
+      $('scroll-title').textContent=next.title||nextKey;$('world-hud').querySelector('.world-title').firstChild.textContent=next.title||nextKey;
+      operation=new Promise(resolve=>resolveOperation=resolve);TransitionDirector.begin(false,saved.gatePoint);
+      Promise.resolve().then(()=>next.preload(()=>{})).then(()=>{if(token===generation)loadReady=true;},()=>{if(token===generation)loadReady='failed';});
+      return operation;
+    },
+    exit(){
+      if(state!=='WORLD')return operation||Promise.resolve(false);
+      clearInput();state='TRANSITION_OUT';$('world-hud').hidden=true;TransitionDirector.begin(true);
+      operation=new Promise(resolve=>resolveOperation=resolve);return operation;
+    },
+    tick(dt,input){
+      if(state==='WORLD'){current.update(dt,input||{keys:[...keys],x:joy.x,y:joy.y,sprint:sprintPointer!==null});return;}
+      if(state==='HUB')return;
+      TransitionDirector.tick(dt,state==='TRANSITION_OUT'?true:loadReady,()=>{
+        if(state==='TRANSITION_IN'){const child=current.enter({renderer,camera,composer,player,cameraState,stepWalker,stepOrbit,requestExit:api.exit});mainRenderPass.scene=child;mainRenderPass.camera=camera;}
+        else{restoreHub();cleanup();}
+      },finish,()=>{++generation;restoreHub();cleanup();});
+    }
+  };
+  return Object.freeze(api);
+})();
+Object.defineProperty(window,'WorldHost',{value:WorldHost,writable:false});
+$('world-enter').onclick=()=>{if(atButterflyGate())WorldHost.enter('butterfly');};
+$('world-exit').onclick=()=>WorldHost.current?.requestExit();
+// Test-only, finite stepping; never schedules a frame or advances the hub sky implicitly.
+function w2bTest(action='step',dt=1/60,input){
+  if(action==='step')WorldHost.tick(dt,input);
+  else if(action==='render'){renderer.info.reset();composer.render(0);}
+  else if(action==='hub'){if(!worldActive()){move(dt);updateCamera(dt);}}
+  else if(action==='prepare'){if(!worldActive()){skyTick(0);updateLandmarks(0);updateButterflySea(0,landmarks[23]);updateCamera(0);layoutLabels();}}
+  return {state:WorldHost.state,key:WorldHost.key,phase:TransitionDirector.phase,cover:TransitionDirector.cover,speed:currentSpeed,sprinting,skyT};
+}
+
 function frame(now){
   requestAnimationFrame(frame);if(failed||document.hidden){lastTime=0;return;}
-  const raw=lastTime?(now-lastTime)/1000:1/60,dt=Math.min(raw,.035);lastTime=now;elapsed+=dt;
+  const raw=lastTime?(now-lastTime)/1000:1/60,dt=Math.min(raw,.035);lastTime=now;
+  if(worldActive()){WorldHost.tick(dt);renderer.info.reset();composer.render(dt);return;}
+  elapsed+=dt;
   skyTick(dt);
   if(started&&!modalOpen())move(dt);
   updateLandmarks(dt);updateButterflySea(dt,landmarks[23]);updateCamera(dt);layoutLabels();
@@ -2262,7 +2908,7 @@ function frame(now){
   if(!qualityReduced&&elapsed>3){slowFrames=raw>.029?slowFrames+1:Math.max(0,slowFrames-2);if(slowFrames>90){qualityReduced=true;reduceQuality();}}
 }
 // Read-mostly handle for automated smoke tests (batch 5 seven-bridge verification).
-window.__garden={get atlas(){return {...atlasState,scales:[...atlasState.scales]};},WORLD,scene,renderer,camera,composer,cameraLook,subjectBounds,monumentFaces,walkable,surfaceHeight,terrainHeight,teleport,start,player,cameraState,modelLoads,
+window.__garden={get worldHost(){return WorldHost;},get transitionDirector(){return TransitionDirector;},get renderPass(){return mainRenderPass;},__w2bTest:w2bTest,get skyT(){return skyT;},get atlas(){return {...atlasState,scales:[...atlasState.scales]};},WORLD,scene,renderer,camera,composer,cameraLook,subjectBounds,monumentFaces,walkable,surfaceHeight,terrainHeight,teleport,start,player,cameraState,modelLoads,
   get butterfly(){return landmarks[23].butterfly;},get sharedIvory(){return M.ivory;},BUTTERFLY,
   get landmarks(){return landmarks.map(lm=>({index:lm.index,title:lm.entry.title,bboxHeight:lm.bboxHeight,groundY:lm.groundY,x:lm.entry.x,z:lm.entry.z,bounds:lm.bounds,platformY:lm.site.groundY,targetHeight:lm.targetHeight,entryPoint:lm.entryPoint,...(lm.gatePoint?{gatePoint:lm.gatePoint}:{}),site:lm.site,labelY:lm.group.position.y+lm.name.position.y}));},
   get mathMonuments(){return mathMonuments.map(({group,model,lod,fallback,bounds,site,name,...r})=>r);},
