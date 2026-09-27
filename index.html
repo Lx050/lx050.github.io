@@ -2634,44 +2634,48 @@ window.WorldS.butterfly=(()=>{
     }
     if(dirty)paint.texture.needsUpdate=true;
   }
-  // LM24 is loaded but not retained by the hub; its authored wings are boxes on a panel.
-  // Use the permitted sculptural placeholder, sharing only the immutable outline/vein graph.
-  // Four low-poly lobes + one merged body + one silk court = six additional draws.
-  function createMonument(){
-    const mobile=paint.settings.mobile,size=mobile?128:256,field=new Uint8Array(size*size*4);
-    const {nodes,edges,cells,distance}=butterflyVeins;
-    for(let y=0;y<size;y++)for(let x=0;x<size;x++){
-      const u=(x+.5)/size,v=(y+.5)/size;let gap=2,arrival=2,tone=.45;
-      for(const [a,b]of edges){
-        const A=nodes[a],B=nodes[b],dx=B[0]-A[0],dy=B[1]-A[1],length=Math.hypot(dx,dy);
-        const t=THREE.MathUtils.clamp(((u-A[0])*dx+(v-A[1])*dy)/(length*length),0,1),d=Math.hypot(u-A[0]-t*dx,v-A[1]-t*dy);
-        if(d<gap){gap=d;arrival=Math.min(distance[a]+t*length,distance[b]+(1-t)*length);}
-      }
-      cells.forEach((cell,i)=>{const crosses=cell.map((a,j)=>{const A=nodes[a],B=nodes[cell[(j+1)%cell.length]];return (B[0]-A[0])*(v-A[1])-(B[1]-A[1])*(u-A[0]);});if(crosses.every(c=>c>=0)||crosses.every(c=>c<=0))tone=(i*7%11)/10;});
-      const i=(y*size+x)*4;field[i]=Math.round(Math.min(1,gap*8)*255);field[i+1]=Math.round(Math.min(1,arrival/2)*255);field[i+2]=Math.round(tone*255);field[i+3]=255;
+  // CPU-only template: never attached/rendered or counted among the 34 HUB loads.
+  let monumentTemplatePromise=null;
+  const monumentLoads={requests:0,loaded:0,failed:0};
+  function loadMonumentTemplate(){
+    if(!monumentTemplatePromise){
+      monumentLoads.requests++;
+      monumentTemplatePromise=new Promise((resolve,reject)=>gltfLoader.load('assets/models/MyriadButterfly.glb',g=>{
+        monumentLoads.loaded++;resolve(g.scene);
+      },undefined,error=>{monumentLoads.failed++;reject(error);}));
+      // A failed attempt may be retried on the next entry; successful templates stay cached.
+      monumentTemplatePromise.catch(()=>{monumentTemplatePromise=null;});
     }
-    const map=own(new THREE.DataTexture(field,size,size,THREE.RGBAFormat));map.minFilter=map.magFilter=THREE.LinearFilter;map.generateMipmaps=false;map.needsUpdate=true;
+    return monumentTemplatePromise;
+  }
+  function mountMonument(template,m){
+    // Loading can finish after a close, or after another entry has already begun.
+    if(monument!==m||!ownScene)return;
+    const model=template.clone(true),box=new THREE.Box3().setFromObject(model),center=box.getCenter(new THREE.Vector3());
+    // Authored 43.89 x 35.20m envelope; preserve +Z front and original depth.
+    model.position.set(-center.x,2.465-center.y,0);
     const uniforms=THREE.UniformsUtils.merge([THREE.UniformsLib.fog]);
-    Object.assign(uniforms,{veinField:{value:map},bloom:{value:.12},time:{value:0},veinWidth:{value:mobile?.008:.005}});
-    const enamel=own(new THREE.ShaderMaterial({uniforms,side:THREE.DoubleSide,fog:true,toneMapped:false,
+    Object.assign(uniforms,{bloom:{value:m.bloom},time:{value:reduced?0:m.time},mountFade:{value:0}});
+    const enamel=own(new THREE.ShaderMaterial({uniforms,side:THREE.DoubleSide,fog:true,toneMapped:false,transparent:true,depthWrite:false,
       vertexShader:`attribute vec3 pigment;attribute float facet;varying vec2 vWing;varying vec3 vPigment;varying float vFacet;
         #include <fog_pars_vertex>
         void main(){vWing=uv;vPigment=pigment;vFacet=facet;vec4 mvPosition=modelViewMatrix*vec4(position,1.);gl_Position=projectionMatrix*mvPosition;
           #include <fog_vertex>
         }`,
-      fragmentShader:`uniform sampler2D veinField;uniform float bloom,time,veinWidth;varying vec2 vWing;varying vec3 vPigment;varying float vFacet;
+      fragmentShader:`uniform float bloom,time,mountFade;varying vec2 vWing;varying vec3 vPigment;varying float vFacet;
         #include <fog_pars_fragment>
-        void main(){vec3 field=texture2D(veinField,vWing).rgb;float gap=field.r/8.,arrival=field.g*2.;
-          float vein=1.-smoothstep(veinWidth,veinWidth+.006,gap);
-          float travel=arrival*.49+gap*1.45+field.b*.025;
+        void main(){
+          // WingUV is mirrored in U; glTF's V runs top -> bottom, roots near .55.
+          // Analytic root -> edge wash retains growth without a second wire drawing/texture.
+          float arrival=clamp(length(vec2(vWing.x,(vWing.y-.55)*1.35)),0.,1.);
+          float cell=.5+.5*sin(vWing.x*19.+sin(vWing.y*23.)*1.8);
+          float travel=.10+arrival*.85+cell*.025;
           float growth=smoothstep(travel,travel+.18,bloom*1.5);
-          // A twenty-second tide travels root -> veins -> cells, never flashing or changing hue.
-          float tide=.94+.045*sin(time*.30-arrival*4.-gap*12.);
+          float tide=.94+.045*sin(time*.31415926536-arrival*4.);
           vec3 silk=vec3(.36,.345,.31)*vFacet;
-          vec3 color=mix(silk,vPigment*(.86+field.b*.18)*vFacet*tide,growth);
-          vec3 wire=mix(vec3(.095,.082,.064),vec3(.23,.16,.065)*tide,growth);
-          color=mix(color,wire,vein*.64)+vPigment*growth*.016*pow(max(0.,sin(time*.30-arrival*4.)),4.);
-          gl_FragColor=vec4(color,1.);
+          vec3 color=mix(silk,vPigment*(.86+cell*.18)*vFacet*tide,growth);
+          color+=vPigment*growth*.016*pow(max(0.,sin(time*.31415926536-arrival*4.)),4.);
+          gl_FragColor=vec4(color,mix(.78,.98,growth)*mountFade);
           #include <encodings_fragment>
           #ifdef USE_FOG
             float silkFog=1.-exp(-fogDensity*fogDensity*fogDepth*fogDepth*.05);
@@ -2679,30 +2683,49 @@ window.WorldS.butterfly=(()=>{
           #endif
         }` }));
     enamel.name='scroll-monument-enamel';enamel.userData.palette=[...pigments];
-    const root=new THREE.Group();root.name='scroll-myriad-butterfly';root.position.set(0,terminal.y,terminal.z);ownScene.add(root);
-    const wings=[];
-    for(const side of [-1,1])for(const upper of [true,false]){
-      const contour=butterflyWingShape(upper).getPoints(mobile?5:9);contour.pop();
-      const center=new THREE.Vector2(upper?.31:.25,upper?.28:-.21),p=[],uv=[],color=[],facet=[];
-      const pigment=new THREE.Color(pigments[(side<0?0:2)+(upper?0:1)]).convertSRGBToLinear().toArray();
-      const point=(q,r)=>new THREE.Vector2().copy(center).lerp(q,r);
-      const vertex=(q,f)=>{p.push(side*q.x*32,q.y*32,.8*Math.sin(q.x/.68*Math.PI)*Math.sin(Math.abs(q.y)/.64*Math.PI));uv.push(q.x/.68,q.y/(upper?.64:-.46));color.push(...pigment);facet.push(f);};
-      const tri=(a,b,c,i)=>{const f=.94+(i%5)*.025;for(const q of [a,b,c])vertex(q,f);};
-      for(let i=0;i<contour.length;i++){
-        const a=contour[i],b=contour[(i+1)%contour.length];tri(center,point(a,.38),point(b,.38),i);
-        for(const [lo,hi]of [[.38,.72],[.72,1]]){const A=point(a,lo),B=point(b,lo),C=point(a,hi),D=point(b,hi);tri(A,C,D,i+1);tri(A,D,B,i+2);}
+    model.traverse(o=>{
+      if(!o.isMesh)return;
+      // Own all runtime buffers, including injected attributes; template stays immutable.
+      o.geometry=own(o.geometry.clone());
+      const match=/^Wing_(LU|LL|RU|RL)$/.exec(o.name);
+      if(match){
+        const code=match[1],index=['LU','LL','RU','RL'].indexOf(code),geometry=o.geometry;
+        const color=new THREE.Color(pigments[index]).convertSRGBToLinear(),count=geometry.attributes.position.count;
+        const pigment=new Float32Array(count*3),facet=new Float32Array(count),normal=geometry.attributes.normal;
+        for(let i=0;i<count;i++){color.toArray(pigment,i*3);facet[i]=.94+.06*Math.abs(normal.getZ(i));}
+        geometry.setAttribute('pigment',new THREE.BufferAttribute(pigment,3));geometry.setAttribute('facet',new THREE.BufferAttribute(facet,1));
+        o.material=enamel;m.wings.push(o);
+        const pivot=o.parent;pivot.userData.side=code[0]==='L'?-1:1;pivot.userData.upper=code[1]==='U';m.pivots.push(pivot);
+      }else{
+        o.material=own(o.material.clone());o.material.side=THREE.DoubleSide;
+        // No environment map in this scroll: retain warm diffuse color, and keep
+        // the architectural spine out of the 64m beige fog wash. Real Vein meshes
+        // alone draw the cloison cells; the enamel shader above draws no wires.
+        const bronze=o.material.name==='BodyBronze',material=o.material;
+        material.color.setHex(bronze?0x5d472e:0xb08d4e).convertSRGBToLinear();
+        material.metalness=bronze?.35:.60;material.roughness=bronze?.68:.48;
+        material.emissive.setHex(bronze?0x5d472e:0x805221).convertSRGBToLinear();
+        material.emissiveIntensity=bronze?.32:.30;material.fog=false;
+        material.transparent=true;material.opacity=0;m.metals.push(material);
       }
-      const geometry=own(new THREE.BufferGeometry());geometry.setAttribute('position',new THREE.Float32BufferAttribute(p,3));geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));geometry.setAttribute('pigment',new THREE.Float32BufferAttribute(color,3));geometry.setAttribute('facet',new THREE.Float32BufferAttribute(facet,1));geometry.computeVertexNormals();geometry.computeBoundingSphere();
-      const wing=new THREE.Mesh(geometry,enamel);wing.name='scroll-monument-'+(side<0?'left-':'right-')+(upper?'upper':'lower');wing.userData.side=side;wing.userData.upper=upper;root.add(wing);wings.push(wing);
-    }
-    // Tapered octagonal stem, small crown and drawn antennae, merged before upload.
-    const parts=[],addPart=(geometry,x,y,z,rz=0)=>{geometry.rotateZ(rz);geometry.translate(x,y,z);const flat=geometry.index?geometry.toNonIndexed():geometry;parts.push(...flat.attributes.position.array);if(flat!==geometry)flat.dispose();geometry.dispose();};
-    addPart(new THREE.CylinderGeometry(.55,.16,17,8),0,-3,.7);
-    addPart(new THREE.CylinderGeometry(.36,.65,4,8),0,7.5,.7);
-    addPart(new THREE.IcosahedronGeometry(.72,0),0,10,.7);
-    for(const side of [-1,1])addPart(new THREE.CylinderGeometry(.045,.10,5.5,5),side*1.05,12.7,.7,-side*.38);
-    const bodyGeometry=own(new THREE.BufferGeometry());bodyGeometry.setAttribute('position',new THREE.Float32BufferAttribute(parts,3));bodyGeometry.computeVertexNormals();
-    const bodyMaterial=own(new THREE.MeshStandardMaterial({color:0x716148,roughness:.69,metalness:.18,flatShading:true}));const stem=new THREE.Mesh(bodyGeometry,bodyMaterial);stem.name='scroll-monument-stem';root.add(stem);
+    });
+    m.model=model;m.enamel=enamel;m.root.add(model);updateMonument(0);
+  }
+  function createMonument(){
+    const mobile=paint.settings.mobile;
+    const root=new THREE.Group();root.name='scroll-myriad-butterfly';root.position.set(0,terminal.y,terminal.z);ownScene.add(root);
+    const m=monument={root,model:null,wings:[],pivots:[],metals:[],enamel:null,time:0,bloom:.12,awakened:0,fade:0,period:16,source:'MyriadButterfly.glb'};
+    // A finite, horizontal cone lights the bronze front and inner cloison ribs.
+    // Its lowest possible point is 24 - 42*sin(.58) > .98m: no court/road spill;
+    // its entire cone is beyond z=-154, clear of the ink scroll ending at -136.
+    // No shadow map or light mesh: zero additional draw calls / GPU resources.
+    const accent=new THREE.SpotLight(0xffcf88,mobile?.75:1.15,42,.58,.55,2);
+    accent.name='scroll-monument-accent';accent.color.convertSRGBToLinear();
+    accent.position.set(0,24,terminal.z+30);accent.target.position.set(0,24,terminal.z);
+    accent.castShadow=false;ownScene.add(accent,accent.target);
+    loadMonumentTemplate().then(template=>mountMonument(template,m)).catch(error=>{
+      if(monument===m)console.warn('万彩大蝶未加载',error);
+    });
     const courtMaterial=own(new THREE.MeshBasicMaterial({color:0xded4b9,transparent:true,depthWrite:false,side:THREE.DoubleSide}));
     courtMaterial.onBeforeCompile=shader=>{shader.vertexShader='varying vec2 vCourt;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\n vCourt=uv*2.-1.;');shader.fragmentShader='varying vec2 vCourt;\n'+shader.fragmentShader;shader.fragmentShader=shader.fragmentShader.replace('#include <dithering_fragment>','gl_FragColor.a*=1.-smoothstep(.88,1.,length(vCourt));\n#include <dithering_fragment>');};
     const court=new THREE.Mesh(own(new THREE.RingGeometry(terminal.inner,terminal.outer+.6,mobile?48:80)),courtMaterial);court.name='scroll-terminal-silk';court.rotation.x=-Math.PI/2;court.position.set(0,-.018,terminal.z);ownScene.add(court);
@@ -2713,20 +2736,23 @@ window.WorldS.butterfly=(()=>{
     const rimGeometry=own(new THREE.BufferGeometry());rimGeometry.setAttribute('position',new THREE.Float32BufferAttribute(rim,3));
     const rimLines=new THREE.LineSegments(rimGeometry,own(new THREE.LineBasicMaterial({color:0xa89875,transparent:true,opacity:.55})));
     rimLines.name='scroll-platform-rim';ownScene.add(rimLines);
-    monument={root,wings,enamel,map,time:0,bloom:.12,awakened:0,clock:0,period:16,source:'procedural-low-poly',textureSize:size};
   }
   function updateMonument(dt){
-    const m=monument;m.time+=Math.max(0,dt);m.clock+=Math.max(0,dt);
+    const m=monument;m.time+=Math.max(0,dt);
     const proximity=1-THREE.MathUtils.smoothstep(Math.hypot(player.position.x,player.position.z-terminal.z),65,88);
-    // Once kindled, the final color remains on a return walk; smooth arrival over about three seconds.
+    // Once kindled, color remains on the return walk, even if the GLB is still loading.
     m.awakened=Math.max(m.awakened,proximity);const target=.12+.88*m.awakened;
     m.bloom+=(target-m.bloom)*(1-Math.exp(-Math.max(0,dt)*1.6));
-    m.enamel.uniforms.bloom.value=m.bloom;
-    if(m.clock>=(paint.settings.mobile?1/24:1/60)||dt===0){
-      m.clock=0;m.enamel.uniforms.time.value=reduced?0:m.time;
-      const breath=reduced?0:(1-Math.cos(m.time*2*Math.PI/m.period))*.5;
-      for(const wing of m.wings)wing.rotation.y=wing.userData.side*(.035+.09*breath)*(wing.userData.upper?1:.78);
+    if(!m.enamel)return;
+    m.fade=Math.min(1,m.fade+Math.max(0,dt)/.55);
+    m.enamel.uniforms.bloom.value=m.bloom;m.enamel.uniforms.mountFade.value=m.fade;
+    m.enamel.uniforms.time.value=reduced?0:m.time;
+    for(const material of m.metals){
+      material.opacity=m.fade;
+      if(material.transparent&&m.fade===1){material.transparent=false;material.needsUpdate=true;}
     }
+    const breath=reduced?0:(1-Math.cos(m.time*2*Math.PI/m.period))*.5;
+    for(const pivot of m.pivots)pivot.rotation.y=pivot.userData.side*(.035+.09*breath)*(pivot.userData.upper?1:.78);
   }
   function updateInscription(){
     // Aspect-only world placement: the title rests centered below the wings, above the silk.
@@ -2752,7 +2778,7 @@ window.WorldS.butterfly=(()=>{
   }
   return {
     get minPitch(){return space.minPitch;},title:'素墨长卷',get gatePoint(){return landmarks[23].gatePoint;},
-    get scene(){return ownScene;},get resources(){return owned.length;},interruptReveal,
+    get scene(){return ownScene;},get resources(){return owned.length;},get monumentLoads(){return {...monumentLoads};},interruptReveal,
     get ink(){return paint?{settings:{...paint.settings},lamp:paint.lamp.toArray(),marks:paint.marks.map(m=>({...m,position:[...m.position]}))}:null;},inkAt,
     preload(onProgress){onProgress?.(1);return Promise.resolve();},
     enter(context){
@@ -2815,6 +2841,9 @@ window.WorldS.butterfly=(()=>{
     },
     dispose(){
       if(player.parent===ownScene)ownScene.remove(player);
+      // Detach before disposal; pending loads cannot attach to this retired entry.
+      if(monument?.model)monument.root.remove(monument.model);
+      monument=null;
       for(const resource of owned)resource.dispose();owned=[];
       ownScene?.clear();ownScene=null;ctx=null;moonCopy=null;moonDirection=null;moonBaseScale=null;exitSign=null;paint=null;monument=null;reveal=null;homeward=null;
     }
