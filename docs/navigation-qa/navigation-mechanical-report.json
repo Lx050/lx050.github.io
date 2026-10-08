@@ -1,0 +1,1038 @@
+{
+  "method": "Actual Chrome WebGL via CDP/SwiftShader, finite motion stepping. Narrow viewport emulated; not real phone performance.",
+  "reports": [
+    {
+      "width": 1440,
+      "buildings": {
+        "records": 28,
+        "rooms": 2,
+        "stairs": 0
+      },
+      "motion": [
+        {
+          "fps": 15,
+          "distance": 18.475776185089924,
+          "position": [
+            0,
+            -0.036718022831491316,
+            -18.475739699084723
+          ]
+        },
+        {
+          "fps": 30,
+          "distance": 18.475776185089924,
+          "position": [
+            0,
+            -0.036718022831491316,
+            -18.475739699084723
+          ]
+        },
+        {
+          "fps": 60,
+          "distance": 18.475776185089924,
+          "position": [
+            0,
+            -0.036718022831491316,
+            -18.475739699084723
+          ]
+        }
+      ],
+      "sprint": 30.5663828153655,
+      "jump": {
+        "peak": 1.13722222222222,
+        "landed": true,
+        "landingError": 0
+      },
+      "door": {
+        "z": 0.42061848150192127,
+        "foot": -0.49854412674903875,
+        "floor": -0.5,
+        "worldScale": [
+          20.60605999304685,
+          20.60605999304685,
+          15.757574268828058
+        ],
+        "front": 0.5,
+        "inside": true
+      },
+      "wall": {
+        "z": 0.52414388006404,
+        "front": 0.5,
+        "stopped": true
+      },
+      "slide": {
+        "moved": 4.183225032310654,
+        "x": 0.515187609180365,
+        "wall": 0.5,
+        "clear": true
+      },
+      "fixtures": true,
+      "autoStep": {
+        "peak": 0.18000000357627868,
+        "z": -2.7261265744018925
+      },
+      "diagonal": 18.475739699084752,
+      "corner": {
+        "x": -1.517974243528885,
+        "z": -1.519362322605304
+      },
+      "ceiling": {
+        "peak": 0.6930555555555549,
+        "landed": true
+      },
+      "sequence": {
+        "progress": 0.16805802867855857,
+        "main": 0,
+        "outer": 8.464757394874187
+      },
+      "closed": {
+        "locked": true,
+        "main": 22,
+        "outer": 18,
+        "skinScales": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "pins": [
+          {
+            "name": "outer-hinge-left-upper-actuator",
+            "length": 12.560520717276184,
+            "segments": 12.560520717276184,
+            "anchorError": 0
+          },
+          {
+            "name": "outer-hinge-left-lower-actuator",
+            "length": 9.70523269663929,
+            "segments": 9.70523269663929,
+            "anchorError": 0
+          },
+          {
+            "name": "main-actuator--1--2",
+            "length": 16.15724808265728,
+            "segments": 16.15724808265728,
+            "anchorError": 3.2023728339893768e-15
+          },
+          {
+            "name": "main-actuator--1-4",
+            "length": 13.109148744831533,
+            "segments": 13.109148744831533,
+            "anchorError": 1.0877919644084146e-15
+          },
+          {
+            "name": "outer-hinge-right-upper-actuator",
+            "length": 12.560520717276184,
+            "segments": 12.560520717276184,
+            "anchorError": 0
+          },
+          {
+            "name": "outer-hinge-right-lower-actuator",
+            "length": 9.705232696639314,
+            "segments": 9.705232696639314,
+            "anchorError": 1.7763568394002505e-15
+          },
+          {
+            "name": "main-actuator-1--2",
+            "length": 16.157248082657276,
+            "segments": 16.157248082657276,
+            "anchorError": 8.881784197001252e-16
+          },
+          {
+            "name": "main-actuator-1-4",
+            "length": 13.109148744831513,
+            "segments": 13.109148744831513,
+            "anchorError": 7.691850745534255e-16
+          }
+        ]
+      },
+      "half": {
+        "progress": 0.65,
+        "locked": true
+      },
+      "skeleton": true,
+      "fixed": true,
+      "clearance": {
+        "method": "41 sampled rigid poses; roof vertices against conservative core/entry envelopes and ground; not structural engineering",
+        "minimumGround": 7.7092666625976545,
+        "minimumCore": 0.9545160293579102,
+        "minimumEntry": null,
+        "poses": [
+          {
+            "progress": 0,
+            "ground": 7.7092666625976545,
+            "core": 0.9545160293579102,
+            "entry": null
+          },
+          {
+            "progress": 0.025,
+            "ground": 7.7092666625976545,
+            "core": 0.9545160293579102,
+            "entry": null
+          },
+          {
+            "progress": 0.05,
+            "ground": 7.7092666625976545,
+            "core": 0.9545160293579102,
+            "entry": null
+          },
+          {
+            "progress": 0.075,
+            "ground": 7.7092666625976545,
+            "core": 0.9545160293579102,
+            "entry": null
+          },
+          {
+            "progress": 0.1,
+            "ground": 7.7092666625976545,
+            "core": 0.9545160293579102,
+            "entry": null
+          },
+          {
+            "progress": 0.125,
+            "ground": 7.7092666625976545,
+            "core": 0.9545160293579102,
+            "entry": null
+          },
+          {
+            "progress": 0.15,
+            "ground": 7.7092666625976545,
+            "core": 0.9545160293579102,
+            "entry": null
+          },
+          {
+            "progress": 0.175,
+            "ground": 7.7092666625976545,
+            "core": 0.9545160293579102,
+            "entry": null
+          },
+          {
+            "progress": 0.2,
+            "ground": 7.7092666625976545,
+            "core": 0.9545160293579102,
+            "entry": null
+          },
+          {
+            "progress": 0.225,
+            "ground": 7.7092666625976545,
+            "core": 0.9545160293579102,
+            "entry": null
+          },
+          {
+            "progress": 0.25,
+            "ground": 7.7092666625976545,
+            "core": 0.9545160293579102,
+            "entry": null
+          },
+          {
+            "progress": 0.275,
+            "ground": 7.7092666625976545,
+            "core": 0.9545160293579102,
+            "entry": null
+          },
+          {
+            "progress": 0.3,
+            "ground": 7.7092666625976545,
+            "core": 0.9545160293579102,
+            "entry": null
+          },
+          {
+            "progress": 0.325,
+            "ground": 7.7092666625976545,
+            "core": 0.9545160293579102,
+            "entry": null
+          },
+          {
+            "progress": 0.35,
+            "ground": 7.7092666625976545,
+            "core": 0.9545160293579102,
+            "entry": null
+          },
+          {
+            "progress": 0.375,
+            "ground": 7.709288798054638,
+            "core": 0.9744307358061719,
+            "entry": null
+          },
+          {
+            "progress": 0.4,
+            "ground": 7.709602433699876,
+            "core": 1.0320647863924308,
+            "entry": null
+          },
+          {
+            "progress": 0.425,
+            "ground": 7.710875840893847,
+            "core": 1.1242339306039484,
+            "entry": null
+          },
+          {
+            "progress": 0.45,
+            "ground": 7.714073681012051,
+            "core": 1.2477283427733625,
+            "entry": null
+          },
+          {
+            "progress": 0.475,
+            "ground": 7.72034078530274,
+            "core": 1.399311468054114,
+            "entry": null
+          },
+          {
+            "progress": 0.5,
+            "ground": 7.730896674901809,
+            "core": 1.5757192681210683,
+            "entry": null
+          },
+          {
+            "progress": 0.525,
+            "ground": 7.746940827948327,
+            "core": 1.7736613429857244,
+            "entry": null
+          },
+          {
+            "progress": 0.55,
+            "ground": 7.769568807043262,
+            "core": 1.9898248547466921,
+            "entry": null
+          },
+          {
+            "progress": 0.575,
+            "ground": 7.799699452825033,
+            "core": 2.2208816861836653,
+            "entry": null
+          },
+          {
+            "progress": 0.6,
+            "ground": 7.838013408065345,
+            "core": 2.4634988330011027,
+            "entry": null
+          },
+          {
+            "progress": 0.625,
+            "ground": 7.884903250059795,
+            "core": 2.714351655214051,
+            "entry": null
+          },
+          {
+            "progress": 0.65,
+            "ground": 7.940435473560507,
+            "core": 2.9701393031558667,
+            "entry": null
+          },
+          {
+            "progress": 0.675,
+            "ground": 8.004324485065238,
+            "core": 3.227601389463294,
+            "entry": null
+          },
+          {
+            "progress": 0.7,
+            "ground": 8.075918650420617,
+            "core": 3.483534802255042,
+            "entry": null
+          },
+          {
+            "progress": 0.725,
+            "ground": 8.154198294162894,
+            "core": 3.734809447660061,
+            "entry": null
+          },
+          {
+            "progress": 0.75,
+            "ground": 8.23778539652413,
+            "core": 3.9783816715735925,
+            "entry": null
+          },
+          {
+            "progress": 0.775,
+            "ground": 8.324964589915625,
+            "core": 4.211304139108966,
+            "entry": null
+          },
+          {
+            "progress": 0.8,
+            "ground": 8.413714938577217,
+            "core": 4.430731042185192,
+            "entry": null
+          },
+          {
+            "progress": 0.825,
+            "ground": 8.50175190952249,
+            "core": 4.633917656213901,
+            "entry": null
+          },
+          {
+            "progress": 0.85,
+            "ground": 8.586578924219893,
+            "core": 4.8182134702797494,
+            "entry": null
+          },
+          {
+            "progress": 0.875,
+            "ground": 8.665547929556507,
+            "core": 4.9810483657451154,
+            "entry": null
+          },
+          {
+            "progress": 0.9,
+            "ground": 8.73592855012056,
+            "core": 5.119911610770883,
+            "entry": null
+          },
+          {
+            "progress": 0.925,
+            "ground": 8.7949855831096,
+            "core": 5.232323769372604,
+            "entry": null
+          },
+          {
+            "progress": 0.95,
+            "ground": 8.840064867683834,
+            "core": 5.315801992431629,
+            "entry": null
+          },
+          {
+            "progress": 0.975,
+            "ground": 8.868687891120835,
+            "core": 5.367819567058779,
+            "entry": null
+          },
+          {
+            "progress": 1,
+            "ground": 8.878655865978937,
+            "core": 5.385761056413818,
+            "entry": null
+          }
+        ]
+      },
+      "meshSweep": {
+        "method": "41 sampled rigid poses; segment/triangle intersections of roof skins against fixed building meshes and nearby scene meshes (including individual tree/structure instances), plus other roof skins. Hinges and actuator joints excluded as designed contacts; original painted sky/backdrops excluded (renderOrder <= -900). Not continuous collision or engineering validation.",
+        "fixedShapes": 370,
+        "nearbySceneShapes": 0,
+        "trianglePairComparisons": 14790,
+        "strokes": [
+          {
+            "name": "outer-hinge-left-upper-actuator",
+            "barrel": 11.228771919675923,
+            "min": 1.247641324408436,
+            "max": 1.3392292916805104
+          },
+          {
+            "name": "outer-hinge-left-lower-actuator",
+            "barrel": 8.66429868658736,
+            "min": 0.9626998540652618,
+            "max": 1.0444023339417559
+          },
+          {
+            "name": "main-actuator--1--2",
+            "barrel": 11.431249345266197,
+            "min": 1.2701388161406886,
+            "max": 4.725998737391082
+          },
+          {
+            "name": "main-actuator--1-4",
+            "barrel": 6.982774712155223,
+            "min": 0.7758638569061356,
+            "max": 6.12637403267631
+          },
+          {
+            "name": "outer-hinge-right-upper-actuator",
+            "barrel": 11.228771919675934,
+            "min": 1.2476413244084377,
+            "max": 1.3392292916804927
+          },
+          {
+            "name": "outer-hinge-right-lower-actuator",
+            "barrel": 8.664298686587347,
+            "min": 0.96269985406526,
+            "max": 1.0444023339417878
+          },
+          {
+            "name": "main-actuator-1--2",
+            "barrel": 11.431249345266192,
+            "min": 1.2701388161406886,
+            "max": 4.725998737391084
+          },
+          {
+            "name": "main-actuator-1-4",
+            "barrel": 6.98277471215521,
+            "min": 0.7758638569061347,
+            "max": 6.126374032676303
+          }
+        ],
+        "hits": []
+      },
+      "enterDuringMotion": {
+        "panelHidden": true,
+        "sameProgress": true
+      },
+      "reentry": {
+        "state": "HUB",
+        "progress": 0.36829772473857614,
+        "loads": {
+          "requests": 1,
+          "loaded": 1,
+          "failed": 0
+        },
+        "resources": 0
+      },
+      "errors": [],
+      "responses": [],
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "buildings": {
+        "records": 28,
+        "rooms": 2,
+        "stairs": 0
+      },
+      "motion": [
+        {
+          "fps": 15,
+          "distance": 18.475776185089924,
+          "position": [
+            0,
+            -0.036718022831491316,
+            -18.475739699084723
+          ]
+        },
+        {
+          "fps": 30,
+          "distance": 18.475776185089924,
+          "position": [
+            0,
+            -0.036718022831491316,
+            -18.475739699084723
+          ]
+        },
+        {
+          "fps": 60,
+          "distance": 18.475776185089924,
+          "position": [
+            0,
+            -0.036718022831491316,
+            -18.475739699084723
+          ]
+        }
+      ],
+      "sprint": 30.5663828153655,
+      "jump": {
+        "peak": 1.13722222222222,
+        "landed": true,
+        "landingError": 0
+      },
+      "door": {
+        "z": 0.42061848150192127,
+        "foot": -0.49854412674903875,
+        "floor": -0.5,
+        "worldScale": [
+          20.60605999304685,
+          20.60605999304685,
+          15.757574268828058
+        ],
+        "front": 0.5,
+        "inside": true
+      },
+      "wall": {
+        "z": 0.52414388006404,
+        "front": 0.5,
+        "stopped": true
+      },
+      "slide": {
+        "moved": 4.183225032310654,
+        "x": 0.515187609180365,
+        "wall": 0.5,
+        "clear": true
+      },
+      "fixtures": true,
+      "autoStep": {
+        "peak": 0.18000000357627868,
+        "z": -2.7261265744018925
+      },
+      "diagonal": 18.475739699084752,
+      "corner": {
+        "x": -1.517974243528885,
+        "z": -1.519362322605304
+      },
+      "ceiling": {
+        "peak": 0.6930555555555549,
+        "landed": true
+      },
+      "sequence": {
+        "progress": 0.16805802867855857,
+        "main": 0,
+        "outer": 8.464757394874187
+      },
+      "closed": {
+        "locked": true,
+        "main": 22,
+        "outer": 18,
+        "skinScales": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            1,
+            1,
+            1
+          ]
+        ],
+        "pins": [
+          {
+            "name": "outer-hinge-left-upper-actuator",
+            "length": 12.560520717276184,
+            "segments": 12.560520717276184,
+            "anchorError": 0
+          },
+          {
+            "name": "outer-hinge-left-lower-actuator",
+            "length": 9.70523269663929,
+            "segments": 9.70523269663929,
+            "anchorError": 0
+          },
+          {
+            "name": "main-actuator--1--2",
+            "length": 16.15724808265728,
+            "segments": 16.15724808265728,
+            "anchorError": 3.2023728339893768e-15
+          },
+          {
+            "name": "main-actuator--1-4",
+            "length": 13.109148744831533,
+            "segments": 13.109148744831533,
+            "anchorError": 1.0877919644084146e-15
+          },
+          {
+            "name": "outer-hinge-right-upper-actuator",
+            "length": 12.560520717276184,
+            "segments": 12.560520717276184,
+            "anchorError": 0
+          },
+          {
+            "name": "outer-hinge-right-lower-actuator",
+            "length": 9.705232696639314,
+            "segments": 9.705232696639314,
+            "anchorError": 1.7763568394002505e-15
+          },
+          {
+            "name": "main-actuator-1--2",
+            "length": 16.157248082657276,
+            "segments": 16.157248082657276,
+            "anchorError": 8.881784197001252e-16
+          },
+          {
+            "name": "main-actuator-1-4",
+            "length": 13.109148744831513,
+            "segments": 13.109148744831513,
+            "anchorError": 7.691850745534255e-16
+          }
+        ]
+      },
+      "half": {
+        "progress": 0.65,
+        "locked": true
+      },
+      "skeleton": true,
+      "fixed": true,
+      "clearance": {
+        "method": "41 sampled rigid poses; roof vertices against conservative core/entry envelopes and ground; not structural engineering",
+        "minimumGround": 7.7092666625976545,
+        "minimumCore": 0.9545160293579102,
+        "minimumEntry": null,
+        "poses": [
+          {
+            "progress": 0,
+            "ground": 7.7092666625976545,
+            "core": 0.9545160293579102,
+            "entry": null
+          },
+          {
+            "progress": 0.025,
+            "ground": 7.7092666625976545,
+            "core": 0.9545160293579102,
+            "entry": null
+          },
+          {
+            "progress": 0.05,
+            "ground": 7.7092666625976545,
+            "core": 0.9545160293579102,
+            "entry": null
+          },
+          {
+            "progress": 0.075,
+            "ground": 7.7092666625976545,
+            "core": 0.9545160293579102,
+            "entry": null
+          },
+          {
+            "progress": 0.1,
+            "ground": 7.7092666625976545,
+            "core": 0.9545160293579102,
+            "entry": null
+          },
+          {
+            "progress": 0.125,
+            "ground": 7.7092666625976545,
+            "core": 0.9545160293579102,
+            "entry": null
+          },
+          {
+            "progress": 0.15,
+            "ground": 7.7092666625976545,
+            "core": 0.9545160293579102,
+            "entry": null
+          },
+          {
+            "progress": 0.175,
+            "ground": 7.7092666625976545,
+            "core": 0.9545160293579102,
+            "entry": null
+          },
+          {
+            "progress": 0.2,
+            "ground": 7.7092666625976545,
+            "core": 0.9545160293579102,
+            "entry": null
+          },
+          {
+            "progress": 0.225,
+            "ground": 7.7092666625976545,
+            "core": 0.9545160293579102,
+            "entry": null
+          },
+          {
+            "progress": 0.25,
+            "ground": 7.7092666625976545,
+            "core": 0.9545160293579102,
+            "entry": null
+          },
+          {
+            "progress": 0.275,
+            "ground": 7.7092666625976545,
+            "core": 0.9545160293579102,
+            "entry": null
+          },
+          {
+            "progress": 0.3,
+            "ground": 7.7092666625976545,
+            "core": 0.9545160293579102,
+            "entry": null
+          },
+          {
+            "progress": 0.325,
+            "ground": 7.7092666625976545,
+            "core": 0.9545160293579102,
+            "entry": null
+          },
+          {
+            "progress": 0.35,
+            "ground": 7.7092666625976545,
+            "core": 0.9545160293579102,
+            "entry": null
+          },
+          {
+            "progress": 0.375,
+            "ground": 7.709288798054638,
+            "core": 0.9744307358061719,
+            "entry": null
+          },
+          {
+            "progress": 0.4,
+            "ground": 7.709602433699876,
+            "core": 1.0320647863924308,
+            "entry": null
+          },
+          {
+            "progress": 0.425,
+            "ground": 7.710875840893847,
+            "core": 1.1242339306039484,
+            "entry": null
+          },
+          {
+            "progress": 0.45,
+            "ground": 7.714073681012051,
+            "core": 1.2477283427733625,
+            "entry": null
+          },
+          {
+            "progress": 0.475,
+            "ground": 7.72034078530274,
+            "core": 1.399311468054114,
+            "entry": null
+          },
+          {
+            "progress": 0.5,
+            "ground": 7.730896674901809,
+            "core": 1.5757192681210683,
+            "entry": null
+          },
+          {
+            "progress": 0.525,
+            "ground": 7.746940827948327,
+            "core": 1.7736613429857244,
+            "entry": null
+          },
+          {
+            "progress": 0.55,
+            "ground": 7.769568807043262,
+            "core": 1.9898248547466921,
+            "entry": null
+          },
+          {
+            "progress": 0.575,
+            "ground": 7.799699452825033,
+            "core": 2.2208816861836653,
+            "entry": null
+          },
+          {
+            "progress": 0.6,
+            "ground": 7.838013408065345,
+            "core": 2.4634988330011027,
+            "entry": null
+          },
+          {
+            "progress": 0.625,
+            "ground": 7.884903250059795,
+            "core": 2.714351655214051,
+            "entry": null
+          },
+          {
+            "progress": 0.65,
+            "ground": 7.940435473560507,
+            "core": 2.9701393031558667,
+            "entry": null
+          },
+          {
+            "progress": 0.675,
+            "ground": 8.004324485065238,
+            "core": 3.227601389463294,
+            "entry": null
+          },
+          {
+            "progress": 0.7,
+            "ground": 8.075918650420617,
+            "core": 3.483534802255042,
+            "entry": null
+          },
+          {
+            "progress": 0.725,
+            "ground": 8.154198294162894,
+            "core": 3.734809447660061,
+            "entry": null
+          },
+          {
+            "progress": 0.75,
+            "ground": 8.23778539652413,
+            "core": 3.9783816715735925,
+            "entry": null
+          },
+          {
+            "progress": 0.775,
+            "ground": 8.324964589915625,
+            "core": 4.211304139108966,
+            "entry": null
+          },
+          {
+            "progress": 0.8,
+            "ground": 8.413714938577217,
+            "core": 4.430731042185192,
+            "entry": null
+          },
+          {
+            "progress": 0.825,
+            "ground": 8.50175190952249,
+            "core": 4.633917656213901,
+            "entry": null
+          },
+          {
+            "progress": 0.85,
+            "ground": 8.586578924219893,
+            "core": 4.8182134702797494,
+            "entry": null
+          },
+          {
+            "progress": 0.875,
+            "ground": 8.665547929556507,
+            "core": 4.9810483657451154,
+            "entry": null
+          },
+          {
+            "progress": 0.9,
+            "ground": 8.73592855012056,
+            "core": 5.119911610770883,
+            "entry": null
+          },
+          {
+            "progress": 0.925,
+            "ground": 8.7949855831096,
+            "core": 5.232323769372604,
+            "entry": null
+          },
+          {
+            "progress": 0.95,
+            "ground": 8.840064867683834,
+            "core": 5.315801992431629,
+            "entry": null
+          },
+          {
+            "progress": 0.975,
+            "ground": 8.868687891120835,
+            "core": 5.367819567058779,
+            "entry": null
+          },
+          {
+            "progress": 1,
+            "ground": 8.878655865978937,
+            "core": 5.385761056413818,
+            "entry": null
+          }
+        ]
+      },
+      "meshSweep": {
+        "method": "41 sampled rigid poses; segment/triangle intersections of roof skins against fixed building meshes and nearby scene meshes (including individual tree/structure instances), plus other roof skins. Hinges and actuator joints excluded as designed contacts; original painted sky/backdrops excluded (renderOrder <= -900). Not continuous collision or engineering validation.",
+        "fixedShapes": 370,
+        "nearbySceneShapes": 0,
+        "trianglePairComparisons": 14790,
+        "strokes": [
+          {
+            "name": "outer-hinge-left-upper-actuator",
+            "barrel": 11.228771919675923,
+            "min": 1.247641324408436,
+            "max": 1.3392292916805104
+          },
+          {
+            "name": "outer-hinge-left-lower-actuator",
+            "barrel": 8.66429868658736,
+            "min": 0.9626998540652618,
+            "max": 1.0444023339417559
+          },
+          {
+            "name": "main-actuator--1--2",
+            "barrel": 11.431249345266197,
+            "min": 1.2701388161406886,
+            "max": 4.725998737391082
+          },
+          {
+            "name": "main-actuator--1-4",
+            "barrel": 6.982774712155223,
+            "min": 0.7758638569061356,
+            "max": 6.12637403267631
+          },
+          {
+            "name": "outer-hinge-right-upper-actuator",
+            "barrel": 11.228771919675934,
+            "min": 1.2476413244084377,
+            "max": 1.3392292916804927
+          },
+          {
+            "name": "outer-hinge-right-lower-actuator",
+            "barrel": 8.664298686587347,
+            "min": 0.96269985406526,
+            "max": 1.0444023339417878
+          },
+          {
+            "name": "main-actuator-1--2",
+            "barrel": 11.431249345266192,
+            "min": 1.2701388161406886,
+            "max": 4.725998737391084
+          },
+          {
+            "name": "main-actuator-1-4",
+            "barrel": 6.98277471215521,
+            "min": 0.7758638569061347,
+            "max": 6.126374032676303
+          }
+        ],
+        "hits": []
+      },
+      "touchJump": true,
+      "enterDuringMotion": {
+        "panelHidden": true,
+        "sameProgress": true
+      },
+      "reentry": {
+        "state": "HUB",
+        "progress": 0.36829772473857614,
+        "loads": {
+          "requests": 1,
+          "loaded": 1,
+          "failed": 0
+        },
+        "resources": 0
+      },
+      "errors": [],
+      "responses": [],
+      "overflow": false
+    }
+  ]
+}

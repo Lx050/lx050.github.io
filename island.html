@@ -39,6 +39,8 @@ const TRACKS=[
 #stick{position:absolute;left:calc((100% - var(--knob-size))/2);top:calc((100% - var(--knob-size))/2);width:var(--knob-size);height:var(--knob-size);background:#e8e2d555;border:1px solid #e8e2d5aa;border-radius:50%;z-index:1}
 #joystick small{position:absolute;top:calc(100% + 6px);width:100%;text-align:center;color:var(--paper);font-size:9px;letter-spacing:3px}
 #sprint{display:none;position:absolute;right:var(--sprint-right);bottom:max(46px,env(safe-area-inset-bottom));width:78px;height:78px;border-radius:50%;border:1px solid #e8e2d566;background:#14171899;touch-action:none;user-select:none;z-index:3;letter-spacing:3px}
+#mechanical-controls{position:absolute;right:20px;top:220px;max-width:230px;padding:10px;background:#162224e8;border:1px solid #b39a6377;color:#e5dec9;z-index:4}#mechanical-controls[hidden],.world-active #mechanical-controls{display:none!important}#mechanical-controls p{font-size:11px;margin:0 0 8px}#mechanical-controls button{min-height:44px;min-width:44px;font-size:11px;padding:7px;border:1px solid #b39a6366;background:#283638;color:#e5dec9;margin:2px}@media(max-width:600px){#mechanical-controls{max-width:185px;top:215px}}
+#jump{display:none;position:absolute;right:calc(var(--sprint-right) + 88px);bottom:max(46px,env(safe-area-inset-bottom));width:64px;height:64px;border-radius:50%;border:1px solid #e8e2d566;background:#14171899;touch-action:none;z-index:3}.touch #jump{display:block}@media(pointer:coarse){#jump{display:block}}
 #sprint.active{background:#c0563e88;border-color:var(--paper)}
 .touch{--joy-size:132px;--joy-bottom:max(46px,calc(12px + env(safe-area-inset-bottom)))}.touch #joystick{opacity:.22}.touch #joystick.active{opacity:1}.touch #joystick.returning{opacity:0}.touch #sprint{display:block}.touch .desktop-help{display:none}
 @media(pointer:coarse){:root{--joy-size:132px;--joy-bottom:max(46px,calc(12px + env(safe-area-inset-bottom)))}#joystick{opacity:.22}#joystick.active{opacity:1}#joystick.returning{opacity:0}#sprint{display:block}}
@@ -134,7 +136,9 @@ const TRACKS=[
 #world-notice{position:fixed;z-index:41;left:50%;top:42%;transform:translateX(-50%);font:16px var(--serif);letter-spacing:4px;color:#655d4b;pointer-events:none}#world-notice:not(:empty){background:#e5decbe8;padding:10px 18px}
 @media(max-width:760px){.world-title{left:20px;font-size:18px}#world-exit{bottom:max(24px,env(safe-area-inset-bottom));right:20px}.scroll-inscription{font-size:19px;letter-spacing:4px}}
 </style>
-</head>
+<style>
+#craft-controls{position:absolute;right:20px;top:220px;max-width:220px;padding:10px 12px;background:#162224ee;border:1px solid #a98c5877;border-radius:5px;pointer-events:auto;z-index:4}#craft-controls[hidden],.world-active #craft-controls{display:none!important}#craft-controls p{margin:0 0 6px;font-size:11px}#craft-controls button{min-width:44px;min-height:44px;border:1px solid #aa996666;border-radius:3px;padding:7px 10px;margin:2px;font-size:11px}#craft-controls button[aria-pressed="true"]{background:#a78c4933}@media(max-width:600px){#craft-controls{top:215px;right:12px;max-width:180px}}
+</style></head>
 <body>
 <main id="world" tabindex="-1" aria-label="可探索的三维数字庭院。使用 WASD 或方向键行走；靠近建筑后按回车访问。"></main>
 <div class="vignette" aria-hidden="true"></div>
@@ -148,15 +152,18 @@ const TRACKS=[
   </header>
   <div class="margin-note" aria-hidden="true"><i></i>灯火所及，皆是来处。</div>
   <div class="viewpad" id="viewpad" tabindex="0" role="group" aria-label="视角控制：拖动旋转视角，聚焦后使用方向键调整，Home 重置"><span class="arrows">↔</span><small>拖动视角</small></div>
-  <div class="bottom-note"><div class="desktop-help"><p><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> / 方向键 · 行走</p><p><kbd>↵</kbd> / <kbd>空格</kbd> · 访问　拖动画面 · 环顾</p></div></div>
+  <div class="bottom-note"><div class="desktop-help"><p><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> / 方向键 · 行走</p><p><kbd>↵</kbd> · 访问　<kbd>Shift</kbd> · 跑步　<kbd>空格</kbd> · 跳跃　拖动 · 环顾</p></div></div>
   <div id="joystick" aria-label="移动摇杆"><div id="stick"></div><small>拖动行走</small></div>
+  <section id="craft-controls" hidden aria-label="建筑构件"><p id="craft-status">建筑构件</p><button data-craft="1">开启</button><button data-craft="0.5">半开</button><button data-craft="0">收合</button></section>
+  <section id="mechanical-controls" hidden aria-label="蝶阙机械翼"><p id="mechanical-status">展开 · 已锁止</p><button data-roof="open">展开</button><button data-roof="half">半收</button><button data-roof="closed">收拢</button><button id="roof-skeleton" aria-pressed="false">显示骨架</button></section>
+  <button id="jump" type="button" aria-label="跳跃">跳跃</button>
   <button id="sprint" type="button" aria-label="按住疾行" aria-pressed="false">疾行</button>
   <div class="mapbox" role="button" tabindex="0" aria-label="打开全岛地图" aria-haspopup="dialog" aria-controls="atlas" aria-expanded="false"><canvas id="map" width="288" height="288" aria-label="航向朝上小地图：中央箭头为当前位置，N 指向北方"></canvas><div id="location">庭心</div></div>
   <div id="ambient-hint">提灯走近，让故事发生。</div>
   <section id="interaction" aria-label="附近的入口">
     <div class="entry-copy" aria-live="polite"><div class="eyebrow" id="entry-zone"></div><h2 id="entry-title"></h2><p id="entry-desc"></p></div>
     <button id="world-enter" type="button" hidden>展卷 · 入《未上色的蝴蝶》<small>按 E 展卷</small></button>
-    <a id="enter-link" target="_blank" rel="noopener noreferrer">访问 ↗<span>ENTER / 空格</span></a>
+    <a id="enter-link" target="_blank" rel="noopener noreferrer">访问 ↗<span>ENTER</span></a>
   </section>
   <section id="world-hud" hidden aria-label="卷中行走"><div class="world-title">未上色的蝴蝶<small>空卷 · 一灯行</small></div><div id="butterfly-source"></div><div id="world-exit-hint">卷尽处，亦是来处</div><button id="world-exit" type="button">合卷归途 · E</button></section>
   <div id="bridge-toast" aria-live="polite"></div>
@@ -165,7 +172,7 @@ const TRACKS=[
 <div id="world-scroll" hidden aria-hidden="true"><div class="scroll-silk"><div class="scroll-ink"></div><div class="scroll-inscription"><span id="scroll-title">未上色的蝴蝶</span><small id="scroll-verse">一灯入卷 · 万象未生</small></div></div><i class="scroll-rod left"></i><i class="scroll-rod right"></i></div>
 <div id="world-notice" role="status"></div>
 <section id="intro" aria-label="进入数字庭院">
-  <div class="intro-inner"><div class="intro-kicker">A SMALL ISLAND OF THOUGHTS</div><h1>Lx050<span style="color:var(--red)">.</span></h1><div class="intro-poem">在数字之间，留一点人间</div><div class="intro-line"></div><p class="intro-description">一些作品，一些故事，一些仍在生长的念头。<br>借一盏灯，随意走走。</p><button class="start" id="start" disabled>正在点灯<span class="arrow">↗</span></button><div class="intro-controls" id="intro-controls">WASD / 方向键行走 · 拖动环顾 · 回车访问<br>点击或按任意键，开始夜游</div></div>
+  <div class="intro-inner"><div class="intro-kicker">A SMALL ISLAND OF THOUGHTS</div><h1>Lx050<span style="color:var(--red)">.</span></h1><div class="intro-poem">在数字之间，留一点人间</div><div class="intro-line"></div><p class="intro-description">一些作品，一些故事，一些仍在生长的念头。<br>借一盏灯，随意走走。</p><button class="start" id="start" disabled>正在点灯<span class="arrow">↗</span></button><div class="intro-controls" id="intro-controls">WASD / 方向键行走 · Shift 跑步 · 空格跳跃 · 回车访问<br>点击或按任意键，开始夜游</div></div>
   <div class="intro-footer"><span>作品 / 服务 / 项目 / 连接</span><span>慢一点，也没有关系。 &nbsp; © Lx050</span></div>
 </section>
 <section id="atlas" role="dialog" aria-modal="true" aria-labelledby="atlas-title" hidden><div class="atlas-inner"><header class="atlas-head"><h2 id="atlas-title">一岛 · 二十六盏灯</h2><button id="close-atlas" aria-label="关闭大地图">×</button></header><div class="atlas-tools"><button id="atlas-minus" aria-label="缩小地图">−</button><output id="atlas-scale" aria-live="polite"></output><button id="atlas-plus" aria-label="放大地图">+</button><button id="atlas-home">归庭</button><small>拖动地图 · 点名录定位</small></div><div class="atlas-body"><div class="atlas-chart"><canvas id="atlas-map" aria-label="北向上全岛地图，完整名称亦可在下方或右侧名录查找"></canvas></div><nav id="atlas-list" aria-label="四区地标名录"></nav></div><div id="atlas-legend" class="atlas-legend"></div></div></section>
@@ -180,9 +187,13 @@ const TRACKS=[
 <script src="vendor/three/RenderPass.js"></script>
 <script src="vendor/three/ShaderPass.js"></script>
 <script src="vendor/three/UnrealBloomPass.js"></script>
+<script src="assets/architecture.js"></script>
+<script src="assets/infrastructure.js"></script>
+<script src="assets/courtyard-runtime.js"></script>
 <script>
 (() => {
 'use strict';
+if(new URLSearchParams(location.search).has('architectureQA')){window.__courtyardErrors=[];window.addEventListener('error',e=>window.__courtyardErrors.push(e.message));window.addEventListener('unhandledrejection',e=>window.__courtyardErrors.push(String(e.reason)));}
 let butterflySea=null; // Landmark #23 metre-space deck and collision field.
 // Wave 1 · metres. Human geometry is deliberately never scaled with the world.
 const WORLD=Object.freeze({PLAYER_HEIGHT:1.7,ISLAND_RADIUS:150,INNER_RING:70,OUTER_RING:124,
@@ -244,7 +255,7 @@ ZONES.forEach((zone,zi)=>{
 });
 const terraceSites=LINKS.map((entry,index)=>{
   const r=Math.hypot(entry.x,entry.z),ux=entry.x/r,uz=entry.z/r;
-  const steps=20+(index%5)*4, rise=steps*WORLD.STEP_HEIGHT;
+  const steps=0, rise=0;
   return {index,x:entry.x,z:entry.z,ux,uz,radius:WORLD.TERRACE_RADIUS,steps,rise,
     baseY:rawTerrain(entry.x,entry.z),groundY:rawTerrain(entry.x,entry.z)+rise,
     start:r-WORLD.TERRACE_RADIUS-WORLD.APPROACH_LENGTH,ring:r};
@@ -366,8 +377,8 @@ ZONES.forEach((zone,index)=>{
 });
 $('music-credits').innerHTML='<h3>夜乐 · 背景音乐署名</h3><small class="mc-note">入庭后夜间随机播放，一曲播罢自动接续下一首。以下均为公有领域或 CC0 / CC-BY 授权的演奏录音。</small>'+TRACKS.map(t=>`<small>${t.n} — ${t.a}，${t.l}</small>`).join('');
 function modalOpen(){return !$('directory').hidden||!$('atlas').hidden;}
-function clearInput(){keys.clear();resetJoystick(true);releaseSprint();currentSpeed=6.3;sprinting=false;velocity.set(0,0);}
-function showDirectory(){if(worldActive())return;previousFocus=document.activeElement;clearInput();$('directory').hidden=false;$('hud').inert=true;$('intro').inert=true;$('close-directory').focus();}
+function clearInput(){keys.clear();resetJoystick(true);releaseSprint();currentSpeed=6.3;sprinting=false;velocity.set(0,0);if(typeof motor!=='undefined')motor.jumpBuffer=0;}
+function showDirectory(){if(ready&&worldActive())return;previousFocus=document.activeElement;if(ready)clearInput();$('directory').hidden=false;$('hud').inert=true;$('intro').inert=true;$('close-directory').focus();}
 function closeDirectory(){$('directory').hidden=true;$('hud').inert=!started;$('intro').inert=started;previousFocus?.focus();}
 $('list-button').onclick=showDirectory;$('fallback-list').onclick=showDirectory;$('close-directory').onclick=closeDirectory;
 $('directory').addEventListener('click',e=>{if(e.target===$('directory'))closeDirectory();});
@@ -379,8 +390,9 @@ $('directory').addEventListener('keydown',e=>{
     else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}
   }
 });
-function fail(message){failed=true;clearInput();$('error-message').textContent=message;$('error').hidden=false;$('intro').classList.add('gone');$('hud').inert=true;}
+function fail(message){failed=true;if(ready)clearInput();$('error-message').textContent=message;$('error').hidden=false;$('intro').classList.add('gone');$('hud').inert=true;}
 if(!window.THREE){fail('三维引擎未能加载。请检查网络后刷新，或从目录访问全部 26 个入口。');return;}
+if(!window.CourtyardArchitecture||!window.CourtyardInfrastructure||!window.CourtyardRuntime){fail('建筑资源未能加载。请刷新重试，或从目录访问全部入口。');return;}
 let renderer;
 try{renderer=new THREE.WebGLRenderer({antialias:!lightQuality,alpha:false,powerPreference:'high-performance'});}
 catch(error){fail('当前浏览器无法开启三维场景。请尝试支持 WebGL 的浏览器，或从目录直接访问全部入口。');return;}
@@ -832,7 +844,7 @@ function dressMonument(wrap){
   // the void under MindCare's arch and other open monuments when seen from below.
   wrap.traverse(o=>{if(!o.isMesh)return;if(!o.geometry.boundingBox)o.geometry.computeBoundingBox();const part=o.geometry.boundingBox.clone().applyMatrix4(o.matrixWorld);if(part.min.y-box.min.y<(box.max.y-box.min.y)*.05)footprints.push(part);});
   const base=new THREE.InstancedMesh(G.box,dressingBase,footprints.length);
-  footprints.forEach((part,i)=>{const size=part.getSize(new THREE.Vector3()),c=part.getCenter(new THREE.Vector3()).sub(host.position),m=new THREE.Matrix4().makeScale(size.x+.12,.38,size.z+.12);m.setPosition(c.x,box.min.y-host.position.y+.19,c.z);base.setMatrixAt(i,m);});
+  footprints.forEach((part,i)=>{const size=part.getSize(new THREE.Vector3()),c=part.getCenter(new THREE.Vector3()).sub(host.position),m=new THREE.Matrix4().makeScale(size.x+.12,.04,size.z+.12);m.setPosition(c.x,box.min.y-host.position.y+.02,c.z);base.setMatrixAt(i,m);});
   base.name='dark-footing';base.receiveShadow=true;layer.add(base);
   layer.updateWorldMatrix(true,true);wrap.userData.dressing=layer;
   // r128 Box3.setFromObject ignores instanceMatrix: explicitly union every instance.
@@ -850,6 +862,16 @@ function monumentLOD(group,size){
 function setHingeAngle(hinge,angle){hinge.quaternion.setFromAxisAngle(hinge.userData.axis,angle);hinge.userData.angle=angle;}
 const BUTTERFLY={idlePeriod:16,activePeriod:4.8};
 // Shared root-origin curves for the four roof wings.
+function roofSurfaceAt(geometry,x,z){
+  const a=geometry.attributes.position,index=geometry.index;
+  for(let n=0;n<(index?index.count:a.count);n+=3){const ids=[0,1,2].map(j=>index?index.getX(n+j):n+j),[i,j,k]=ids,ax=a.getX(i),az=a.getZ(i),bx=a.getX(j),bz=a.getZ(j),cx=a.getX(k),cz=a.getZ(k),den=(bz-cz)*(ax-cx)+(cx-bx)*(az-cz);if(Math.abs(den)<1e-8)continue;const u=((bz-cz)*(x-cx)+(cx-bx)*(z-cz))/den,v=((cz-az)*(x-cx)+(ax-cx)*(z-cz))/den,w=1-u-v;if(u>=-1e-6&&v>=-1e-6&&w>=-1e-6)return u*a.getY(i)+v*a.getY(j)+w*a.getY(k);}
+  return null;
+}
+function roofCutRange(geometry,x){
+  const a=geometry.attributes.position,index=geometry.index,zs=[];
+  for(let n=0;n<(index?index.count:a.count);n+=3)for(let e=0;e<3;e++){const i=index?index.getX(n+e):n+e,j=index?index.getX(n+(e+1)%3):n+(e+1)%3,dx=a.getX(j)-a.getX(i);if(Math.abs(dx)<1e-7)continue;const t=(x-a.getX(i))/dx;if(t>=0&&t<=1)zs.push(a.getZ(i)+(a.getZ(j)-a.getZ(i))*t);}
+  return {min:Math.min(...zs),max:Math.max(...zs)};
+}
 function butterflyWingShape(upper){
   const s=new THREE.Shape();s.moveTo(0,0);
   if(upper){
@@ -1145,7 +1167,7 @@ function prepareButterflySea(lm){
     }
     batch(parent,G.box,ribGlaze,rafters,'branching-vein-ribs');batch(parent,G.box,edge,eaves,'continuous-thick-eaves');
     const columns=upper?[[15,-18],[36,-28]]:[[10,12],[25,16]];
-    for(const [x,z] of columns)support(x*side,z,roofY(x,z)-.6,upper?.29:.25);
+    for(const [x,z] of columns)support(x*side,z,(roofSurfaceAt(geometry,x*side,z)??roofY(x,z))-.8,upper?.29:.25);
     // One curved stylobate under each cloister, connected to the axial terrace.
     const curve=new THREE.CatmullRomCurve3([[3.5,upper?-3:6],...columns].map(([x,z])=>new THREE.Vector3(side*x,.12,z)));
     const screen=[],strip=[];
@@ -1234,7 +1256,7 @@ function prepareButterflySea(lm){
   }
   // Wing roots gather into the same branching relief on the lower body.
   for(const side of [-1,1])for(const front of [-1,1]){
-    const pts=[[side*5.5,11.2,front*2],[side*3.2,13.4,-3],[side*2.4,16.4,-7.5]];
+    const pts=[[side*2.8,11.2,front*2],[side*2.65,13.4,-3],[side*2.4,16.4,-7.5]];
     beam(veinRelief,pts[0],pts[1],.14);beam(veinRelief,pts[1],pts[2],.11);
   }
   // Pointed lotus petals have a convex midrib; top view reads a flower, not a nut.
@@ -1318,6 +1340,98 @@ function prepareButterflySea(lm){
     im.frustumCulled=false;im.castShadow=false;im.receiveShadow=false;parent.add(im);
   }
 }
+function clipRoofGeometry(geometry,matrix,side,cut,outer){
+  const names=Object.keys(geometry.attributes),out=Object.fromEntries(names.map(k=>[k,[]])),index=geometry.index,normalMatrix=new THREE.Matrix3().getNormalMatrix(matrix);
+  function vertex(i){const v={};for(const k of names){const a=geometry.attributes[k];v[k]=Array.from({length:a.itemSize},(_,j)=>a.array[i*a.itemSize+j]);}const p=new THREE.Vector3(...v.position).applyMatrix4(matrix);v.position=p.toArray();if(v.normal)v.normal=new THREE.Vector3(...v.normal).applyMatrix3(normalMatrix).normalize().toArray();return v;}
+  const inside=v=>outer?v.position[0]*side>=cut+.055:v.position[0]*side<=cut-.055;
+  for(let i=0;i<(index?index.count:geometry.attributes.position.count);i+=3){let poly=[0,1,2].map(j=>vertex(index?index.getX(i+j):i+j)),next=[];
+    for(let j=0;j<poly.length;j++){const a=poly[j],b=poly[(j+1)%poly.length],ia=inside(a),ib=inside(b);if(ia)next.push(a);if(ia!==ib){const plane=cut+(outer?.055:-.055),t=(plane-a.position[0]*side)/((b.position[0]-a.position[0])*side),v={};for(const k of names)v[k]=a[k].map((x,n)=>x+(b[k][n]-x)*t);next.push(v);}}
+    for(let j=1;j+1<next.length;j++)for(const v of [next[0],next[j],next[j+1]])for(const k of names)out[k].push(...v[k]);
+  }
+  const result=new THREE.BufferGeometry();for(const k of names)result.setAttribute(k,new THREE.Float32BufferAttribute(out[k],geometry.attributes[k].itemSize));result.computeBoundingBox();return result;
+}
+function installRoofMechanism(b){
+  const rig=b.mechanical={target:0,progress:0,velocity:0,state:'展开',skeleton:false,locked:true,mainAngle:0,outerAngle:0,joints:[],links:[],skins:[],structureMeshes:[]};
+  const gold=material(0xb39a63,{metalness:.65,roughness:.42}),steel=material(0x59666a,{metalness:.72,roughness:.38}),rodMaterial=material(0xc7c0a7,{metalness:.82,roughness:.25});
+  const fixed=new THREE.Group();fixed.name='mechanical-fixed-bearings';b.creature.add(fixed);
+  function cylinder(parent,name,radius,length,position,axis,mat){const o=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,1,12),mat);o.name=name;o.scale.y=length;o.position.copy(position);o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),axis.clone().normalize());parent.add(o);return o;}
+  function link(name,aParent,a,bParent,c){
+    const barrel=cylinder(b.creature,name+'-barrel',.34,1,new THREE.Vector3(),new THREE.Vector3(0,1,0),steel),rod=cylinder(b.creature,name+'-rod',.16,1,new THREE.Vector3(),new THREE.Vector3(0,1,0),rodMaterial);
+    const ends=[aParent,bParent].map((parent,i)=>{const ball=new THREE.Mesh(new THREE.SphereGeometry(.47,10,6),gold);ball.name=name+'-pin-'+i;ball.position.copy(i?c:a);parent.add(ball);return ball;});
+    rig.links.push({name,aParent,a:a.clone(),bParent,b:c.clone(),barrel,rod,rest:0,ends});
+  }
+  const oldWings=[...b.wings];b.wings=[];
+  for(const side of [-1,1]){
+    const main=side<0?b.left:b.right,mainOrigin=new THREE.Vector3(side*3.5,24,1),mainAxis=new THREE.Vector3(0,-.12,1).normalize(),oldChildren=[...main.children];
+    main.position.copy(mainOrigin);main.userData.axis=mainAxis;rig.joints.push({object:main,side,kind:'main'});
+    for(const upper of [true,false]){
+      const skin=oldWings.find(w=>w.parent===main&&w.name.includes(upper?'upper':'lower'));skin.geometry.computeBoundingBox();const extent=side<0?-skin.geometry.boundingBox.min.x:skin.geometry.boundingBox.max.x,cut=3.5+(extent-3.5)*2/3,range=roofCutRange(skin.geometry,side*cut);
+      const roofY=(x,z)=>upper?9+x*.42-z*.23+2.4*Math.sin(x/48*Math.PI):7+x*.10-z*.045+1.2*Math.sin(x/32*Math.PI);
+      const origin=new THREE.Vector3(side*cut,roofY(cut,1),1),axis=new THREE.Vector3(0,upper?-.23:-.045,1).normalize();
+      const outer=new THREE.Group();outer.name='outer-hinge-'+(side<0?'left':'right')+'-'+(upper?'upper':'lower');outer.position.copy(origin).sub(mainOrigin);outer.userData.axis=axis;main.add(outer);rig.joints.push({object:outer,side,kind:'outer'});
+      for(const outside of [false,true]){
+        const geo=clipRoofGeometry(skin.geometry,new THREE.Matrix4(),side,cut,outside);geo.translate(...(outside?origin:mainOrigin).clone().negate().toArray());
+        const panel=new THREE.Mesh(geo,skin.material);panel.name=skin.name+(outside?'-outer':'-inner');(outside?outer:main).add(panel);b.wings.push(panel);rig.skins.push(panel);
+      }
+      // Bearings lie on the actual sloping cut line. Panels and beams never span the hinge gap.
+      for(const z of [THREE.MathUtils.lerp(range.min,range.max,.25),THREE.MathUtils.lerp(range.min,range.max,.75)]){
+        const p=new THREE.Vector3(side*cut,roofY(cut,z)-.4,z).sub(mainOrigin);cylinder(main,outer.name+'-bearing-'+z,.55,1.3,p,axis,gold);
+      }
+      const outerX=cut+(extent-cut)*.45,innerX=cut-5,outerRange=roofCutRange(skin.geometry,side*outerX),innerRange=roofCutRange(skin.geometry,side*innerX),anchorZ=(Math.max(outerRange.min,innerRange.min)+Math.min(outerRange.max,innerRange.max))/2;
+      const innerAnchor=new THREE.Vector3(side*innerX,(roofSurfaceAt(skin.geometry,side*innerX,anchorZ)??roofY(innerX,anchorZ))-.45,anchorZ).sub(mainOrigin);
+      const outerAnchor=new THREE.Vector3(side*outerX,(roofSurfaceAt(skin.geometry,side*outerX,anchorZ)??roofY(outerX,anchorZ))-.45,anchorZ).sub(origin);
+      outer.userData.cut=cut;outer.userData.extent=extent;
+      link(outer.name+'-actuator',main,innerAnchor,outer,outerAnchor);
+    }
+    for(const z of [-2,4]){
+      cylinder(fixed,'main-bearing-'+side+'-'+z,.8,2,new THREE.Vector3(side*3.5,24-.12*(z-1),z),mainAxis,gold);
+      const foot=new THREE.Vector3(side*3.5,.25,z),head=new THREE.Vector3(side*3.5,24-.12*(z-1),z);
+      cylinder(fixed,'fixed-hinge-tower-'+side+'-'+z,.32,head.distanceTo(foot),foot.clone().add(head).multiplyScalar(.5),head.clone().sub(foot),steel);
+      const roof=oldWings.find(w=>w.parent===main&&w.name.includes(z<1?'upper':'lower')),crankEnd=new THREE.Vector3(side*7,(roofSurfaceAt(roof.geometry,side*7,z)??(z<1?13.6:8.3))-.45,z).sub(mainOrigin),crankStart=new THREE.Vector3(0,-.12*(z-1),z-1);
+      cylinder(main,'rigid-main-crank-'+side+'-'+z,.38,crankEnd.distanceTo(crankStart),crankEnd.clone().add(crankStart).multiplyScalar(.5),crankEnd.clone().sub(crankStart),gold);
+      link('main-actuator-'+side+'-'+z,fixed,new THREE.Vector3(side*3.5,.8,z),main,crankEnd);
+    }
+    for(const object of oldChildren){
+      if(oldWings.includes(object)){main.remove(object);continue;}
+      if(!object.isInstancedMesh){object.position.sub(mainOrigin);continue;}
+      const partName=object.name,upper=partName.includes('upper');
+      // Original batches contain both lobes; split each rigid rib by its own lobe and cut.
+      const groups=new Map();
+      for(let i=0;i<object.count;i++){
+        const m=new THREE.Matrix4();object.getMatrixAt(i,m);const centre=new THREE.Vector3().setFromMatrixPosition(m),lobe=centre.z<1?'upper':'lower',cut=main.getObjectByName('outer-hinge-'+(side<0?'left':'right')+'-'+lobe).userData.cut;
+        for(const outside of [false,true]){
+          const geo=clipRoofGeometry(object.geometry,m,side,cut,outside);if(!geo.attributes.position.count){geo.dispose();continue;}
+          const key=lobe+'-'+outside;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(geo);
+        }
+      }
+      for(const [key,parts] of groups){const [lobe,outside]=key.split('-'),outer=main.getObjectByName('outer-hinge-'+(side<0?'left':'right')+'-'+lobe),origin=outside==='true'?outer.position.clone().add(mainOrigin):mainOrigin;
+        const geo=new THREE.BufferGeometry();for(const k of Object.keys(parts[0].attributes)){const arrays=parts.map(g=>g.attributes[k].array),buffer=new Float32Array(arrays.reduce((n,a)=>n+a.length,0));let at=0;for(const a of arrays){buffer.set(a,at);at+=a.length;}geo.setAttribute(k,new THREE.BufferAttribute(buffer,parts[0].attributes[k].itemSize));}geo.translate(...origin.clone().negate().toArray());geo.computeBoundingBox();parts.forEach(g=>g.dispose());
+        const beam=new THREE.Mesh(geo,partName.includes('vein')?gold:object.material);beam.name='rigid-rib-'+side+'-'+key+'-'+rig.structureMeshes.length;(outside==='true'?outer:main).add(beam);rig.structureMeshes.push(beam);
+      }
+      main.remove(object);
+    }
+  }
+  for(const side of [-1,1])for(const z of [-2,4])b.sea.collisions.push({x:side*3.5,z,r:.36,h:24.5});
+  updateRoofMechanism(b,0);
+}
+function setRoofState(state){const rig=landmarks[23].butterfly.mechanical;if(!rig)return;rig.target={open:0,half:.65,closed:1}[state]??rig.target;rig.state={open:'展开',half:'半收',closed:'收拢'}[state]||rig.state;document.querySelectorAll('[data-roof]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.roof===state)));}
+function updateRoofMechanism(b,dt){
+  const rig=b.mechanical;if(!rig)return;const h=Math.min(.12,Math.max(0,dt)),omega=1.05,offset=rig.progress-rig.target,c=rig.velocity+omega*offset,e=Math.exp(-omega*h);
+  rig.progress=THREE.MathUtils.clamp(rig.target+(offset+c*h)*e,0,1);rig.velocity=(rig.velocity-omega*c*h)*e;
+  rig.locked=Math.abs(rig.progress-rig.target)<.0005&&Math.abs(rig.velocity)<.0005;if(rig.locked){rig.progress=rig.target;rig.velocity=0;}
+  const outer=18*smooth01(rig.progress/.35),main=22*smooth01((rig.progress-.35)/.65);rig.outerAngle=outer;rig.mainAngle=main;
+  for(const joint of rig.joints)joint.object.quaternion.setFromAxisAngle(joint.object.userData.axis,joint.side*THREE.MathUtils.degToRad(joint.kind==='main'?main:outer));
+  b.root.updateWorldMatrix(true,true);
+  for(const l of rig.links){
+    const a=b.creature.worldToLocal(l.aParent.localToWorld(l.a.clone())),c=b.creature.worldToLocal(l.bParent.localToWorld(l.b.clone())),direction=c.clone().sub(a),length=direction.length();if(!l.rest)l.rest=length*.90;
+    direction.normalize();const barrelLength=l.rest,rodLength=Math.max(.02,length-barrelLength);
+    l.barrel.position.copy(a).addScaledVector(direction,barrelLength/2);l.barrel.scale.y=barrelLength;l.barrel.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),direction);
+    l.rod.position.copy(a).addScaledVector(direction,barrelLength+rodLength/2);l.rod.scale.y=rodLength;l.rod.quaternion.copy(l.barrel.quaternion);l.length=length;
+  }
+  for(const skin of rig.skins)skin.visible=!rig.skeleton;
+  const controls=$('mechanical-controls');if(controls){controls.hidden=!started||worldActive()||!$('craft-controls').hidden||player.position.distanceTo(b.root.getWorldPosition(new THREE.Vector3()))>95;$('mechanical-status').textContent=rig.state+(rig.locked?' · 已锁止':' · 机构运行中');}
+}
+
 function butterflySeaDeck(r){const s=butterflySea,t=THREE.MathUtils.clamp((r-s.start)/((s.end-s.start)*.72),0,1);return THREE.MathUtils.lerp(s.startY,s.y+.20,smooth01(t));}
 function butterflySeaSurface(x,z){
   const s=butterflySea,along=x*s.ux+z*s.uz,side=-x*s.uz+z*s.ux,d=Math.hypot(x-s.x,z-s.z);
@@ -1329,7 +1443,7 @@ function butterflySeaSurface(x,z){
   return null;
 }
 function finishButterflySea(lm){
-  const b=lm.butterfly;lm.model.updateWorldMatrix(true,true);
+  const b=lm.butterfly;installRoofMechanism(b);lm.model.updateWorldMatrix(true,true);
   lm.bounds=butterflySeaBounds(b.creature).expandByScalar(.4);lm.model.userData.bounds=lm.bounds;lm.bboxHeight=lm.bounds.max.y-lm.site.groundY;lm.groundY=lm.site.groundY;
   b.wingBounds=new THREE.Box3();b.wings.forEach(w=>b.wingBounds.union(new THREE.Box3().setFromObject(w)));b.wingBounds.expandByScalar(.4);
   b.observationTargets=b.wings.map(w=>w.localToWorld(w.geometry.boundingBox.getCenter(new THREE.Vector3())));
@@ -1358,8 +1472,8 @@ function updateButterflySea(dt,lm){
   const arrival=THREE.MathUtils.lerp(1,.86,smooth01((local.z-2)/23));
   const active=started?(1-smooth01((d-8)/28))*arrival:0;
   advanceReveal(b,dt,active,false,1-Math.min(1,(skyState.sunI||0)/1.3));
-  // A slow architectural welcome, 24 seconds per breath even when fully revealed.
-  const a=reduced?0:.0035*(1-Math.cos(elapsed*Math.PI/12));setHingeAngle(b.left,a);setHingeAngle(b.right,-a);
+  // User-commanded, sequential rigid joints; no continuous flapping.
+  updateRoofMechanism(b,dt);
   for(const w of b.wings){const u=w.material.userData.revealUniforms;u.uReveal.value=b.reveal;u.uTime.value=reduced?0:elapsed;u.uVisited.value=0;u.uNight.value=b.night;}
   b.lampMaterial.emissiveIntensity=.6+b.reveal*.6;b.finialMaterial.emissiveIntensity=.65+b.reveal*.48;b.seal.material.opacity=.18+b.reveal*.55;
 }
@@ -1369,6 +1483,7 @@ function updateButterflySeaReflection(dt){
   b.reflectionClock+=dt;if(b.reflectionClock<1/15)return;b.reflectionClock=0;
   b.root.updateWorldMatrix(true,true);b.reflectionClone.matrixAutoUpdate=false;b.reflectionClone.matrix.copy(b.root.matrixWorld);
   b.reflectionClone.getObjectByName('roof-hinge-left').quaternion.copy(b.left.quaternion);b.reflectionClone.getObjectByName('roof-hinge-right').quaternion.copy(b.right.quaternion);
+  if(b.mechanical)for(const source of [...b.mechanical.joints.map(j=>j.object),...b.mechanical.links.flatMap(l=>[l.barrel,l.rod]),...b.mechanical.skins]){const copy=b.reflectionClone.getObjectByName(source.name);if(copy){copy.position.copy(source.position);copy.quaternion.copy(source.quaternion);copy.scale.copy(source.scale);copy.visible=source.visible;}}
   b.reflectionHemi.intensity=hemi.intensity;b.reflectionKey.intensity=moon.intensity;b.reflectionKey.position.copy(moon.position);
   // Keep the reflected celestial direction identical to the visible moon.
   b.reflectionMoon.position.copy(moonOrb.position).sub(camera.position).add(activeCamera.position);b.reflectionMoon.visible=moonOrb.visible;
@@ -1399,6 +1514,7 @@ function butterflySeaBounds(root){
 }
 // Normalise from world bounds, including nested GLB transforms; never assume its authored origin.
 function placeMonument(glb,group,{targetHeight,tier}){
+  if(tier!=='butterfly-sea'&&tier!=='threshold'){const bases=[];glb.traverse(o=>{if(o.isMesh&&/^(Base(?:\.\d+)?|Steps?)$/.test(o.name))bases.push(o);});for(const o of bases)if(o.parent)o.parent.remove(o);}
   const wrap=new THREE.Group();wrap.add(glb);group.add(wrap);group.updateWorldMatrix(true,true);
   if(tier==='butterfly-sea'){wrap.userData.tier=tier;wrap.userData.dressing=new THREE.Group();wrap.userData.bounds=butterflySeaBounds(wrap);return wrap;}
   let box=new THREE.Box3().setFromObject(wrap),h=box.max.y-box.min.y;
@@ -1416,14 +1532,34 @@ function placeMonument(glb,group,{targetHeight,tier}){
         m.userData.monument=true;m.userData.baseEmission=m.emissiveIntensity;materials.set(original,m);}
       return materials.get(original);
     });if(o.material.length===1)o.material=o.material[0];});
+    if(['standard','major','math'].includes(tier))prepareBuildingNavigation(wrap);
     dressMonument(wrap);
   }
   return wrap;
 }
+function prepareBuildingNavigation(wrap){
+  // Two authored box houses get actual hollow walls and open doorways, not disabled collision.
+  wrap.updateWorldMatrix(true,true);
+  const rooms=[];wrap.traverse(o=>{if(o.isMesh&&/^(House|Room)$/.test(o.name))rooms.push(o);});
+  for(const room of rooms){
+    room.geometry.computeBoundingBox();const b=room.geometry.boundingBox,d=b.getSize(new THREE.Vector3()),c=b.getCenter(new THREE.Vector3());
+    const scale=room.getWorldScale(new THREE.Vector3()),wall=.22/Math.max(scale.x,scale.z),doorW=Math.min(d.x*.6,2.8/scale.x),doorH=Math.min(d.y*.85,2.6/scale.y);
+    const pieces=[],add=(x,y,z,w,h,l)=>{if(w>0&&h>0&&l>0)pieces.push(new THREE.BoxGeometry(w,h,l).toNonIndexed().translate(x,y,z));};
+    add(b.min.x+wall/2,c.y,c.z,wall,d.y,d.z);add(b.max.x-wall/2,c.y,c.z,wall,d.y,d.z);add(c.x,c.y,b.min.z+wall/2,d.x,d.y,wall);
+    const jamb=(d.x-doorW)/2;for(const side of [-1,1])add(c.x+side*(doorW/2+jamb/2),c.y,b.max.z-wall/2,jamb,d.y,wall);
+    add(c.x,b.max.y-(d.y-doorH)/2,b.max.z-wall/2,doorW,d.y-doorH,wall);
+    add(c.x,b.min.y+.015/scale.y,c.z,d.x,.03/scale.y,d.z);
+    const geometry=new THREE.BufferGeometry();for(const key of ['position','normal','uv']){const size=key==='uv'?2:3,arrays=pieces.map(g=>g.attributes[key].array),buffer=new Float32Array(arrays.reduce((n,a)=>n+a.length,0));let offset=0;for(const a of arrays){buffer.set(a,offset);offset+=a.length;}geometry.setAttribute(key,new THREE.BufferAttribute(buffer,size));}
+    for(const g of pieces)g.dispose();room.geometry=geometry;room.userData.openRoom=true;
+    wrap.traverse(o=>{if(o.isMesh&&/^Door(?:\.\d+)?$/.test(o.name))o.visible=false;});
+  }
+  wrap.updateWorldMatrix(true,true);const meshes=[];wrap.traverse(o=>{if(o.isMesh&&o.visible&&!o.material?.transparent&&!o.userData.dressing)meshes.push(o);});
+  navigationBuildings.push({root:wrap,bounds:new THREE.Box3().setFromObject(wrap),meshes});
+}
 function buildTerrace(lm){
   const t=lm.site,angle=Math.atan2(t.ux,t.uz),point=(d,side=0)=>[t.x+t.ux*d-t.uz*side,t.z+t.uz*d+t.ux*side];
-  const plinth=mesh(new THREE.CylinderGeometry(t.radius,t.radius+.4,t.rise,48),M.edge,scene,t.x,t.baseY+t.rise/2,t.z);
-  plinth.receiveShadow=true;disc(scene,t.x,t.z,t.radius,M.path,t.groundY+.012);
+  // Ground-level forecourt: no raised cylinder or mandatory stair approach.
+  disc(scene,t.x,t.z,t.radius,M.path,t.groundY+.012);
   const stairRun=t.steps*WORLD.STEP_DEPTH;
   for(let k=0;k<t.steps;k++){
     const [x,z]=point(-t.radius-stairRun+(k+.5)*WORLD.STEP_DEPTH),h=(k+1)*WORLD.STEP_HEIGHT;
@@ -1440,7 +1576,40 @@ function buildTerrace(lm){
   const [gx,gz]=point(-t.radius+1);instance(G.box,M.wood,gx,t.groundY+2.6,gz,3.5,.2,.3,angle);
   lm.entryPoint={x:gx,z:gz};
 }
-const landmarks=[],pickables=[],colliders=[];
+const landmarks=[],pickables=[],colliders=[],navigationBuildings=[],architecturalRecords=[],architecturalObstacles=[];
+let activeCraft=null;
+function craftedNavigation(b){
+ const collisionRoot=new THREE.Group();collisionRoot.name='physical-query-only';collisionRoot.visible=false;b.root.add(collisionRoot);
+ const meshes=[],mat=new THREE.MeshBasicMaterial({side:THREE.DoubleSide});
+ const add=box=>{const size=box.getSize(new THREE.Vector3()),center=box.getCenter(new THREE.Vector3());if(Math.min(size.x,size.y,size.z)<=0)return;const m=new THREE.Mesh(G.box,mat);m.position.copy(center);m.scale.copy(size);m.name='physical-collider';collisionRoot.add(m);meshes.push(m);};
+ b.collisionBoxes.forEach(add);
+ if(b.index!==99)add(new THREE.Box3(new THREE.Vector3(-b.width/2,-.025,-b.depth/2),new THREE.Vector3(b.width/2,.045,b.depth/2)));
+ b.root.updateWorldMatrix(true,true);navigationBuildings.push({root:b.root,bounds:b.bounds.clone(),meshes,crafted:true});
+}
+function setupCraftedLandmark(lm){
+ const b=CourtyardArchitecture.build({THREE,index:lm.index,title:lm.entry.title,zone:lm.entry.zone,materials:M});
+ for(let i=pickables.length-1;i>=0;i--)if(pickables[i].userData.landmark===lm&&pickables[i]!==lm.name)pickables.splice(i,1);
+ if(lm.fallback){lm.fallback.visible=false;lm.fallback.parent?.remove(lm.fallback);lm.fallback.userData.dressing?.parent?.remove(lm.fallback.userData.dressing);}
+ b.root.rotation.y=Math.atan2(lm.site.ux,lm.site.uz);lm.group.add(b.root);
+ CourtyardRuntime.register(THREE,b,b.root,lm.index,lm.entry.title);architecturalRecords.push(b);craftedNavigation(b);
+ b.root.userData.tier='crafted-building';b.root.userData.dressing=b.detail||new THREE.Group();b.root.userData.bounds=b.bounds;
+ lm.model=b.root;lm.crafted=b;lm.bounds=b.bounds;lm.targetHeight=b.height;lm.bboxHeight=b.height;lm.groundY=lm.site.groundY;
+ const point=b.point(0,-b.depth/2-1.2);lm.entryPoint={x:point.x,z:point.z};lm.name.position.set(0,b.height+1.6,0);lm.name.scale.multiplyScalar(.5);lm.name.userData.baseWidth=lm.name.scale.x;
+ lm.beacon.position.set(lm.site.uz*1.2,b.height+.5,-lm.site.ux*1.2);lm.marker.visible=false;lm.lightHalo.position.set(point.x-lm.entry.x,1.8,point.z-lm.entry.z);lm.lightHalo.scale.set(3.5,3.5,1);
+ b.root.traverse(c=>{if(c.isMesh&&c.name!=='physical-collider'){c.userData.landmark=lm;pickables.push(c);}});
+ // Flush-laid approach stones and paired bronze inlays meet the actual threshold.
+ const run=Math.max(0,15-b.depth/2),angle=b.yaw;
+ for(let z=-15;z< -b.depth/2;z+=.82){const q=b.point(0,z);instance(G.box,M.path,q.x,lm.site.groundY+.019,q.z,3.3,.032,.77,angle);}
+ for(const side of [-1.65,1.65])for(let z=-15;z< -b.depth/2;z+=1.2){const q=b.point(side,z);instance(G.box,M.wood,q.x,lm.site.groundY+.042,q.z,.055,.018,1.04,angle);}
+}
+function updateCraftControls(){
+ let best=15,next=null;
+ if(started&&!worldActive())for(const b of architecturalRecords){const d=Math.hypot(player.position.x-b.origin.x,player.position.z-b.origin.z);if(b.mechanisms.length&&d<best){best=d;next=b;}}
+ activeCraft=next;const controls=$('craft-controls');controls.hidden=!next;
+ if(next){$('craft-status').textContent=next.title+' · '+(next.metadata.mechanism||'通风与采光构件');controls.querySelectorAll('button').forEach(el=>el.setAttribute('aria-pressed',String(Number(el.dataset.craft)===next.targetOpen)));}
+}
+document.querySelectorAll('[data-craft]').forEach(el=>el.onclick=()=>{if(activeCraft)activeCraft.targetOpen=Number(el.dataset.craft);});
+
 LINKS.forEach((entry,index)=>{
   const group=new THREE.Group();group.position.set(entry.x,terraceSites[index].groundY,entry.z);scene.add(group);
   const tint=ZONES[entry.zone].color;const glow=material(0xc9a672,{emissive:0xffbf72,emissiveIntensity:2.3});
@@ -1533,7 +1702,7 @@ MATH_ISLES.forEach(is=>{
   mesh(new THREE.CylinderGeometry(is.r+1.2,is.r,1.2,56),M.ground,scene,is.x,-.6,is.z);
   const rim=mesh(new THREE.CylinderGeometry(is.r+1.3,is.r+1.05,.3,56),M.edge,scene,is.x,-.16,is.z);rim.castShadow=false;
   const s=label(is.name+' · '+is.note);is.label=s;s.position.set(is.x,is.key==='K'?70:42,is.z);s.scale.multiplyScalar(3);s.material.opacity=.55;scene.add(s);
-  const len=Math.hypot(is.x,is.z),site={index:26+MATH_ISLES.indexOf(is),x:is.x,z:is.z,ux:is.x/len,uz:is.z/len,radius:15,steps:20,rise:3,baseY:0,groundY:3};
+  const len=Math.hypot(is.x,is.z),site={index:26+MATH_ISLES.indexOf(is),x:is.x,z:is.z,ux:is.x/len,uz:is.z/len,radius:15,steps:0,rise:0,baseY:0,groundY:0};
   is.site=site;terraceSites.push(site);buildTerrace({site,index:site.index});
 });
 // Continuous metre-scale decks, shared by the renderer and surfaceHeight().
@@ -1587,6 +1756,7 @@ function buildBridge(b){
 }
 
 BRIDGES.forEach(buildBridge);
+BRIDGES.forEach(bridge=>bridge.mesh.add(CourtyardInfrastructure.embellishBridge({THREE,bridge})));
 islandRoads.build();
 
 function onBridgeSeg(x,z,b,half){
@@ -1614,15 +1784,13 @@ function surfaceHeight(x,z){
   return Math.hypot(x,z)>WORLD.ISLAND_RADIUS?0:terrainHeight(x,z);
 }
 const mathMonuments=[];
-Promise.resolve().then(()=>MATH_ISLES.forEach((is,i)=>{
+MATH_ISLES.forEach((is,i)=>{
   const group=new THREE.Group();group.position.set(is.x,is.site.groundY,is.z);scene.add(group);
-  const targetHeight=i===0?64:36;
-  const fb=new THREE.Group();mesh(G.cone,M.stone,fb,0,.5,0,.35,1,.35);
-  const fallback=placeMonument(fb,group,{targetHeight,tier:'math-fallback'});
-  const record={index:26+i,title:is.name,site:is.site,name:is.label,group,fallback,bounds:fallback.userData.bounds,bboxHeight:targetHeight,groundY:is.site.groundY,platformY:is.site.groundY,x:is.x,z:is.z};mathMonuments.push(record);
-  glbLoad(is.glb).then(g=>{fallback.visible=false;fallback.userData.dressing.visible=false;record.model=placeMonument(glbRefine((g.getObjectByName(is.root)||g).clone(true)),group,{targetHeight,tier:'math'});record.bounds=record.model.userData.bounds;const size=new THREE.Box3().setFromObject(record.model).getSize(new THREE.Vector3());record.lod=monumentLOD(group,size);})
-    .catch(e=>console.warn(is.glb+' 未加载',e));
-}));
+  const b=CourtyardInfrastructure.buildMath({THREE,index:i,materials:M});b.root.rotation.y=Math.atan2(is.site.ux,is.site.uz);group.add(b.root);
+  CourtyardRuntime.register(THREE,b,b.root,26+i,is.name);architecturalRecords.push(b);craftedNavigation(b);
+  const record={index:26+i,title:is.name,site:is.site,name:is.label,group,model:b.root,crafted:b,bounds:b.bounds,bboxHeight:b.height,groundY:is.site.groundY,platformY:is.site.groundY,x:is.x,z:is.z};mathMonuments.push(record);
+  is.label.position.y=is.site.groundY+b.height+2.3;
+});
 
 // Seven-bridge challenge: cross each bridge exactly once. Euler 1736: 4 odd vertices make it impossible.
 const bridgesWalked=new Set();let currentBridge=0,toastTimer=0;
@@ -1722,10 +1890,11 @@ glbLoad('assets/models/Tree.glb').then(g=>instancePrototype(g,glbTrees,p=>p.h,gl
 glbLoad('assets/models/SteppingStone.glb').then(g=>{
   const stones=[];for(let i=0;i<8;i++)stones.push({x:4+i*.8,y:terrainHeight(4+i*.8,7),z:7});instancePrototype(g,stones,()=>.12);
 }).catch(e=>console.warn('SteppingStone.glb 未加载',e));
-glbLoad('assets/models/Torii.glb').then(g=>{
-  toriiFallback.visible=false;const group=new THREE.Group();group.position.set(0,terrainHeight(0,WORLD.TORII_Z),WORLD.TORII_Z);garden.add(group);
-  placeMonument(glbRefine(g),group,{targetHeight:WORLD.TORII_HEIGHT,tier:'threshold'});
-}).catch(e=>console.warn('Torii.glb 未加载',e));
+{
+  toriiFallback.visible=false;
+  const b=CourtyardInfrastructure.buildTorii({THREE,materials:M});b.root.position.set(0,terrainHeight(0,WORLD.TORII_Z),WORLD.TORII_Z);garden.add(b.root);
+  CourtyardRuntime.register(THREE,b,b.root,99,'庭门');architecturalObstacles.push(b);craftedNavigation(b);
+}
 // Distance falloff applies in world metres to both instanced fire rooms and small wicks.
 function pathLightMaterial(intensity){
   const mat=material(0x634521,{emissive:0xffb45b,emissiveIntensity:intensity});
@@ -1790,20 +1959,9 @@ Object.keys(glbPerEntry).forEach(k=>{
     glbLoad(spec[0]).catch(e=>console.warn(spec[0]+' 未加载',e));
     return;
   }
-  if(!lm.zproc.length)return;
-  glbLoad(spec[0]).then(g=>{
-    const proto=(g.getObjectByName(spec[1])||g).clone(true);if(lm.index===15)proto.rotation.y+=Math.PI/2; // Wide forms face their free corridor.
-    lm.fallback.visible=false;lm.fallback.userData.dressing.visible=false;
-    const refined=glbRefine(proto,lm.glow);
-    const wrap=placeMonument(refined,lm.group,{targetHeight:lm.targetHeight,tier:lm.targetHeight>=48?'major':'standard'});
-    lm.model=wrap;wrap.updateWorldMatrix(true,true);const box=new THREE.Box3().setFromObject(wrap);
-    lm.bboxHeight=box.max.y-box.min.y;lm.groundY=box.min.y;lm.bounds=wrap.userData.bounds;
-    // A single simplified mass is used beyond LOD distance, with hysteresis in updateLandmarks.
-    const size=box.getSize(new THREE.Vector3());lm.lod=monumentLOD(lm.group,size);
-    lm.entryPoint={x:lm.entry.x-lm.site.ux*(lm.site.radius-2),z:lm.entry.z-lm.site.uz*(lm.site.radius-2)};
-    wrap.traverse(c=>{if(c.isMesh){c.userData.landmark=lm;pickables.push(c);}});
-  }).catch(e=>console.warn(spec[0]+' 未加载',e));
+  setupCraftedLandmark(lm);
 });
+flushInstances();
 const particleCount=lightQuality?16:80,particlePositions=new Float32Array(particleCount*3),particleBase=[];
 for(let i=0;i<particleCount;i++){const a=random()*Math.PI*2,r=Math.sqrt(random())*WORLD.ISLAND_RADIUS;particleBase.push([Math.cos(a)*r,terrainHeight(Math.cos(a)*r,Math.sin(a)*r)+.7+random()*4,Math.sin(a)*r,random()*6]);particlePositions.set(particleBase[i].slice(0,3),i*3);}
 const particleGeometry=new THREE.BufferGeometry();particleGeometry.setAttribute('position',new THREE.BufferAttribute(particlePositions,3));
@@ -1848,7 +2006,7 @@ $('intro').addEventListener('click',start);
 function teleport(x,z){
   if(worldActive())return false;
   clearInput();velocity.set(0,0);if(!walkable(x,z))return false;
-  player.position.set(x,surfaceHeight(x,z),z);setNear(null);
+  player.position.set(x,surfaceHeight(x,z),z);motor.vy=0;motor.grounded=true;motor.jumpBuffer=0;setNear(null);
   cameraState.yaw=butterflySea&&butterflySeaSurface(x,z)!==null?Math.atan2(-butterflySea.ux,-butterflySea.uz):0;
   cameraState.pitch=WORLD.CAMERA_PITCH;cameraState.framing=0;cameraState.initialized=false;viewCache=null;
   // Seed the same shoulder-height orbit used while walking, without a cross-world sweep.
@@ -1865,7 +2023,8 @@ window.addEventListener('keydown',e=>{
   if(e.target.closest('#viewpad'))return;
   if(e.target.closest('button,a')&&(e.code==='Enter'||e.code==='Space'))return;
   if(moveKeys.includes(e.code)||e.code==='ShiftLeft'||e.code==='ShiftRight'){e.preventDefault();if(!e.repeat)interruptWorldReveal();keys.add(e.code);}
-  if((e.code==='Enter'||e.code==='Space')&&!e.repeat){e.preventDefault();visit(nearest);}
+  if(e.code==='Space'&&!e.repeat){e.preventDefault();requestJump();}
+  if(e.code==='Enter'&&!e.repeat){e.preventDefault();visit(nearest);}
   if(e.code==='KeyR'&&!e.repeat)teleport(0,3);
 });
 window.addEventListener('keyup',e=>keys.delete(e.code));
@@ -1873,6 +2032,7 @@ window.addEventListener('blur',()=>{clearInput();velocity.set(0,0);});
 document.addEventListener('visibilitychange',()=>{clearInput();velocity.set(0,0);lastTime=0;});
 let joyPointer=null,joyReturnTimer=null,sprintPointer=null,currentSpeed=6.3,sprinting=false;
 const joystick=$('joystick'),sprintButton=$('sprint');
+$('jump').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();if(!worldInputBlocked())requestJump();});
 const floatingJoystick=()=>matchMedia('(pointer:coarse)').matches||document.body.classList.contains('touch');
 function resetJoystick(immediate=false){
   const id=joyPointer;joyPointer=null;joy.x=joy.y=0;$('stick').style.transform='';
@@ -2062,42 +2222,86 @@ function drawAtlas(){
 }
 
 function move(dt){stepWalker(dt);}
-// Shared motor: the hub keeps its original surface, collision and bridge behavior.
+const motor={vy:0,grounded:true,jumpBuffer:0,coyote:.1,stepHeight:.35};
+function requestJump(){if(!started||modalOpen())return;interruptWorldReveal();motor.jumpBuffer=.16;}
+const navRay=new THREE.Raycaster(),navNormal=new THREE.Vector3(),navMatrix=new THREE.Matrix3();
+function nearbyNavigation(x,z,space){
+  if(space)return space.navigation||[];
+  return navigationBuildings.filter(b=>x>b.bounds.min.x-1&&x<b.bounds.max.x+1&&z>b.bounds.min.z-1&&z<b.bounds.max.z+1);
+}
+function supportedHeight(x,z,foot,floor,nearby){
+  let y=floor(x,z);navRay.set(new THREE.Vector3(x,foot+motor.stepHeight+.04,z),new THREE.Vector3(0,-1,0));navRay.near=0;navRay.far=Math.max(1,foot+motor.stepHeight-y+.2);
+  for(const b of nearby)for(const hit of navRay.intersectObjects(b.meshes,false)){
+    if(!hit.face||hit.point.y<y-.02)continue;navMatrix.getNormalMatrix(hit.object.matrixWorld);navNormal.copy(hit.face.normal).applyMatrix3(navMatrix).normalize();
+    if(navNormal.y>.55&&hit.point.y<=foot+motor.stepHeight+.04)y=Math.max(y,hit.point.y);
+  }
+  return y;
+}
+function wallHit(x,z,dx,dz,foot,nearby){
+  const length=Math.hypot(dx,dz);if(length<1e-7)return null;
+  const direction=new THREE.Vector3(dx/length,0,dz/length);navRay.near=0;navRay.far=length+.38;
+  let best=null;
+  for(const height of [.42,1.05,1.55])for(const side of [-.27,0,.27]){
+    navRay.set(new THREE.Vector3(x-direction.z*side,foot+height,z+direction.x*side),direction);
+    for(const b of nearby)for(const hit of navRay.intersectObjects(b.meshes,false)){
+      if(!hit.face)continue;navMatrix.getNormalMatrix(hit.object.matrixWorld);navNormal.copy(hit.face.normal).applyMatrix3(navMatrix).normalize();
+      if(Math.abs(navNormal.y)>.5)continue;
+      if(navNormal.dot(direction)>0)navNormal.negate();
+      if(navNormal.dot(direction)>-.001)continue;
+      if(!best||hit.distance<best.distance)best={distance:hit.distance,normal:navNormal.clone()};
+    }
+  }
+  return best;
+}
 function stepWalker(dt,space=null){
   const floor=space?space.surfaceHeight:surfaceHeight,allowed=space?space.walkable:walkable;
   if(!started||modalOpen()){clearInput();return;}
-  const amplitude=Math.min(1,Math.hypot(joy.x,joy.y));
-  const keyboardMoving=moveKeys.some(key=>keys.has(key));
+  const amplitude=Math.min(1,Math.hypot(joy.x,joy.y)),keyboardMoving=moveKeys.some(key=>keys.has(key));
   sprinting=keys.has('ShiftLeft')||keys.has('ShiftRight')||sprintPointer!==null||amplitude>=.92;
-  const targetSpeed=sprinting?10.6:keyboardMoving||amplitude<.08?6.3:3.2+3.1*THREE.MathUtils.clamp((amplitude-.08)/(.92-.08),0,1);
-  currentSpeed+=(targetSpeed-currentSpeed)*(1-Math.exp(-8*dt));
+  const targetSpeed=sprinting?10.6:6.3;
   const ix=(keys.has('KeyD')||keys.has('ArrowRight')?1:0)-(keys.has('KeyA')||keys.has('ArrowLeft')?1:0)+joy.x;
   const iz=(keys.has('KeyS')||keys.has('ArrowDown')?1:0)-(keys.has('KeyW')||keys.has('ArrowUp')?1:0)+joy.y;
-  desired.set(ix,iz);if(desired.length()<.08)desired.set(0,0);else desired.normalize();
-  const x=desired.x,z=desired.y,sin=Math.sin(cameraState.yaw),cos=Math.cos(cameraState.yaw);
-  desired.set(x*cos+z*sin,-x*sin+z*cos).multiplyScalar(currentSpeed);
-  space?.easeArrival?.(desired);
-  // Exponential acceleration and stronger braking: responsive on both keys and touch.
-  velocity.lerp(desired,1-Math.exp(-(desired.lengthSq()?12:22)*dt));if(velocity.lengthSq()<.0005)velocity.set(0,0);
-  const oldX=player.position.x,oldZ=player.position.z;
-  player.position.x+=velocity.x*dt;player.position.z+=velocity.y*dt;
-  for(const c of (space?space.colliders:colliders)){const dx=player.position.x-c.x,dz=player.position.z-c.z,d=Math.hypot(dx,dz),r=c.r+.38;if(d<r){const nx=d>1e-5?dx/d:1,nz=d>1e-5?dz/d:0;player.position.x=c.x+nx*r;player.position.z=c.z+nz*r;const inward=velocity.x*nx+velocity.y*nz;if(inward<0){velocity.x-=nx*inward;velocity.y-=nz*inward;}}}
-  // Walkable = mainland ∪ bridge decks ∪ isle disks (batch 5); outside that is water — roll back.
-  if(!allowed(player.position.x,player.position.z)){player.position.x=oldX;player.position.z=oldZ;velocity.multiplyScalar(0);}
-  const ty=floor(player.position.x,player.position.z),oldY=floor(oldX,oldZ);
-  // A vertical plinth is not a ramp. Only the 0.15m treads permit ascending it.
-  if(Math.abs(ty-oldY)>.32){player.position.x=oldX;player.position.z=oldZ;velocity.set(0,0);}
-  player.position.y=floor(player.position.x,player.position.z);
-
-  const speed=velocity.length();if(speed>.05){const target=Math.atan2(velocity.x,velocity.y);let diff=target-body.rotation.y;diff=Math.atan2(Math.sin(diff),Math.cos(diff));body.rotation.y+=diff*(reduced?1:1-Math.exp(-16*dt));}
-  walkPhase+=speed*dt*2.5;body.position.y=reduced?0:Math.abs(Math.sin(walkPhase))*.065*Math.min(speed,1);legL.rotation.x=reduced?0:Math.sin(walkPhase)*.45*Math.min(speed,1);legR.rotation.x=-legL.rotation.x;
+  const input=new THREE.Vector2(ix,iz);if(input.length()<.08)input.set(0,0);else input.multiplyScalar(Math.min(1,input.length())/input.length());
+  const sin=Math.sin(cameraState.yaw),cos=Math.cos(cameraState.yaw),count=Math.max(1,Math.ceil(Math.min(dt,.12)*120)),h=Math.min(dt,.12)/count;
+  for(let n=0;n<count;n++){
+    currentSpeed+=(targetSpeed-currentSpeed)*(1-Math.exp(-8*h));
+    desired.set(input.x*cos+input.y*sin,-input.x*sin+input.y*cos).multiplyScalar(currentSpeed);space?.easeArrival?.(desired);
+    velocity.lerp(desired,1-Math.exp(-(desired.lengthSq()?14:26)*h));if(velocity.lengthSq()<.0005)velocity.set(0,0);
+    const ox=player.position.x,oz=player.position.z,nearby=nearbyNavigation(ox,oz,space),support=supportedHeight(ox,oz,player.position.y,floor,nearby);
+    motor.grounded=player.position.y<=support+.045&&motor.vy<=0;
+    if(motor.grounded){player.position.y=support;motor.vy=0;motor.coyote=.1;}else motor.coyote=Math.max(0,motor.coyote-h);
+    if(motor.jumpBuffer>0&&motor.coyote>0){motor.vy=6.1;motor.grounded=false;motor.coyote=0;motor.jumpBuffer=0;}
+    motor.jumpBuffer=Math.max(0,motor.jumpBuffer-h);
+    let dx=velocity.x*h,dz=velocity.y*h;
+    for(let contact=0;contact<3;contact++){const hit=wallHit(ox,oz,dx,dz,player.position.y,nearby);if(!hit)break;const inward=dx*hit.normal.x+dz*hit.normal.z;if(inward<0){dx-=hit.normal.x*inward;dz-=hit.normal.z*inward;}const v=velocity.x*hit.normal.x+velocity.y*hit.normal.z;if(v<0){velocity.x-=hit.normal.x*v;velocity.y-=hit.normal.z*v;}}
+    const valid=(x,z)=>allowed(x,z)&&supportedHeight(x,z,player.position.y,floor,nearby)<=player.position.y+motor.stepHeight+.01;
+    let nx=ox+dx,nz=oz+dz;
+    if(!valid(nx,nz)){if(valid(ox+dx,oz))nz=oz;else if(valid(ox,oz+dz))nx=ox;else{nx=ox;nz=oz;}if(nx===ox)velocity.x=0;if(nz===oz)velocity.y=0;}
+    for(const c of (space?space.colliders:colliders)){
+      const x=nx-c.x,z=nz-c.z,d=Math.hypot(x,z),r=c.r+.38;if(d<r){const a=d>1e-5?x/d:1,b=d>1e-5?z/d:0,px=c.x+a*r,pz=c.z+b*r;if(valid(px,pz)){nx=px;nz=pz;}else{nx=ox;nz=oz;}const inward=velocity.x*a+velocity.y*b;if(inward<0){velocity.x-=a*inward;velocity.y-=b*inward;}}
+    }
+    player.position.x=nx;player.position.z=nz;
+    const target=supportedHeight(nx,nz,player.position.y,floor,nearby);
+    if(motor.grounded&&target>=player.position.y-.07&&target<=player.position.y+motor.stepHeight+.01)player.position.y=target;
+    else{
+      motor.grounded=false;motor.vy-=16*h;const beforeY=player.position.y;player.position.y+=motor.vy*h;
+      if(motor.vy>0){
+        // Sweep the head during ascent so a jump cannot pass through a lintel/ceiling.
+        navRay.near=0;navRay.far=player.position.y-beforeY+.08;navRay.set(new THREE.Vector3(nx,beforeY+1.65,nz),new THREE.Vector3(0,1,0));
+        for(const b of nearby)for(const hit of navRay.intersectObjects(b.meshes,false))if(hit.face){navMatrix.getNormalMatrix(hit.object.matrixWorld);navNormal.copy(hit.face.normal).applyMatrix3(navMatrix).normalize();if(Math.abs(navNormal.y)>.55){player.position.y=Math.min(player.position.y,hit.point.y-1.65-.02);motor.vy=0;}}
+      }
+      if(player.position.y<=target){player.position.y=target;motor.vy=0;motor.grounded=true;}
+    }
+  }
+  const speed=velocity.length();if(speed>.05){const target=Math.atan2(velocity.x,velocity.y),diff=Math.atan2(Math.sin(target-body.rotation.y),Math.cos(target-body.rotation.y));body.rotation.y+=diff*(reduced?1:1-Math.exp(-18*dt));}
+  walkPhase+=speed*dt*2.5;body.position.y=reduced||!motor.grounded?0:Math.abs(Math.sin(walkPhase))*.04*Math.min(speed,1);legL.rotation.x=reduced?0:Math.sin(walkPhase)*.45*Math.min(speed,1);legR.rotation.x=-legL.rotation.x;
   lanternSwing.rotation.z=reduced?0:Math.sin(walkPhase+.65)*.13*Math.min(speed/3,1);lanternSwing.rotation.x=reduced?0:Math.cos(walkPhase*.5)*.06*Math.min(speed,1);
-  if(space)return;
-  dustElapsed+=dt;
-  if(!reduced&&!lightQuality&&speed>1&&dustElapsed>.46){dustElapsed=0;const count=random()>.7?2:1;for(let i=0;i<count;i++){const puff=dustPool[dustCursor++%dustPool.length];puff.position.set(player.position.x+(random()-.5)*.3,player.position.y+.09,player.position.z+(random()-.5)*.3);puff.userData.life=.65;puff.visible=true;}}
-  bridgeTick();
+  if(!space)bridgeTick();
 }
+
 function updateLandmarks(dt){
+  CourtyardRuntime.update([...architecturalRecords,...architecturalObstacles],player.position,dt,lightQuality,camera);
+  updateCraftControls();
   let closest=null,best=WORLD.INTERACT_DISTANCE;
   for(const lm of landmarks){const entryDistance=Math.hypot(player.position.x-lm.entryPoint.x,player.position.z-lm.entryPoint.z),d=lm.gatePoint?Math.min(entryDistance,Math.hypot(player.position.x-lm.gatePoint.x,player.position.z-lm.gatePoint.z)):entryDistance;if(d<best){best=d;closest=lm;}}
   setNear(started?closest:null);
@@ -2105,20 +2309,20 @@ function updateLandmarks(dt){
   for(const lm of landmarks){
     const d=Math.hypot(player.position.x-lm.entry.x,player.position.z-lm.entry.z),active=lm===nearest;
     lm.name.visible=started&&d<WORLD.LABEL_DISTANCE;lm.name.material.opacity=active?1:!started?.75:THREE.MathUtils.clamp(1-(d-20)/100,.2,.85);
-    lm.name.material.color.setHex(active?0xffd6a3:0xe8e2d5);const factor=active?1.1:1;lm.name.scale.set(lm.name.userData.baseWidth*factor,3.24*factor,1);
+    lm.name.material.color.setHex(active?0xffd6a3:0xe8e2d5);const factor=active?1.1:1;lm.name.scale.set(lm.name.userData.baseWidth*factor,(lm.crafted?1.4:3.24)*factor,1);
     lm.activation+=(Number(active)-lm.activation)*(reduced?1:1-Math.exp(-7*dt));
     // Keep the measured model base immovable; activation belongs to light, never to foundations.
-    if(lm.model){const limit=lightQuality?WORLD.LOD_MOBILE:WORLD.LOD_DESKTOP;
+    if(lm.model&&!lm.crafted){const limit=lightQuality?WORLD.LOD_MOBILE:WORLD.LOD_DESKTOP;
       const far=lm.index===23?false:d>limit+(lm.model.visible?12:-12);lm.model.visible=!far;lm.model.userData.dressing.visible=!far;lm.lod.visible=far;
     }
     const lit=visited.has(lm.index),breath=reduced?0:Math.sin(elapsed*1.2+lm.index*.7)*.045;
-    const body=lm.model||lm.fallback;body.traverse(o=>{if(o.isMesh){for(const mat of (Array.isArray(o.material)?o.material:[o.material]))if(mat.userData.baseEmission)mat.emissiveIntensity=mat.userData.baseEmission*(lit?1.08:1);}});
+    const body=lm.model||lm.fallback;if(!lm.crafted)body.traverse(o=>{if(o.isMesh){for(const mat of (Array.isArray(o.material)?o.material:[o.material]))if(mat.userData.baseEmission)mat.emissiveIntensity=mat.userData.baseEmission*(lit?1.08:1);}});
     lm.lightHalo.material.opacity=(lit?.065:.04)+lm.activation*.015+breath*.1;lm.marker.material.opacity=active?.7:lit?.4:.16;
     lm.beacon.visible=lit;
     // Blob shadows stay on the ground while the building lifts.
     lm.group.children.forEach(child=>{if(child.material===M.shadow)child.position.y=.025;});
   }
-  for(const m of mathMonuments)if(m.model){const d=Math.hypot(player.position.x-m.x,player.position.z-m.z),limit=lightQuality?WORLD.LOD_MOBILE:WORLD.LOD_DESKTOP,far=!(viewCache?.lm===m&&cameraState.framing>.01)&&d>limit+(m.model.visible?12:-12);m.model.visible=!far;m.model.userData.dressing.visible=!far;m.lod.visible=far;}
+  for(const m of mathMonuments)if(m.model&&!m.crafted){const d=Math.hypot(player.position.x-m.x,player.position.z-m.z),limit=lightQuality?WORLD.LOD_MOBILE:WORLD.LOD_DESKTOP,far=!(viewCache?.lm===m&&cameraState.framing>.01)&&d>limit+(m.model.visible?12:-12);m.model.visible=!far;m.model.userData.dressing.visible=!far;m.lod.visible=far;}
   let zone=-1,min=80;ZONES.forEach((item,i)=>{const d=Math.hypot(player.position.x-item.x,player.position.z-item.z);if(d<min){zone=i;min=d;}});
   const inIsle=MATH_ISLES.find(is=>Math.hypot(player.position.x-is.x,player.position.z-is.z)<is.r+2.5);
   const locationText=nearest?nearest.entry.title:inIsle?inIsle.note:zone<0?'庭心':ZONES[zone].note;
@@ -2127,8 +2331,11 @@ function updateLandmarks(dt){
   if(uiKey!==lastUIZone){lastUIZone=uiKey;document.querySelectorAll('[data-zone]').forEach((button,i)=>{const on=!inIsle&&i===zone;button.classList.toggle('active',on);button.setAttribute('aria-pressed',String(on));});}
 }
 // AABBs include actual face trim and footing, independent of visual LOD.
-function subjectBounds(){return [...landmarks,...mathMonuments].map(l=>l.bounds).filter(Boolean);}
-const cameraRay=new THREE.Ray(),rayPoint=new THREE.Vector3();
+function subjectBounds(){
+ const boxes=[];for(const b of [...architecturalRecords,...architecturalObstacles])if(Math.hypot(player.position.x-b.origin.x,player.position.z-b.origin.z)<Math.max(b.width,b.depth)+25)boxes.push(...b.cameraBoxes);
+ if(landmarks[23]?.bounds)boxes.push(landmarks[23].bounds);return boxes;
+}
+const cameraRay=new THREE.Ray(),rayPoint=new THREE.Vector3(),architectureCameraRay=new THREE.Raycaster();
 function segmentHit(a,b,box,margin=0){
   const expanded=margin?box.clone().expandByScalar(margin):box,direction=new THREE.Vector3().subVectors(b,a),length=direction.length();
   if(length<1e-6)return null;cameraRay.set(a,direction.divideScalar(length));
@@ -2151,6 +2358,13 @@ function clearCamera(position,target,pad=WORLD.CAMERA_CLEARANCE,space=null){
     }
     const hit=segmentHit(target,position,expanded);
     if(hit)distance=Math.min(distance,Math.max(.6,hit.distanceTo(target)-.05));
+  }
+  if(!space){
+    architectureCameraRay.set(target,direction);architectureCameraRay.near=.12;architectureCameraRay.far=distance;
+    for(const b of [...architecturalRecords,...architecturalObstacles]){
+      if(Math.hypot(target.x-b.origin.x,target.z-b.origin.z)>Math.max(b.width,b.depth)+distance+2)continue;
+      const hits=architectureCameraRay.intersectObjects(b.cameraMeshes,false);if(hits.length)distance=Math.min(distance,Math.max(.6,hits[0].distance-Math.max(.18,pad)));
+    }
   }
   distance=cameraGroundDistance(target,direction,distance,pad,space);
   position.copy(target).addScaledVector(direction,distance);return distance;
@@ -2886,7 +3100,7 @@ function w2bTest(action='step',dt=1/60,input){
 
 function frame(now){
   requestAnimationFrame(frame);if(failed||document.hidden){lastTime=0;return;}
-  const raw=lastTime?(now-lastTime)/1000:1/60,dt=Math.min(raw,.035);lastTime=now;
+  const raw=lastTime?(now-lastTime)/1000:1/60,dt=Math.min(raw,.12);lastTime=now;
   if(worldActive()){WorldHost.tick(dt);renderer.info.reset();composer.render(dt);return;}
   elapsed+=dt;
   skyTick(dt);
@@ -2902,13 +3116,38 @@ function frame(now){
   if(!qualityReduced&&elapsed>3){slowFrames=raw>.029?slowFrames+1:Math.max(0,slowFrames-2);if(slowFrames>90){qualityReduced=true;reduceQuality();}}
 }
 // Read-mostly handle for automated smoke tests (batch 5 seven-bridge verification).
-window.__garden={get worldHost(){return WorldHost;},get transitionDirector(){return TransitionDirector;},get renderPass(){return mainRenderPass;},__w2bTest:w2bTest,get skyT(){return skyT;},get atlas(){return {...atlasState,scales:[...atlasState.scales]};},WORLD,scene,renderer,camera,composer,cameraLook,subjectBounds,monumentFaces,walkable,surfaceHeight,terrainHeight,teleport,start,player,cameraState,modelLoads,
+document.querySelectorAll('[data-roof]').forEach(button=>button.onclick=()=>setRoofState(button.dataset.roof));
+$('roof-skeleton').onclick=()=>{const r=landmarks[23].butterfly.mechanical;r.skeleton=!r.skeleton;$('roof-skeleton').setAttribute('aria-pressed',String(r.skeleton));updateRoofMechanism(landmarks[23].butterfly,0);};
+window.__garden={mechanicalStep(dt){updateButterflySea(dt,landmarks[23]);},setRoofState,get worldHost(){return WorldHost;},get transitionDirector(){return TransitionDirector;},get renderPass(){return mainRenderPass;},__w2bTest:w2bTest,get skyT(){return skyT;},get atlas(){return {...atlasState,scales:[...atlasState.scales]};},get motor(){return {...motor,speed:velocity.length(),currentSpeed,sprinting};},get navigation(){return navigationBuildings;},requestJump,stepWalker,WORLD,scene,renderer,camera,composer,cameraLook,subjectBounds,monumentFaces,walkable,surfaceHeight,terrainHeight,teleport,start,player,cameraState,modelLoads,
   get butterfly(){return landmarks[23].butterfly;},get sharedIvory(){return M.ivory;},BUTTERFLY,
   get landmarks(){return landmarks.map(lm=>({index:lm.index,title:lm.entry.title,bboxHeight:lm.bboxHeight,groundY:lm.groundY,x:lm.entry.x,z:lm.entry.z,bounds:lm.bounds,platformY:lm.site.groundY,targetHeight:lm.targetHeight,entryPoint:lm.entryPoint,...(lm.gatePoint?{gatePoint:lm.gatePoint}:{}),site:lm.site,labelY:lm.group.position.y+lm.name.position.y}));},
   get mathMonuments(){return mathMonuments.map(({group,model,lod,fallback,bounds,site,name,...r})=>r);},
   get quality(){return {lightQuality,qualityReduced,pixelRatio:renderer.getPixelRatio(),drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles};},
   get observation(){return viewCache?{position:viewCache.position,target:viewCache.target,k:viewCache.k}:null;},
   get nearest(){return nearest?.index??null;},get cameraHeight(){return camera.position.y-surfaceHeight(camera.position.x,camera.position.z);},BRIDGES,MATH_ISLES,bridgesWalked,get bridge8Open(){return bridge8Open;},setSky(v){skyT=((v%1)+1)%1;skyTarget=null;},skyInfo(){return {t:+skyT.toFixed(3),name:lastSkyName,...skyState};}};
+// Development harness is opt-in and never changes production navigation/camera control.
+if(new URLSearchParams(location.search).has('architectureQA'))window.__garden.architectureQA={
+ buildings:architecturalRecords,
+ clear(){clearInput();},
+ step(dt,input=[]){keys.clear();input.forEach(k=>keys.add(k));stepWalker(dt);updateCamera(dt);CourtyardRuntime.update(architecturalRecords,player.position,dt,lightQuality);},
+ mechanism(index,value,snap=false){const b=architecturalRecords.find(b=>b.index===index);if(!b)return;b.targetOpen=value;if(snap){b.open=value;for(const m of b.mechanisms)if(m.update)m.update(value);}CourtyardRuntime.update([b],player.position,.2,lightQuality);},
+ get views(){return [{name:'court-overview',position:[85,58,185],target:[0,2,0]},{name:'mechanical-butterfly',position:landmarks[23].butterfly.root.localToWorld(new THREE.Vector3(95,48,-150)).toArray(),target:landmarks[23].butterfly.root.localToWorld(new THREE.Vector3(0,15,0)).toArray()},...architecturalRecords.flatMap(b=>{
+ const p=b.point(b.width*.75,-b.depth*.78-7),t=b.point(0,0),inside=b.point(.3,-b.depth*.32);p.y=b.origin.y+Math.min(8,b.height*.48);t.y=b.origin.y+3.4;inside.y=b.origin.y+1.68;
+ return [{name:'exterior-'+b.index,position:p.toArray(),target:t.toArray()},...([0,4,9,10,12,17,20,24,25,26,27,28].includes(b.index)?[{name:'interior-'+b.index,position:inside.toArray(),target:[t.x,b.origin.y+2.5,t.z]}]:[])];})];},
+ renderView(view){teleport(view.target[0],view.target[2]);skyT=.28;skyTick(0);scene.updateMatrixWorld(true);camera.position.fromArray(view.position);cameraLook.fromArray(view.target);camera.lookAt(cameraLook);camera.fov=48;camera.updateProjectionMatrix();for(const b of [...architecturalRecords,...architecturalObstacles]){b.root.visible=true;b.detail.visible=camera.position.distanceTo(b.origin)<65;}composer.render(0);},
+ butterflyAudit(){const b=landmarks[23].butterfly,r=b.mechanical,body=b.creature.position.clone(),rows=[];for(const state of ['open','half','closed','open','closed','half','open']){setRoofState(state);for(let i=0;i<180;i++)updateRoofMechanism(b,.1);rows.push({state,progress:r.progress,locked:r.locked,mainAngle:r.mainAngle,outerAngle:r.outerAngle,scales:r.skins.every(s=>s.scale.equals(new THREE.Vector3(1,1,1))),links:r.links.every(l=>Number.isFinite(l.length)&&l.rod.scale.y>0&&l.barrel.scale.y>0)});}r.skeleton=true;updateRoofMechanism(b,0);const skeleton=r.skins.every(s=>!s.visible);r.skeleton=false;updateRoofMechanism(b,0);return{passed:rows.every(r=>r.locked&&r.scales&&r.links)&&skeleton&&b.creature.position.equals(body),rows,skeleton,fixedBody:b.creature.position.equals(body),joints:r.joints.length,links:r.links.length};},
+ movementAudit(){
+  const travel=run=>{teleport(0,3);cameraState.yaw=0;keys.clear();keys.add('KeyW');if(run)keys.add('ShiftLeft');for(let i=0;i<120;i++)stepWalker(1/60);const d=3-player.position.z;clearInput();return d;};
+  const walking=travel(false),running=travel(true);teleport(0,3);const floor=player.position.y;requestJump();let peak=0;for(let i=0;i<160;i++){stepWalker(1/60);peak=Math.max(peak,player.position.y-floor);}const landed=motor.grounded&&Math.abs(player.position.y-floor)<.06;
+  const b=architecturalRecords.find(b=>b.index===0),box=b.collisionBoxes.find(q=>q.max.y-q.min.y>2&&q.max.x< -1.5);let wallBlocked=false;
+  if(box){const c=box.getCenter(new THREE.Vector3()),p=b.point(box.max.x+1,c.z),end=b.point(c.x,c.z);p.y=b.origin.y;wallBlocked=!!wallHit(p.x,p.z,end.x-p.x,end.z-p.z,p.y,nearbyNavigation(p.x,p.z));}
+  let wallSliding=false,slideDisplacement=0;const slideBox=b.collisionBoxes.find(q=>q.max.x< -2&&q.max.z-q.min.z>4&&q.max.y>2);
+  if(slideBox){const start=b.point(slideBox.min.x-.75,-1);teleport(start.x,start.z);cameraState.yaw=b.yaw;keys.clear();keys.add('KeyD');keys.add('KeyS');for(let i=0;i<60;i++)stepWalker(1/60);clearInput();const end=b.local(player.position);slideDisplacement=end.z+1;wallSliding=end.x<=slideBox.min.x-.25&&slideDisplacement>1;}
+  teleport(0,3);cameraState.yaw=.91;cameraState.pitch=.31;for(let i=0;i<100;i++)updateCamera(1/60);const freeCamera=Math.abs(cameraState.yaw-.91)<1e-8&&Math.abs(cameraState.pitch-.31)<1e-8;
+  clearInput();return{passed:walking>11&&running>walking*1.4&&peak>.9&&peak<1.4&&landed&&wallBlocked&&wallSliding&&freeCamera,walking,running,jumpPeak:peak,landed,wallBlocked,wallSliding,slideDisplacement,freeCamera};
+ }
+};
+
 ready=true;$('start').disabled=false;$('start').innerHTML='提灯入庭<span class="arrow">↗</span>';
 drawMap();requestAnimationFrame(frame);
 })();

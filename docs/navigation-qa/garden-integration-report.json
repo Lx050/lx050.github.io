@@ -1,0 +1,111 @@
+{
+  "method": "CDP/SwiftShader, finite stepping; emulated narrow viewport, not device performance",
+  "reports": [
+    {
+      "width": 1440,
+      "monument": {
+        "source": "PapilioMachaon-Web.glb",
+        "loaded": true,
+        "displayWingspan": 8,
+        "position": [
+          0,
+          8.7,
+          -151
+        ],
+        "fade": 1
+      },
+      "loads": {
+        "requests": 1,
+        "loaded": 1,
+        "failed": 0
+      },
+      "resources": 103,
+      "memory": {
+        "geometries": 86,
+        "textures": 24
+      },
+      "viewDrag": true,
+      "keyboardWalk": true,
+      "dispose": {
+        "resources": 0,
+        "sceneNull": true
+      },
+      "returnInvitation": true,
+      "endReturnWithE": true,
+      "reentryLoads": {
+        "requests": 1,
+        "loaded": 1,
+        "failed": 0
+      },
+      "releasedMemory": {
+        "geometries": 23,
+        "textures": 15
+      },
+      "errors": [],
+      "responses": [],
+      "overflow": false
+    },
+    {
+      "width": 390,
+      "monument": {
+        "source": "PapilioMachaon-Web-Compact.glb",
+        "loaded": true,
+        "displayWingspan": 8,
+        "position": [
+          0,
+          8.7,
+          -151
+        ],
+        "fade": 1
+      },
+      "loads": {
+        "requests": 1,
+        "loaded": 1,
+        "failed": 0
+      },
+      "resources": 103,
+      "memory": {
+        "geometries": 89,
+        "textures": 12
+      },
+      "viewDrag": true,
+      "touchLook": true,
+      "keyboardWalk": true,
+      "touchWalk": true,
+      "dispose": {
+        "resources": 0,
+        "sceneNull": true
+      },
+      "returnInvitation": true,
+      "endReturnWithE": true,
+      "reentryLoads": {
+        "requests": 1,
+        "loaded": 1,
+        "failed": 0
+      },
+      "releasedMemory": {
+        "geometries": 24,
+        "textures": 4
+      },
+      "errors": [],
+      "responses": [],
+      "overflow": false
+    },
+    {
+      "delayedLoadAndRapidReentry": true,
+      "retired": {
+        "resources": 0,
+        "sceneNull": true
+      },
+      "late": {
+        "loads": {
+          "requests": 1,
+          "loaded": 1,
+          "failed": 0
+        },
+        "resources": 103,
+        "models": 1
+      }
+    }
+  ]
+}
