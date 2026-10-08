@@ -122,6 +122,7 @@ const TRACKS=[
 .touch.world-active #world-exit{right:var(--sprint-right);bottom:calc(max(46px,env(safe-area-inset-bottom)) + var(--world-sprint-size) + 18px)}
 @media(pointer:coarse){.world-active #world-exit{right:var(--sprint-right);bottom:calc(max(46px,env(safe-area-inset-bottom)) + var(--world-sprint-size) + 18px)}}
 @media(min-width:768px) and (pointer:coarse){.world-active{--world-sprint-size:92px}}
+#butterfly-source{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:min(550px,95vw);text-align:center;font:9px system-ui;line-height:1.5;color:#625b4b}#butterfly-source a{pointer-events:auto;color:inherit}
 #world-exit-hint{position:absolute;bottom:95px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:12px;letter-spacing:3px}
 #world-scroll{position:fixed;inset:0;z-index:40;pointer-events:auto;overflow:hidden;--spread:0;--ink:0}
 .scroll-silk{position:absolute;inset:-2px;background:repeating-linear-gradient(0deg,#78633806 0 1px,transparent 1px 4px),repeating-linear-gradient(90deg,#fff8de15 0 1px,transparent 1px 3px),radial-gradient(ellipse at 35% 48%,#f5edd8,#e1d5b8 75%,#c5b48d);clip-path:inset(0 calc((1 - var(--spread))*var(--right)) 0 calc((1 - var(--spread))*var(--left)));}
@@ -157,7 +158,7 @@ const TRACKS=[
     <button id="world-enter" type="button" hidden>展卷 · 入《未上色的蝴蝶》<small>按 E 展卷</small></button>
     <a id="enter-link" target="_blank" rel="noopener noreferrer">访问 ↗<span>ENTER / 空格</span></a>
   </section>
-  <section id="world-hud" hidden aria-label="卷中行走"><div class="world-title">未上色的蝴蝶<small>空卷 · 一灯行</small></div><div id="world-exit-hint">卷尽处，亦是来处</div><button id="world-exit" type="button">合卷归途 · E</button></section>
+  <section id="world-hud" hidden aria-label="卷中行走"><div class="world-title">未上色的蝴蝶<small>空卷 · 一灯行</small></div><div id="butterfly-source"></div><div id="world-exit-hint">卷尽处，亦是来处</div><button id="world-exit" type="button">合卷归途 · E</button></section>
   <div id="bridge-toast" aria-live="polite"></div>
   <section id="euler-card" aria-label="七桥挑战" hidden><div class="entry-copy"><div class="eyebrow">1736 · 柯尼斯堡</div><h2 id="euler-title">七桥 · 欧拉的判定</h2><p id="euler-text"></p></div><button id="euler-action">架设新桥 ↗</button></section>
 </div>
@@ -2360,11 +2361,10 @@ window.WorldS.butterfly=(()=>{
         v.y*=Math.min(1,Math.sqrt(Math.max(0,player.position.z-terminal.viewZ)/8));
     },
     viewFov(base){
-      // The wide arrival lens keeps torso + lower wings in view even if the invitation is declined.
-      // Looking up restores the already verified full-butterfly lens. This never writes look input.
-      const arrival=THREE.MathUtils.smoothstep(-player.position.z,92,114)*(1-THREE.MathUtils.smoothstep(-player.position.z,124,140));
-      const level=THREE.MathUtils.smoothstep(cameraState.renderPitch,-.30,.12);
-      return THREE.MathUtils.lerp(base,Math.max(base,70),arrival*level);
+      // The biological display no longer needs the giant sculpture's wide lens.
+      // Narrow the portrait arrival lens smoothly, without changing look input.
+      const arrival=THREE.MathUtils.smoothstep(-player.position.z,76,104);
+      return THREE.MathUtils.lerp(base,Math.min(base,camera.aspect<1?60:WORLD.CAMERA_FOV),arrival);
     }};
   function interruptReveal(){
     if(!reveal?.active)return;
@@ -2386,7 +2386,7 @@ window.WorldS.butterfly=(()=>{
     const t=Math.min(1,reveal.time/reveal.duration),ease=t*t*t*(t*(t*6-15)+10);
     const turn=Math.atan2(Math.sin(-reveal.yaw),Math.cos(-reveal.yaw));
     cameraState.yaw=reveal.yaw+turn*ease;
-    cameraState.pitch=THREE.MathUtils.lerp(reveal.pitch,-.36,ease);
+    cameraState.pitch=THREE.MathUtils.lerp(reveal.pitch,-.24,ease);
     if(reduced){monument.awakened=1;monument.bloom=Math.max(monument.bloom,.12+.88*ease);}
     if(t===1)reveal.active=false;
   }
@@ -2634,97 +2634,64 @@ window.WorldS.butterfly=(()=>{
     }
     if(dirty)paint.texture.needsUpdate=true;
   }
-  // CPU-only template: never attached/rendered or counted among the 34 HUB loads.
-  let monumentTemplatePromise=null;
+  // Lazy CPU-only templates. Each visit owns and releases its GPU resources.
+  const monumentTemplates=new Map();
   const monumentLoads={requests:0,loaded:0,failed:0};
-  function loadMonumentTemplate(){
-    if(!monumentTemplatePromise){
+  function monumentSource(){
+    return (touch||innerWidth<=600||lightQuality)?'PapilioMachaon-Web-Compact.glb':'PapilioMachaon-Web.glb';
+  }
+  function loadMonumentTemplate(source){
+    if(!monumentTemplates.has(source)){
       monumentLoads.requests++;
-      monumentTemplatePromise=new Promise((resolve,reject)=>gltfLoader.load('assets/models/MyriadButterfly.glb',g=>{
+      const pending=new Promise((resolve,reject)=>gltfLoader.load('assets/models/'+source,g=>{
         monumentLoads.loaded++;resolve(g.scene);
       },undefined,error=>{monumentLoads.failed++;reject(error);}));
-      // A failed attempt may be retried on the next entry; successful templates stay cached.
-      monumentTemplatePromise.catch(()=>{monumentTemplatePromise=null;});
+      monumentTemplates.set(source,pending);
+      pending.catch(()=>{if(monumentTemplates.get(source)===pending)monumentTemplates.delete(source);});
     }
-    return monumentTemplatePromise;
+    return monumentTemplates.get(source);
   }
   function mountMonument(template,m){
-    // Loading can finish after a close, or after another entry has already begun.
     if(monument!==m||!ownScene)return;
-    const model=template.clone(true),box=new THREE.Box3().setFromObject(model),center=box.getCenter(new THREE.Vector3());
-    // Authored 43.89 x 35.20m envelope; preserve +Z front and original depth.
-    model.position.set(-center.x,2.465-center.y,0);
-    const uniforms=THREE.UniformsUtils.merge([THREE.UniformsLib.fog]);
-    Object.assign(uniforms,{bloom:{value:m.bloom},time:{value:reduced?0:m.time},mountFade:{value:0}});
-    const enamel=own(new THREE.ShaderMaterial({uniforms,side:THREE.DoubleSide,fog:true,toneMapped:false,transparent:true,depthWrite:false,
-      vertexShader:`attribute vec3 pigment;attribute float facet;varying vec2 vWing;varying vec3 vPigment;varying float vFacet;
-        #include <fog_pars_vertex>
-        void main(){vWing=uv;vPigment=pigment;vFacet=facet;vec4 mvPosition=modelViewMatrix*vec4(position,1.);gl_Position=projectionMatrix*mvPosition;
-          #include <fog_vertex>
-        }`,
-      fragmentShader:`uniform float bloom,time,mountFade;varying vec2 vWing;varying vec3 vPigment;varying float vFacet;
-        #include <fog_pars_fragment>
-        void main(){
-          // WingUV is mirrored in U; glTF's V runs top -> bottom, roots near .55.
-          // Analytic root -> edge wash retains growth without a second wire drawing/texture.
-          float arrival=clamp(length(vec2(vWing.x,(vWing.y-.55)*1.35)),0.,1.);
-          float cell=.5+.5*sin(vWing.x*19.+sin(vWing.y*23.)*1.8);
-          float travel=.10+arrival*.85+cell*.025;
-          float growth=smoothstep(travel,travel+.18,bloom*1.5);
-          float tide=.94+.045*sin(time*.31415926536-arrival*4.);
-          vec3 silk=vec3(.36,.345,.31)*vFacet;
-          vec3 color=mix(silk,vPigment*(.86+cell*.18)*vFacet*tide,growth);
-          color+=vPigment*growth*.016*pow(max(0.,sin(time*.31415926536-arrival*4.)),4.);
-          gl_FragColor=vec4(color,mix(.78,.98,growth)*mountFade);
-          #include <encodings_fragment>
-          #ifdef USE_FOG
-            float silkFog=1.-exp(-fogDensity*fogDensity*fogDepth*fogDepth*.05);
-            gl_FragColor.rgb=mix(gl_FragColor.rgb,fogColor,silkFog);
-          #endif
-        }` }));
-    enamel.name='scroll-monument-enamel';enamel.userData.palette=[...pigments];
+    const model=template.clone(true);
+    // Authored in metres (6.8cm). This gallery display is enlarged, not life-size.
+    // Rotate the dorsal surface toward +Z and the head upward, without deforming anatomy.
+    model.rotation.x=Math.PI/2;model.scale.setScalar(8/.068);
+    const box=new THREE.Box3().setFromObject(model),center=box.getCenter(new THREE.Vector3());
+    model.position.sub(center);
+    const geometries=new Map(),materials=new Map(),textures=new Map();
+    function ownedMaterial(source){
+      if(materials.has(source))return materials.get(source);
+      const material=own(source.clone());materials.set(source,material);
+      for(const key of Object.keys(material))if(material[key]?.isTexture){
+        const sourceTexture=material[key];
+        if(!textures.has(sourceTexture)){
+          const texture=own(sourceTexture.clone());texture.needsUpdate=true;textures.set(sourceTexture,texture);
+        }
+        material[key]=textures.get(sourceTexture);
+      }
+      material.fog=false;material.transparent=true;material.opacity=0;m.materials.push(material);
+      return material;
+    }
     model.traverse(o=>{
       if(!o.isMesh)return;
-      // Own all runtime buffers, including injected attributes; template stays immutable.
-      o.geometry=own(o.geometry.clone());
-      const match=/^Wing_(LU|LL|RU|RL)$/.exec(o.name);
-      if(match){
-        const code=match[1],index=['LU','LL','RU','RL'].indexOf(code),geometry=o.geometry;
-        const color=new THREE.Color(pigments[index]).convertSRGBToLinear(),count=geometry.attributes.position.count;
-        const pigment=new Float32Array(count*3),facet=new Float32Array(count),normal=geometry.attributes.normal;
-        for(let i=0;i<count;i++){color.toArray(pigment,i*3);facet[i]=.94+.06*Math.abs(normal.getZ(i));}
-        geometry.setAttribute('pigment',new THREE.BufferAttribute(pigment,3));geometry.setAttribute('facet',new THREE.BufferAttribute(facet,1));
-        o.material=enamel;m.wings.push(o);
-        const pivot=o.parent;pivot.userData.side=code[0]==='L'?-1:1;pivot.userData.upper=code[1]==='U';m.pivots.push(pivot);
-      }else{
-        o.material=own(o.material.clone());o.material.side=THREE.DoubleSide;
-        // No environment map in this scroll: retain warm diffuse color, and keep
-        // the architectural spine out of the 64m beige fog wash. Real Vein meshes
-        // alone draw the cloison cells; the enamel shader above draws no wires.
-        const bronze=o.material.name==='BodyBronze',material=o.material;
-        material.color.setHex(bronze?0x5d472e:0xb08d4e).convertSRGBToLinear();
-        material.metalness=bronze?.35:.60;material.roughness=bronze?.68:.48;
-        material.emissive.setHex(bronze?0x5d472e:0x805221).convertSRGBToLinear();
-        material.emissiveIntensity=bronze?.32:.30;material.fog=false;
-        material.transparent=true;material.opacity=0;m.metals.push(material);
-      }
+      if(!geometries.has(o.geometry))geometries.set(o.geometry,own(o.geometry.clone()));
+      o.geometry=geometries.get(o.geometry);
+      o.material=Array.isArray(o.material)?o.material.map(ownedMaterial):ownedMaterial(o.material);
     });
-    m.model=model;m.enamel=enamel;m.root.add(model);updateMonument(0);
+    model.name='scroll-papilio-machaon';
+    m.model=model;m.root.add(model);updateMonument(0);
   }
   function createMonument(){
     const mobile=paint.settings.mobile;
-    const root=new THREE.Group();root.name='scroll-myriad-butterfly';root.position.set(0,terminal.y,terminal.z);ownScene.add(root);
-    const m=monument={root,model:null,wings:[],pivots:[],metals:[],enamel:null,time:0,bloom:.12,awakened:0,fade:0,period:16,source:'MyriadButterfly.glb'};
-    // A finite, horizontal cone lights the bronze front and inner cloison ribs.
-    // Its lowest possible point is 24 - 42*sin(.58) > .98m: no court/road spill;
-    // its entire cone is beyond z=-154, clear of the ink scroll ending at -136.
-    // No shadow map or light mesh: zero additional draw calls / GPU resources.
-    const accent=new THREE.SpotLight(0xffcf88,mobile?.75:1.15,42,.58,.55,2);
-    accent.name='scroll-monument-accent';accent.color.convertSRGBToLinear();
-    accent.position.set(0,24,terminal.z+30);accent.target.position.set(0,24,terminal.z);
-    accent.castShadow=false;ownScene.add(accent,accent.target);
-    loadMonumentTemplate().then(template=>mountMonument(template,m)).catch(error=>{
-      if(monument===m)console.warn('万彩大蝶未加载',error);
+    const root=new THREE.Group();root.name='scroll-biological-butterfly';root.position.set(0,8.7,-151);ownScene.add(root);
+    const m=monument={root,model:null,materials:[],time:0,bloom:.12,awakened:0,fade:0,source:monumentSource(),displayWingspan:8};
+    // Local diffuse illumination keeps the photograph-derived pigment legible.
+    const accent=new THREE.SpotLight(0xfff4dc,mobile?1.05:1.25,45,.65,.7,1);
+    accent.name='scroll-biological-accent';accent.position.set(8,10,-131);accent.target.position.copy(root.position);
+    ownScene.add(accent,accent.target);
+    loadMonumentTemplate(m.source).then(template=>mountMonument(template,m)).catch(error=>{
+      if(monument===m){$('butterfly-source').textContent='金凤蝶暂未加载 · 返回后可重试';console.warn('金凤蝶未加载',error);}
     });
     const courtMaterial=own(new THREE.MeshBasicMaterial({color:0xded4b9,transparent:true,depthWrite:false,side:THREE.DoubleSide}));
     courtMaterial.onBeforeCompile=shader=>{shader.vertexShader='varying vec2 vCourt;\n'+shader.vertexShader;shader.vertexShader=shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\n vCourt=uv*2.-1.;');shader.fragmentShader='varying vec2 vCourt;\n'+shader.fragmentShader;shader.fragmentShader=shader.fragmentShader.replace('#include <dithering_fragment>','gl_FragColor.a*=1.-smoothstep(.88,1.,length(vCourt));\n#include <dithering_fragment>');};
@@ -2743,17 +2710,14 @@ window.WorldS.butterfly=(()=>{
     // Once kindled, color remains on the return walk, even if the GLB is still loading.
     m.awakened=Math.max(m.awakened,proximity);const target=.12+.88*m.awakened;
     m.bloom+=(target-m.bloom)*(1-Math.exp(-Math.max(0,dt)*1.6));
-    if(!m.enamel)return;
+    if(!m.model)return;
     m.fade=Math.min(1,m.fade+Math.max(0,dt)/.55);
-    m.enamel.uniforms.bloom.value=m.bloom;m.enamel.uniforms.mountFade.value=m.fade;
-    m.enamel.uniforms.time.value=reduced?0:m.time;
-    for(const material of m.metals){
+    for(const material of m.materials){
       material.opacity=m.fade;
       if(material.transparent&&m.fade===1){material.transparent=false;material.needsUpdate=true;}
     }
-    const breath=reduced?0:(1-Math.cos(m.time*2*Math.PI/m.period))*.5;
-    for(const pivot of m.pivots)pivot.rotation.y=pivot.userData.side*(.035+.09*breath)*(pivot.userData.upper?1:.78);
   }
+
   function updateInscription(){
     // Aspect-only world placement: the title rests centered below the wings, above the silk.
     // It never follows the camera pose; all aspects share the same arrival axis.
@@ -2778,7 +2742,7 @@ window.WorldS.butterfly=(()=>{
   }
   return {
     get minPitch(){return space.minPitch;},title:'素墨长卷',get gatePoint(){return landmarks[23].gatePoint;},
-    get scene(){return ownScene;},get resources(){return owned.length;},get monumentLoads(){return {...monumentLoads};},interruptReveal,
+    get scene(){return ownScene;},get resources(){return owned.length;},get monumentLoads(){return {...monumentLoads};},get biologicalButterfly(){return monument?{source:monument.source,loaded:!!monument.model,displayWingspan:monument.displayWingspan,position:monument.root.position.toArray(),fade:monument.fade}:null;},interruptReveal,
     get ink(){return paint?{settings:{...paint.settings},lamp:paint.lamp.toArray(),marks:paint.marks.map(m=>({...m,position:[...m.position]}))}:null;},inkAt,
     preload(onProgress){onProgress?.(1);return Promise.resolve();},
     enter(context){
@@ -2786,6 +2750,7 @@ window.WorldS.butterfly=(()=>{
       ownScene.background=new THREE.Color(0xd4cfbd).convertSRGBToLinear();ownScene.fog=new THREE.FogExp2(ownScene.background,.016);
       createInkScroll();createMonument();createHomeward();
       $('world-exit').textContent='合卷归途 · E';$('world-exit-hint').textContent='卷尽处，亦是来处';
+      $('butterfly-source').innerHTML='金凤蝶 · 观览放大 · <a href="assets/models/PapilioMachaon-ATTRIBUTION.md" target="_blank" rel="noopener">照片：Didier Descouens / MHNT · CC BY-SA 4.0</a>';
       const paper=document.createElement('canvas');paper.width=paper.height=paint.settings.canvas;const pc=paper.getContext('2d');
       pc.fillStyle='#ded4b9';pc.fillRect(0,0,paper.width,paper.height);
       for(let i=0;i<2600;i++){const x=(i*73.31)%paper.width,y=(i*137.17)%paper.height;pc.fillStyle=i%3?'rgba(84,77,62,.025)':'rgba(255,252,239,.12)';pc.fillRect(x,y,1,i%4+1);}
