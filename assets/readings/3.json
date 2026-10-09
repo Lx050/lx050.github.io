@@ -1,0 +1,71 @@
+{
+  "index": 3,
+  "title": "墨生",
+  "source": "https://mosheng.maniforld.com/",
+  "access": "public",
+  "reviewedAt": "2026-10-09",
+  "summary": "墨生把数字修复呈现为可以观看、暂停和回看的过程。完整画面一直在场，变化发生在画面之中。",
+  "sections": [
+    {
+      "id": "whole-picture",
+      "title": "先看见完整作品",
+      "source": "https://mosheng.maniforld.com/#process",
+      "paragraphs": [
+        "公开微站选择完整构图作为观看的基准。处理前与处理后放在独立画框中并列呈现，观众可以同时注意主体、层次和纸本质感，而不必先把作品切碎成局部。",
+        "这也决定了过程演示的节奏：观看者可以停下来，再回看某一阶段，比较变化发生在哪里。过程不是只有一个最终结果的等待页。"
+      ]
+    },
+    {
+      "id": "four-stages",
+      "title": "四个阶段分别在说明什么",
+      "source": "https://mosheng.maniforld.com/#process",
+      "paragraphs": [
+        "第一阶段是软刷微吸，表现浮尘被定向移除；第二阶段是非接触采集，表现纹理成像；第三阶段是棉连纸补配，表现缺口局部得到支撑；第四阶段是间接调湿，表现纸面缓慢舒展。",
+        "这些阶段是应用对修复过程的数字可视化。它们把“清理、观察、局部支持、舒展”区分开，让公众理解变化具有顺序和作用范围。实体文物处理应由具有相应资质的专业人员实施，数字演示不是操作教程。"
+      ]
+    },
+    {
+      "id": "app",
+      "title": "从探索走到过程播放器",
+      "source": "https://mosheng.maniforld.com/#app",
+      "paragraphs": [
+        "微站展示原生应用的探索、创作、案例、分析与过程页面。探索连接藏品和能力；创作列出任务选择；案例供人比较成果；分析强调残损区域；过程播放器把阶段变化重新放回全幅作品。",
+        "公开页面当前介绍九项工作流、十二件示例藏品和四组案例。这是页面展示的产品规模，而不是本庭重新运行或独立验收的成果数量。"
+      ]
+    },
+    {
+      "id": "audience",
+      "title": "公众体验与机构展示",
+      "source": "https://mosheng.maniforld.com/#value",
+      "paragraphs": [
+        "面向文化爱好者，墨生用藏品浏览、过程动画和国风创作建立兴趣；面向博物馆、高校及文化机构，它将案例讲解和科研成果转化成公众可进入的展示界面。",
+        "两种用途共享一个重点：让观看者知道变化是怎样被组织和解释的。可观看的过程帮助人理解一个项目，却不会自动证明某个数字结果就是文物原貌。"
+      ]
+    },
+    {
+      "id": "runtime",
+      "title": "公开源码说明的运行边界",
+      "source": "https://github.com/Lx050/mosheng-ios-public",
+      "paragraphs": [
+        "公开仓库用于比赛评审与工程复核，是可构建源码，并不是 App Store 或 TestFlight 安装入口。README 说明默认参赛版使用内置示例和本地任务状态机，启动时不创建远程网络客户端。",
+        "这一说明很重要：本地演示可以把阶段、案例和任务状态组织得完整，但不能由此推断正在运行远程修复模型。源码公开也不等于授权自由复制，该仓库明确未附开源许可证。"
+      ]
+    },
+    {
+      "id": "boundary",
+      "title": "庭内可以怎样回看",
+      "source": "https://mosheng.maniforld.com/#process",
+      "paragraphs": [
+        "庭内可以用四张阶段说明和同一幅完整示意画，提供逐步查看、暂停和回到起点。即使动画暂停，阶段名称与说明仍应可读。",
+        "如使用微站已有视频或作品图像，需要保留来源并确认使用权限；如使用自行制作的图层，应写明是过程示意。无论采用哪种方式，都不把预制动画标成实时修复。"
+      ]
+    }
+  ],
+  "coverageNotes": [
+    "本日复核完整微站和 mosheng-ios-public README；未播放或下载演示视频，未运行原生应用。",
+    "准确保留四阶段、完整构图、示例运行与实体保护边界。"
+  ],
+  "wordCount": 870,
+  "wordCountMethod": "Chinese characters plus Latin/numeric tokens; summary, section headings and prose only",
+  "coverage": "summary"
+}

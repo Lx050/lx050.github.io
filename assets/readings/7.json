@@ -1,0 +1,72 @@
+{
+  "index": 7,
+  "title": "金陵专利局",
+  "source": "https://patent.maniforld.com/",
+  "access": "public",
+  "reviewedAt": "2026-10-09",
+  "summary": "IPShield 用册页式工作台组织专利、商标和项目档案。线索进入检索，阶段结果再回到同一份档案里。",
+  "sections": [
+    {
+      "id": "patent",
+      "title": "专利工作台的四步",
+      "source": "https://patent.maniforld.com/patents",
+      "paragraphs": [
+        "实际工作台明确列出关键词录入、技术分类、专利检索、生成鉴定书四个阶段。首页的概括宣传与内页不完全一致，这里按可见的四步理解流程。",
+        "关键词要描述产品的用途与结构。页面举出的 portable blender、pet travel bag、magnetic charger，分别比单写“电器”“宠物用品”或“配件”更接近一个具体产品语境。它们只是输入示例，不代表这些产品已经获得检索结论。"
+      ]
+    },
+    {
+      "id": "classification",
+      "title": "图片和分类的作用",
+      "source": "https://patent.maniforld.com/patents",
+      "paragraphs": [
+        "专利页提供可选产品图片，介绍识别洛迦诺外观设计分类、外观特征与关键词的方向。它同时介绍对 USPTO、EPO、CNIPA 公开数据的检索。",
+        "图片和分类是帮助组织查询的线索，并不是外观相似就必然侵权的判断。这里没有提交产品图片或执行查询，公开说明中的识别与检索能力没有被实际检验。"
+      ]
+    },
+    {
+      "id": "trademark",
+      "title": "商标页需要哪些材料",
+      "source": "https://patent.maniforld.com/trademarks",
+      "paragraphs": [
+        "商标入口要求图样、名称和商品或服务类别描述，并将结果指向注册前准备。完整的语境能说明“这个名称用在哪一类商品上”，而不只是比较两个孤立的词。",
+        "页面自己的范围说明较窄：当前主要检索 USPTO 文字商标，图样采用规则解析。结果用于候选名称、类别方向与注册前准备，页面明确不把它作为法律意见。"
+      ]
+    },
+    {
+      "id": "archive",
+      "title": "把分散结果收回一卷",
+      "source": "https://patent.maniforld.com/projects",
+      "paragraphs": [
+        "项目档案从项目名称、描述和目标市场等背景信息开始，设计上承接专利检索、商标检索及综合评估。它既是下一阶段入口，也是结果回流的位置。",
+        "一份档案的意义，是让后来阅读的人知道：最初要评估什么、使用了什么线索、哪一步产生了什么结果。不能只留下一个总分，而让输入、来源和阶段关系消失。"
+      ]
+    },
+    {
+      "id": "example",
+      "title": "一卷尚未检索的示例",
+      "source": "https://patent.maniforld.com/patents",
+      "paragraphs": [
+        "可以用页面已有的 portable blender 作为展陈线索：关键词页写下产品语境；分类页说明需要判断的用途与结构；检索页列出准备查阅的公开数据来源；报告页保留“待实际检索”的位置。",
+        "这样的示例让观众理解信息如何组织，却不生成专利号、相似商标、风险等级或可注册结论。没有查过的内容保持空缺，正是这条演示应有的状态。"
+      ]
+    },
+    {
+      "id": "boundary",
+      "title": "庭内能组织材料，不能假造鉴定",
+      "source": "https://patent.maniforld.com/projects",
+      "paragraphs": [
+        "本地可以展示流程、翻阅固定示例卡和说明档案结构。真正搜索数据库、识别图样、生成报告或保存项目，仍需要原服务与实际证据。",
+        "本次打开档案页时还出现请求失败提示，因此不能由公开界面推断后台当前正常。展览描述产品意图与可见流程，不对法律效果、检索完整性或在线服务状态作保证。"
+      ]
+    }
+  ],
+  "coverageNotes": [
+    "本日复核专利、商标、项目页；无项目创建、图像上传、检索或报告生成。",
+    "档案页有“请求失败，请稍后重试”；没有读取或复制既有项目详情。",
+    "保留商标范围限制；不生成或暗示法律结论。"
+  ],
+  "wordCount": 838,
+  "wordCountMethod": "Chinese characters plus Latin/numeric tokens; summary, section headings and prose only",
+  "coverage": "summary"
+}

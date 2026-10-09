@@ -1,0 +1,41 @@
+{
+  "index": 11,
+  "title": "知虾标书",
+  "source": "https://biaoshu.maniforld.com/login",
+  "access": "login-limited",
+  "reviewedAt": "2026-10-09",
+  "summary": "公开入口将知虾称为 AI 投标文档编制平台。登录之后的编制、审阅或导出界面没有开放给本次阅读。",
+  "sections": [
+    {
+      "id": "identity",
+      "title": "可核实的产品定位",
+      "source": "https://biaoshu.maniforld.com/login",
+      "paragraphs": [
+        "页面以智能标书生成系统介绍自身，希望让投标文档编写更高效。入口包含邮箱、密码、找回密码与注册链接。这里可以识别它的用途与名称，但还不能描述一条经过验证的生产流程。"
+      ]
+    },
+    {
+      "id": "unknown",
+      "title": "尚未看见的工作间",
+      "source": "https://biaoshu.maniforld.com/login",
+      "paragraphs": [
+        "本展没有读取招标材料、模板库、文档编辑器或项目协作界面，因此不绘制自动审查、风险评分、投标提交或一键导出等未经核实的步骤。"
+      ]
+    },
+    {
+      "id": "boundary",
+      "title": "入口到此为止",
+      "source": "https://biaoshu.maniforld.com/login",
+      "paragraphs": [
+        "庭内保留简短定位与原站入口，不收集邮箱或密码，不模拟登录成功，也不让一份虚构标书充当平台生成结果。真实文档处理需在原服务与相应权限下进行。"
+      ]
+    }
+  ],
+  "coverageNotes": [
+    "本日复核登录页。未登录、注册、读取项目或运行文档生成。",
+    "按薄入口展陈处理，不从名称推演受保护功能。"
+  ],
+  "wordCount": 256,
+  "wordCountMethod": "Chinese characters plus Latin/numeric tokens; summary, section headings and prose only",
+  "coverage": "entrance-only"
+}

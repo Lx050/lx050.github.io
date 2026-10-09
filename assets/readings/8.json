@@ -1,0 +1,41 @@
+{
+  "index": 8,
+  "title": "RSS",
+  "source": "https://rss.maniforld.com/",
+  "access": "login-limited",
+  "reviewedAt": "2026-10-09",
+  "summary": "这里是 WeWe RSS 的公开入口。订阅源、账号及后续管理位于访问门之后，本展只呈现已核实的门面信息。",
+  "sections": [
+    {
+      "id": "entry",
+      "title": "可见的入口",
+      "source": "https://rss.maniforld.com/dash/login",
+      "paragraphs": [
+        "公开导航包含公众号源和账号管理，并链接至 cooderl/wewe-rss 上游项目。管理入口要求 AuthCode，表明后续内容有访问限制。"
+      ]
+    },
+    {
+      "id": "unknown",
+      "title": "门后保持空白",
+      "source": "https://rss.maniforld.com/dash/login",
+      "paragraphs": [
+        "此次没有进入任何订阅、文章或阅读界面，因此无法说明这里订了哪些公众号、怎样排序、多久更新，或是否提供推荐。庭内不使用虚构报纸和消息流填满这段空白。"
+      ]
+    },
+    {
+      "id": "boundary",
+      "title": "如何继续",
+      "source": "https://rss.maniforld.com/",
+      "paragraphs": [
+        "这处展位保留服务名称、访问说明与原入口。要使用实际账号、订阅或阅读功能，需要通过原站授权的方式进入；本庭不收集 AuthCode，也不代理登录。"
+      ]
+    }
+  ],
+  "coverageNotes": [
+    "本日复核 WeWe RSS 登录门及公开导航；未输入 AuthCode。",
+    "仅薄入口展陈，不扩展后台功能或模拟真实订阅内容。"
+  ],
+  "wordCount": 220,
+  "wordCountMethod": "Chinese characters plus Latin/numeric tokens; summary, section headings and prose only",
+  "coverage": "entrance-only"
+}

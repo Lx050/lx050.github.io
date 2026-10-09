@@ -138,9 +138,10 @@ const TRACKS=[
 </style>
 <style>
 #craft-controls{position:absolute;right:20px;top:220px;max-width:220px;padding:10px 12px;background:#162224ee;border:1px solid #a98c5877;border-radius:5px;pointer-events:auto;z-index:4}#craft-controls[hidden],.world-active #craft-controls{display:none!important}#craft-controls p{margin:0 0 6px;font-size:11px}#craft-controls button{min-width:44px;min-height:44px;border:1px solid #aa996666;border-radius:3px;padding:7px 10px;margin:2px;font-size:11px}#craft-controls[data-content] button{font-size:10px;padding:7px 6px;margin:2px 1px}#craft-controls button[aria-pressed="true"]{background:#a78c4933}@media(max-width:600px){#craft-controls{top:215px;right:12px;max-width:180px}}
-</style></head>
+</style><link rel="stylesheet" href="assets/reading-room.css?v=1c6755065ee7ac11">
+<style>#enter-link[hidden]{display:none!important}.directory-entry{display:flex;align-items:center;gap:8px;border-bottom:1px solid #e8e2d514}.directory-entry button{flex:1;text-align:left;min-height:48px;padding:10px 0;font:inherit;color:var(--paper)}.directory-grid .directory-entry a{flex:0 0 auto;border:0;font-size:11px;color:var(--muted)}#read-entry{min-height:44px;padding:9px 16px;border:1px solid #d1c4a577;color:#eee7d5;background:#263a34;border-radius:4px;font:13px var(--serif)}#read-entry small{display:block;font:9px sans-serif;opacity:.7;margin-top:4px}#world-read{position:absolute;bottom:max(34px,env(safe-area-inset-bottom));left:20px;pointer-events:auto;min-height:44px;padding:10px 17px;color:#eee7d5;border:1px solid #bdab8777;background:#263a34d9;border-radius:4px}.reading-open #hud,.reading-open #intro{pointer-events:none}.reading-open #craft-controls{visibility:hidden}#interaction #enter-link{font-size:10px;padding:9px;white-space:nowrap}@media(max-width:600px){#interaction{flex-wrap:wrap}#interaction .entry-copy{flex-basis:100%}#read-entry{flex:1}#world-read{bottom:max(190px,calc(var(--joy-size) + 60px));left:20px}}</style></head>
 <body>
-<main id="world" tabindex="-1" aria-label="可探索的三维数字庭院。使用 WASD 或方向键行走；靠近建筑后按回车访问。"></main>
+<main id="world" tabindex="-1" aria-label="可探索的三维数字庭院。使用 WASD 或方向键行走；靠近建筑后按回车阅读。"></main>
 <div class="vignette" aria-hidden="true"></div>
 <div class="hud" id="hud" inert>
   <header class="topbar">
@@ -163,20 +164,21 @@ const TRACKS=[
   <section id="interaction" aria-label="附近的入口">
     <div class="entry-copy" aria-live="polite"><div class="eyebrow" id="entry-zone"></div><h2 id="entry-title"></h2><p id="entry-desc"></p></div>
     <button id="world-enter" type="button" hidden>展卷 · 入《未上色的蝴蝶》<small>按 E 展卷</small></button>
-    <a id="enter-link" target="_blank" rel="noopener noreferrer">访问 ↗<span>ENTER</span></a>
+    <button id="read-entry" type="button">在庭院里读<small>ENTER · 原地展开</small></button>
+    <a id="enter-link" target="_blank" rel="noopener noreferrer">原站 ↗</a>
   </section>
-  <section id="world-hud" hidden aria-label="卷中行走"><div class="world-title">未上色的蝴蝶<small>空卷 · 一灯行</small></div><div id="butterfly-source"></div><div id="world-exit-hint">卷尽处，亦是来处</div><button id="world-exit" type="button">合卷归途 · E</button></section>
+  <section id="world-hud" hidden aria-label="卷中行走"><div class="world-title">未上色的蝴蝶<small>空卷 · 一灯行</small></div><div id="butterfly-source"></div><div id="world-exit-hint">卷尽处，亦是来处</div><button id="world-read" type="button">读《未上色的蝴蝶》</button><button id="world-exit" type="button">合卷归途 · E</button></section>
   <div id="bridge-toast" aria-live="polite"></div>
   <section id="euler-card" aria-label="七桥挑战" hidden><div class="entry-copy"><div class="eyebrow">1736 · 柯尼斯堡</div><h2 id="euler-title">七桥 · 欧拉的判定</h2><p id="euler-text"></p></div><button id="euler-action">架设新桥 ↗</button></section>
 </div>
 <div id="world-scroll" hidden aria-hidden="true"><div class="scroll-silk"><div class="scroll-ink"></div><div class="scroll-inscription"><span id="scroll-title">未上色的蝴蝶</span><small id="scroll-verse">一灯入卷 · 万象未生</small></div></div><i class="scroll-rod left"></i><i class="scroll-rod right"></i></div>
 <div id="world-notice" role="status"></div>
 <section id="intro" aria-label="进入数字庭院">
-  <div class="intro-inner"><div class="intro-kicker">A SMALL ISLAND OF THOUGHTS</div><h1>Lx050<span style="color:var(--red)">.</span></h1><div class="intro-poem">在数字之间，留一点人间</div><div class="intro-line"></div><p class="intro-description">一些作品，一些故事，一些仍在生长的念头。<br>借一盏灯，随意走走。</p><button class="start" id="start" disabled>正在点灯<span class="arrow">↗</span></button><div class="intro-controls" id="intro-controls">WASD / 方向键行走 · Shift 跑步 · 空格跳跃 · 回车访问<br>点击或按任意键，开始夜游</div></div>
+  <div class="intro-inner"><div class="intro-kicker">A SMALL ISLAND OF THOUGHTS</div><h1>Lx050<span style="color:var(--red)">.</span></h1><div class="intro-poem">在数字之间，留一点人间</div><div class="intro-line"></div><p class="intro-description">一些作品，一些故事，一些仍在生长的念头。<br>借一盏灯，随意走走。</p><button class="start" id="start" disabled>正在点灯<span class="arrow">↗</span></button><div class="intro-controls" id="intro-controls">WASD / 方向键行走 · Shift 跑步 · 空格跳跃 · 回车阅读<br>点击或按任意键，开始夜游</div></div>
   <div class="intro-footer"><span>作品 / 服务 / 项目 / 连接</span><span>慢一点，也没有关系。 &nbsp; © Lx050</span></div>
 </section>
 <section id="atlas" role="dialog" aria-modal="true" aria-labelledby="atlas-title" hidden><div class="atlas-inner"><header class="atlas-head"><h2 id="atlas-title">一岛 · 二十六盏灯</h2><button id="close-atlas" aria-label="关闭大地图">×</button></header><div class="atlas-tools"><button id="atlas-minus" aria-label="缩小地图">−</button><output id="atlas-scale" aria-live="polite"></output><button id="atlas-plus" aria-label="放大地图">+</button><button id="atlas-home">归庭</button><small>拖动地图 · 点名录定位</small></div><div class="atlas-body"><div class="atlas-chart"><canvas id="atlas-map" aria-label="北向上全岛地图，完整名称亦可在下方或右侧名录查找"></canvas></div><nav id="atlas-list" aria-label="四区地标名录"></nav></div><div id="atlas-legend" class="atlas-legend"></div></div></section>
-<section id="directory" role="dialog" aria-modal="true" aria-labelledby="directory-title" hidden><div class="directory-inner"><div class="directory-head"><h2 id="directory-title">庭院目录</h2><button id="close-directory" aria-label="关闭目录">×</button></div><p class="directory-sub">二十六个入口，也可以直接抵达。所有链接在新标签页打开。</p><div id="directory-grid" class="directory-grid"></div><div class="music-credits" id="music-credits"></div></div></section>
+<section id="directory" role="dialog" aria-modal="true" aria-labelledby="directory-title" hidden><div class="directory-inner"><div class="directory-head"><h2 id="directory-title">庭院目录</h2><button id="close-directory" aria-label="关闭目录">×</button></div><p class="directory-sub">二十六处内容，可在庭院里阅读。原站链接另开标签页；登录与远端服务仍由原站提供。</p><div id="directory-grid" class="directory-grid"></div><div class="music-credits" id="music-credits"></div></div></section>
 <div id="error" role="alert" hidden><h2 style="font-family:var(--serif);font-weight:400">灯还没有亮起来</h2><p id="error-message">三维场景暂时无法加载，请刷新重试。也可以从目录直接访问全部入口。</p><button id="fallback-list">打开庭院目录 ↗</button></div>
 <noscript>请启用 JavaScript，来这座小岛走走。</noscript>
 <script src="vendor/three.min.js"></script>
@@ -187,12 +189,16 @@ const TRACKS=[
 <script src="vendor/three/RenderPass.js"></script>
 <script src="vendor/three/ShaderPass.js"></script>
 <script src="vendor/three/UnrealBloomPass.js"></script>
+<script src="assets/reading-catalog.js?v=2a93a229c0035190"></script>
+<script src="assets/reading-panels.js?v=a16af1e228536ba9"></script>
+<script src="assets/reading-room.js?v=b3420960d82361a9"></script>
 <script src="assets/architecture.js?v=90ae33ab4832abde"></script>
 <script src="assets/content-core.js?v=dc8c61a1267cbeb9"></script>
 <script src="assets/content-creation-care.js?v=9e5e9685cb6cf61a"></script>
 <script src="assets/content-services.js?v=6fbe52a2d2fc38ee"></script>
-<script src="assets/content-narratives.js?v=a5351d8cdfdadc17"></script>
-<script src="assets/content-literary.js?v=85f32f01fa703281"></script>
+<script src="assets/content-narratives.js?v=dd1fe20dcb7e5278"></script>
+<script src="assets/content-literary.js?v=97cf9ab376243ab5"></script>
+<script src="assets/moon-snow-garden.js?v=df72bab89067f3b9"></script>
 <script src="assets/content-butterfly.js?v=3238b2fe25de31db"></script>
 <script src="assets/infrastructure.js?v=95b42f7ffde585c2"></script>
 <script src="assets/courtyard-runtime.js?v=b38226026c57f636"></script>
@@ -225,14 +231,14 @@ const LINKS = [
   {zone:1,title:'API',desc:'LLM 网关，连接想法与智能。',url:'https://api.maniforld.com',x:-19,z:13},
   {zone:1,title:'标书',desc:'智能标书，让繁复工作更有条理。',url:'https://biaoshu.maniforld.com',x:-12,z:13},
   {zone:1,title:'Reme',desc:'家中守护，为日常多留一分安心。',url:'https://reme.maniforld.com',x:-15.5,z:20},
-  {zone:2,title:'AI两年',desc:'关于 AI 两年的一份记录。',url:'https://ai-two-years.maniforld.com',x:7,z:-21},
-  {zone:2,title:'凝结核列传',desc:'翻开《凝结核列传》。',url:'https://biographies.maniforld.com',x:13,z:-21},
-  {zone:2,title:'从因到果',desc:'沿着线索，走进《从因到果》。',url:'https://causal-web.maniforld.com',x:19,z:-21},
+  {zone:2,title:'AI两年',desc:'关于 AI 两年的一份记录。',url:'/?read=13',x:7,z:-21},
+  {zone:2,title:'凝结核列传',desc:'翻开《凝结核列传》。',url:'/?read=14',x:13,z:-21},
+  {zone:2,title:'从因到果',desc:'沿着线索，走进《从因到果》。',url:'/?read=15',x:19,z:-21},
   {zone:2,title:'哭泣的城市',desc:'在《哭泣的城市》里停留片刻。',url:'https://crying-city.maniforld.com',x:7,z:-15},
   {zone:2,title:'双星记',desc:'翻开故事，走近《双星记》。',url:'https://double-stars.maniforld.com',x:13,z:-15},
   {zone:2,title:'思想者的五个版本',desc:'走进《思想者的五个版本》。',url:'https://five-versions.maniforld.com',x:19,z:-15},
-  {zone:2,title:'置身青媒内',desc:'从内部望见青媒的日常。',url:'https://inside-qingmei.maniforld.com',x:7,z:-9},
-  {zone:2,title:'月雪',desc:'翻开《月雪》，留一点安静。',url:'https://moon-snow.maniforld.com',x:13,z:-9},
+  {zone:2,title:'置身青媒内',desc:'从内部望见青媒的日常。',url:'/?read=19',x:7,z:-9},
+  {zone:2,title:'月雪',desc:'翻开《月雪》，留一点安静。',url:'/?read=20',x:13,z:-9},
   {zone:2,title:'清样之前',desc:'在成为定稿之前，再读一遍。',url:'https://qingyang-before-proof.maniforld.com',x:19,z:-9},
   {zone:2,title:'拓片',desc:'走近《拓片》，触碰文字的纹理。',url:'https://rubbing.maniforld.com',x:7,z:-3},
   {zone:2,title:'未上色的蝴蝶',desc:'为尚未上色的故事，留一点想象。',url:'https://uncolored-butterfly.maniforld.com',x:14,z:-3},
@@ -370,7 +376,26 @@ const needsLightQuality=()=>touch || innerWidth<760 || /Android|iPhone|iPad|Mobi
 let lightQuality=needsLightQuality();
 motionQuery.addEventListener('change',e=>{reduced=e.matches;});
 document.body.classList.toggle('touch',touch);
-if(touch) $('intro-controls').innerHTML='左下摇杆行走 · 右上拖动环顾 · 轻触建筑访问<br>点击任意位置，开始夜游';
+if(touch) $('intro-controls').innerHTML='左下摇杆行走 · 右上拖动环顾 · 轻触建筑阅读<br>点击任意位置，开始夜游';
+let readingReturnState=null;
+const readingRoom=window.CourtyardReading?.install({
+ manifestUrl:'assets/readings/index.json?v=9fac1efe7c31ba54',entries:LINKS.map((entry,index)=>({index,title:entry.title,url:entry.url})),
+ onOpen(){
+  if(!readingReturnState)readingReturnState={directory:$('directory').hidden,atlas:$('atlas').hidden,hud:$('hud').inert,intro:$('intro').inert};
+  if(ready){clearInput();lastTime=0;}
+  $('directory').hidden=true;$('atlas').hidden=true;$('hud').inert=true;$('intro').inert=true;document.body.classList.add('reading-open');
+ },
+ onClose(){
+  const saved=readingReturnState;readingReturnState=null;
+  if(saved){$('directory').hidden=saved.directory;$('atlas').hidden=saved.atlas;$('hud').inert=saved.hud;$('intro').inert=saved.intro;}
+  document.body.classList.remove('reading-open');if(ready){clearInput();lastTime=0;}
+ },
+ onSection(index,section){if(ready){const b=architecturalRecords.find(x=>x.index===index);b?.readingPanels?.setSection?.(section?.id);}},
+ onVisit(index){if(ready)markVisited(index);}
+});
+window.__courtyardReader=readingRoom;
+const readingQuery=new URLSearchParams(location.search),requestedReading=readingQuery.get('read');
+if(requestedReading!==null&&/^\d+$/.test(requestedReading)&&Number(requestedReading)<LINKS.length)Promise.resolve().then(()=>readingRoom?.open(Number(requestedReading),readingQuery.get('chapter')||undefined));
 ZONES.forEach((zone,index)=>{
   const section=document.createElement('section');
   const h=document.createElement('h3');h.textContent=zone.name;section.append(h);
@@ -378,11 +403,12 @@ ZONES.forEach((zone,index)=>{
     const a=document.createElement('a');a.href=item.url;a.target='_blank';a.rel='noopener noreferrer';
     a.addEventListener('click',e=>{if(!e.defaultPrevented&&ready)markVisited(LINKS.indexOf(item));});
     a.addEventListener('auxclick',e=>{if(e.button===1&&!e.defaultPrevented&&ready)markVisited(LINKS.indexOf(item));});
-    a.textContent=item.title;const hint=document.createElement('span');hint.textContent=new URL(item.url).hostname+' ↗';a.append(hint);section.append(a);
+    a.textContent='原站 ↗';a.setAttribute('aria-label',item.title+'：打开原站');
+    const row=document.createElement('div');row.className='directory-entry';const read=document.createElement('button');read.type='button';read.textContent=item.title;read.setAttribute('aria-label','在庭院里读：'+item.title);read.onclick=()=>readingRoom?.open(LINKS.indexOf(item));row.append(read);if(/^https:\/\//.test(item.url))row.append(a);section.append(row);
   });$('directory-grid').append(section);
 });
 $('music-credits').innerHTML='<h3>夜乐 · 背景音乐署名</h3><small class="mc-note">入庭后夜间随机播放，一曲播罢自动接续下一首。以下均为公有领域或 CC0 / CC-BY 授权的演奏录音。</small>'+TRACKS.map(t=>`<small>${t.n} — ${t.a}，${t.l}</small>`).join('');
-function modalOpen(){return !$('directory').hidden||!$('atlas').hidden;}
+function modalOpen(){return !!readingRoom?.isOpen||!$('directory').hidden||!$('atlas').hidden;}
 function clearInput(){keys.clear();resetJoystick(true);releaseSprint();currentSpeed=6.3;sprinting=false;velocity.set(0,0);if(typeof motor!=='undefined')motor.jumpBuffer=0;}
 function showDirectory(){if(ready&&worldActive())return;previousFocus=document.activeElement;if(ready)clearInput();$('directory').hidden=false;$('hud').inert=true;$('intro').inert=true;$('close-directory').focus();}
 function closeDirectory(){$('directory').hidden=true;$('hud').inert=!started;$('intro').inert=started;previousFocus?.focus();}
@@ -1454,7 +1480,7 @@ function butterflySeaSurface(x,z){
   return null;
 }
 function finishButterflySea(lm){
-  const b=lm.butterfly;CourtyardButterflyContent.build(THREE,b,material);installRoofMechanism(b);lm.model.updateWorldMatrix(true,true);
+  const b=lm.butterfly;CourtyardButterflyContent.build(THREE,b,material);const reading=window.CourtyardReadingPanels?.attachButterfly({THREE,butterfly:b,index:23,entry:lm.entry,preview:window.CourtyardReadingCatalog?.[23]});if(reading)for(const face of reading.faces){face.userData.landmark=lm;pickables.push(face);}installRoofMechanism(b);lm.model.updateWorldMatrix(true,true);
   lm.bounds=butterflySeaBounds(b.creature).expandByScalar(.4);lm.model.userData.bounds=lm.bounds;lm.bboxHeight=lm.bounds.max.y-lm.site.groundY;lm.groundY=lm.site.groundY;
   b.wingBounds=new THREE.Box3();b.wings.forEach(w=>b.wingBounds.union(new THREE.Box3().setFromObject(w)));b.wingBounds.expandByScalar(.4);
   b.observationTargets=b.wings.map(w=>w.localToWorld(w.geometry.boundingBox.getCenter(new THREE.Vector3())));
@@ -1603,6 +1629,7 @@ function setupCraftedLandmark(lm){
  for(let i=pickables.length-1;i>=0;i--)if(pickables[i].userData.landmark===lm&&pickables[i]!==lm.name)pickables.splice(i,1);
  if(lm.fallback){lm.fallback.visible=false;lm.fallback.parent?.remove(lm.fallback);lm.fallback.userData.dressing?.parent?.remove(lm.fallback.userData.dressing);}
  b.root.rotation.y=Math.atan2(lm.site.ux,lm.site.uz);lm.group.add(b.root);
+ b.readingPanels=window.CourtyardReadingPanels?.attach({THREE,building:b,index:lm.index,entry:lm.entry,preview:window.CourtyardReadingCatalog?.[lm.index]});
  CourtyardRuntime.register(THREE,b,b.root,lm.index,lm.entry.title);architecturalRecords.push(b);craftedNavigation(b);
  b.root.userData.tier='crafted-building';b.root.userData.dressing=b.detail||new THREE.Group();b.root.userData.bounds=b.bounds;
  lm.model=b.root;lm.crafted=b;lm.bounds=b.bounds;lm.targetHeight=b.height;lm.bboxHeight=b.height;lm.groundY=lm.site.groundY;
@@ -1618,7 +1645,7 @@ function updateCraftControls(){
  let best=15,next=null;
  if(started&&!worldActive())for(const b of architecturalRecords){const d=Math.hypot(player.position.x-b.origin.x,player.position.z-b.origin.z);if(b.mechanisms.length&&d<best){best=d;next=b;}}
  activeCraft=next;const controls=$('craft-controls');controls.hidden=!next;controls.toggleAttribute('data-content',!!next?.metadata.contentGrounded);
- if(next){$('craft-status').textContent=next.title+' · '+(next.metadata.contentGrounded?'空间阅读 / '+next.metadata.interactionHint:(next.metadata.mechanism||'通风与采光构件'));controls.querySelectorAll('button').forEach(el=>{el.setAttribute('aria-pressed',String(Number(el.dataset.craft)===next.targetOpen));const n=Number(el.dataset.craft)*2;el.textContent=next.metadata.shortPhaseLabels?.[n]||next.metadata.phaseLabels?.[n]||['收合','半开','开启'][n];el.title=next.metadata.phaseLabels?.[n]||el.textContent;});}
+ if(next){$('craft-status').textContent=next.title+' · '+(next.metadata.contentGrounded?'构件演示 / '+next.metadata.interactionHint:(next.metadata.mechanism||'通风与采光构件'));controls.querySelectorAll('button').forEach(el=>{el.setAttribute('aria-pressed',String(Number(el.dataset.craft)===next.targetOpen));const n=Number(el.dataset.craft)*2;el.textContent=next.metadata.shortPhaseLabels?.[n]||next.metadata.phaseLabels?.[n]||['收合','半开','开启'][n];el.title=next.metadata.phaseLabels?.[n]||el.textContent;});}
 }
 document.querySelectorAll('[data-craft]').forEach(el=>el.onclick=()=>{if(activeCraft)activeCraft.targetOpen=Number(el.dataset.craft);});
 
@@ -1998,16 +2025,15 @@ function setNear(next){
   if(next===nearest)return;
   nearest=next;document.body.classList.toggle('nearby',!!next);$('interaction').classList.toggle('visible',!!next);
   if(next){
-    $('entry-title').textContent=next.entry.title;$('entry-desc').textContent=next.entry.desc;$('entry-zone').textContent=ZONES[next.entry.zone].name+' / '+String(next.index+1).padStart(2,'0');$('enter-link').href=next.entry.url;
+    $('entry-title').textContent=next.entry.title;$('entry-desc').textContent=next.entry.desc;$('entry-zone').textContent=ZONES[next.entry.zone].name+' / '+String(next.index+1).padStart(2,'0');$('enter-link').href=next.entry.url;$('enter-link').hidden=!/^https:\/\//.test(next.entry.url);
   }else $('enter-link').removeAttribute('href');
 }
-function visit(lm){
-  if(!lm||!started||modalOpen()||worldActive())return;
-  // Opening a blank window synchronously lets us detect popup blocking before counting a visit.
-  const destination=window.open('about:blank','_blank');
-  if(destination){destination.opener=null;const meta=destination.document.createElement('meta');meta.name='referrer';meta.content='no-referrer';destination.document.head.append(meta);destination.location.replace(lm.entry.url);markVisited(lm.index);}
-  clearInput();
+function visit(lm,sectionId){
+ if(!lm||!started||modalOpen()||worldActive())return;
+ clearInput();readingRoom?.open(lm.index,sectionId);
 }
+$('read-entry').onclick=()=>visit(nearest);
+$('world-read').onclick=()=>{if(WorldHost.state==='WORLD')readingRoom?.open(23);};
 $('enter-link').addEventListener('click',e=>{if(nearest&&!e.defaultPrevented)markVisited(nearest.index);});
 $('enter-link').addEventListener('auxclick',e=>{if(e.button===1&&nearest&&!e.defaultPrevented)markVisited(nearest.index);});
 function start(){
@@ -2030,7 +2056,7 @@ const moveKeys=['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','A
 window.addEventListener('keydown',e=>{
   if(e.ctrlKey||e.metaKey||e.altKey||modalOpen()||failed)return;
   if(!started){if(!['Shift','Control','Alt','Meta','Tab'].includes(e.key)){e.preventDefault();start();}return;}
-  if(e.code==='KeyE'&&!e.repeat){e.preventDefault();if(WorldHost.state==='WORLD')WorldHost.current?.requestExit();else if(atButterflyGate())WorldHost.enter('butterfly');return;}
+  if(e.code==='KeyE'&&!e.repeat){e.preventDefault();if(WorldHost.state==='WORLD')WorldHost.current?.requestExit();else if(atButterflyGate())WorldHost.enter('butterfly');else visit(nearest);return;}
   if(worldActive()&&WorldHost.state!=='WORLD')return;
   if(e.target.closest('#viewpad'))return;
   if(e.target.closest('button,a')&&(e.code==='Enter'||e.code==='Space'))return;
@@ -2090,7 +2116,7 @@ sprintButton.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropaga
 for(const type of ['pointerup','pointercancel','lostpointercapture'])document.addEventListener(type,e=>{if(e.pointerId===sprintPointer){e.stopPropagation();releaseSprint();}},true);
 window.addEventListener('resize',()=>{resetJoystick(true);releaseSprint();});
 const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
-function pick(e){if(worldActive())return null;const rect=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);raycaster.setFromCamera(pointer,camera);const hits=raycaster.intersectObjects(pickables,false);return hits.find(hit=>{let o=hit.object;while(o){if(!o.visible)return false;o=o.parent;}return !hit.object.isSprite||hit.object.material.opacity>.2;})?.object.userData.landmark;}
+function pick(e){if(worldActive()||modalOpen())return null;const rect=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-rect.left)/rect.width*2-1,-(e.clientY-rect.top)/rect.height*2+1);raycaster.setFromCamera(pointer,camera);const hits=raycaster.intersectObjects(pickables,false);const hit=hits.find(hit=>{let o=hit.object;while(o){if(!o.visible)return false;o=o.parent;}return !hit.object.isSprite||hit.object.material.opacity>.2;});return hit?{landmark:hit.object.userData.landmark,sectionId:hit.object.userData.readingPanel?.sectionId}:null;}
 function interruptWorldReveal(){if(WorldHost.state==='WORLD')WorldHost.current.interruptReveal?.();}
 function orbitMinPitch(){return WorldHost.state==='WORLD'?WorldHost.current.minPitch:WORLD.CAMERA_MIN_PITCH;}
 function bindLook(element,canPick){
@@ -2101,7 +2127,7 @@ function bindLook(element,canPick){
     if(!drag){if(canPick&&e.pointerType==='mouse')element.style.cursor=pick(e)?'pointer':'grab';return;}
     if(drag.id!==e.pointerId)return;lastLookAt=elapsed;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.travel+=Math.hypot(dx,dy);cameraState.yaw-=dx*.0045;cameraState.pitch=THREE.MathUtils.clamp(cameraState.pitch+dy*.0035,orbitMinPitch(),WORLD.CAMERA_MAX_PITCH);drag.x=e.clientX;drag.y=e.clientY;
   });
-  element.addEventListener('pointerup',e=>{if(!drag||drag.id!==e.pointerId)return;const click=drag.travel<7;drag=null;lookActive=Math.max(0,lookActive-1);lastLookAt=elapsed;if(canPick&&click)visit(pick(e));});
+  element.addEventListener('pointerup',e=>{if(!drag||drag.id!==e.pointerId)return;const click=drag.travel<7;drag=null;lookActive=Math.max(0,lookActive-1);lastLookAt=elapsed;if(canPick&&click){const selected=pick(e);if(selected)visit(selected.landmark,selected.sectionId);}});
   ['pointercancel','lostpointercapture'].forEach(type=>element.addEventListener(type,()=>{if(drag)lookActive=Math.max(0,lookActive-1);drag=null;lastLookAt=elapsed;}));
 }
 bindLook(renderer.domElement,true);bindLook($('viewpad'),false);
@@ -3111,13 +3137,13 @@ function w2bTest(action='step',dt=1/60,input){
 }
 
 function frame(now){
-  requestAnimationFrame(frame);if(failed||document.hidden){lastTime=0;return;}
+  requestAnimationFrame(frame);if(readingRoom?.isOpen){lastTime=0;return;}if(failed||document.hidden){lastTime=0;return;}
   const raw=lastTime?(now-lastTime)/1000:1/60,dt=Math.min(raw,.12);lastTime=now;
   if(worldActive()){WorldHost.tick(dt);renderer.info.reset();composer.render(dt);return;}
   elapsed+=dt;
   skyTick(dt);
   if(started&&!modalOpen())move(dt);
-  updateLandmarks(dt);updateButterflySea(dt,landmarks[23]);updateCamera(dt);layoutLabels();
+  updateLandmarks(dt);updateButterflySea(dt,landmarks[23]);updateCamera(dt);layoutLabels();window.CourtyardReadingPanels?.update([...architecturalRecords,landmarks[23].butterfly.readingPanels].filter(Boolean),player.position);
   particles.visible=!reduced&&fireLevel>.02;starMaterial.uniforms.motion.value=reduced?0:1;
   if(!reduced){for(let i=0;i<(lightQuality?Math.min(16,particleCount):particleCount);i++){const b=particleBase[i];particlePositions[i*3]=b[0]+Math.sin(elapsed*.25+b[3])*.3;particlePositions[i*3+1]=b[1]+Math.sin(elapsed*.6+b[3])*.35;}particleGeometry.attributes.position.needsUpdate=true;}
   mapElapsed+=dt;if(mapElapsed>.08){drawMap();drawAtlas();mapElapsed=0;}
@@ -3130,7 +3156,7 @@ function frame(now){
 // Read-mostly handle for automated smoke tests (batch 5 seven-bridge verification).
 document.querySelectorAll('[data-roof]').forEach(button=>button.onclick=()=>setRoofState(button.dataset.roof));
 $('roof-skeleton').onclick=()=>{const r=landmarks[23].butterfly.mechanical;r.skeleton=!r.skeleton;$('roof-skeleton').setAttribute('aria-pressed',String(r.skeleton));updateRoofMechanism(landmarks[23].butterfly,0);};
-window.__garden={mechanicalStep(dt){updateButterflySea(dt,landmarks[23]);},setRoofState,get worldHost(){return WorldHost;},get transitionDirector(){return TransitionDirector;},get renderPass(){return mainRenderPass;},__w2bTest:w2bTest,get skyT(){return skyT;},get atlas(){return {...atlasState,scales:[...atlasState.scales]};},get motor(){return {...motor,speed:velocity.length(),currentSpeed,sprinting};},get navigation(){return navigationBuildings;},requestJump,stepWalker,WORLD,scene,renderer,camera,composer,cameraLook,subjectBounds,monumentFaces,walkable,surfaceHeight,terrainHeight,teleport,start,player,cameraState,modelLoads,
+window.__garden={get reader(){return readingRoom;},get readingPanels(){return architecturalRecords.map(b=>({index:b.index,panels:b.readingPanels}));},mechanicalStep(dt){updateButterflySea(dt,landmarks[23]);},setRoofState,get worldHost(){return WorldHost;},get transitionDirector(){return TransitionDirector;},get renderPass(){return mainRenderPass;},__w2bTest:w2bTest,get skyT(){return skyT;},get atlas(){return {...atlasState,scales:[...atlasState.scales]};},get motor(){return {...motor,speed:velocity.length(),currentSpeed,sprinting};},get navigation(){return navigationBuildings;},requestJump,stepWalker,WORLD,scene,renderer,camera,composer,cameraLook,subjectBounds,monumentFaces,walkable,surfaceHeight,terrainHeight,teleport,start,player,cameraState,modelLoads,
   get butterfly(){return landmarks[23].butterfly;},get sharedIvory(){return M.ivory;},BUTTERFLY,
   get landmarks(){return landmarks.map(lm=>({index:lm.index,title:lm.entry.title,bboxHeight:lm.bboxHeight,groundY:lm.groundY,x:lm.entry.x,z:lm.entry.z,bounds:lm.bounds,platformY:lm.site.groundY,targetHeight:lm.targetHeight,entryPoint:lm.entryPoint,...(lm.gatePoint?{gatePoint:lm.gatePoint}:{}),site:lm.site,labelY:lm.group.position.y+lm.name.position.y}));},
   get mathMonuments(){return mathMonuments.map(({group,model,lod,fallback,bounds,site,name,...r})=>r);},
@@ -3146,7 +3172,7 @@ if(new URLSearchParams(location.search).has('architectureQA'))window.__garden.ar
  get views(){return [{name:'court-overview',position:[85,58,185],target:[0,2,0]},{name:'mechanical-butterfly',position:landmarks[23].butterfly.root.localToWorld(new THREE.Vector3(95,48,-150)).toArray(),target:landmarks[23].butterfly.root.localToWorld(new THREE.Vector3(0,15,0)).toArray()},...architecturalRecords.flatMap(b=>{
  const p=b.point(b.width*.75,-b.depth*.78-7),t=b.point(0,0),inside=b.point(.3,-b.depth*.32);p.y=b.origin.y+Math.min(8,b.height*.48);t.y=b.origin.y+3.4;inside.y=b.origin.y+1.68;
  return [{name:'exterior-'+b.index,position:p.toArray(),target:t.toArray()},...([0,1,3,4,6,7,9,10,12,13,14,15,16,17,18,19,20,21,22,24,25,26,27,28].includes(b.index)?[{name:'interior-'+b.index,position:inside.toArray(),target:[t.x,b.origin.y+2.5,t.z]}]:[])];})];},
- renderView(view){teleport(view.target[0],view.target[2]);skyT=.28;skyTick(0);scene.updateMatrixWorld(true);camera.position.fromArray(view.position);cameraLook.fromArray(view.target);camera.lookAt(cameraLook);camera.fov=48;camera.updateProjectionMatrix();for(const b of [...architecturalRecords,...architecturalObstacles]){b.root.visible=true;b.detail.visible=camera.position.distanceTo(b.origin)<65;}composer.render(0);},
+ renderView(view){teleport(view.target[0],view.target[2]);skyT=view.sky??.28;skyTick(0);scene.updateMatrixWorld(true);camera.position.fromArray(view.position);cameraLook.fromArray(view.target);camera.lookAt(cameraLook);camera.fov=48;camera.updateProjectionMatrix();for(const b of [...architecturalRecords,...architecturalObstacles]){b.root.visible=true;b.detail.visible=camera.position.distanceTo(b.origin)<65;}window.CourtyardReadingPanels?.update([...architecturalRecords,landmarks[23].butterfly.readingPanels].filter(Boolean),player.position);composer.render(0);},
  butterflyAudit(){const b=landmarks[23].butterfly,r=b.mechanical,body=b.creature.position.clone(),rows=[];for(const state of ['open','half','closed','open','closed','half','open']){setRoofState(state);for(let i=0;i<180;i++)updateRoofMechanism(b,.1);rows.push({state,progress:r.progress,locked:r.locked,mainAngle:r.mainAngle,outerAngle:r.outerAngle,scales:r.skins.every(s=>s.scale.equals(new THREE.Vector3(1,1,1))),links:r.links.every(l=>Number.isFinite(l.length)&&l.rod.scale.y>0&&l.barrel.scale.y>0)});}r.skeleton=true;updateRoofMechanism(b,0);const skeleton=r.skins.every(s=>!s.visible);r.skeleton=false;updateRoofMechanism(b,0);return{passed:rows.every(r=>r.locked&&r.scales&&r.links)&&skeleton&&b.creature.position.equals(body),rows,skeleton,fixedBody:b.creature.position.equals(body),joints:r.joints.length,links:r.links.length};},
  movementAudit(){
   const travel=run=>{teleport(0,3);cameraState.yaw=0;keys.clear();keys.add('KeyW');if(run)keys.add('ShiftLeft');for(let i=0;i<120;i++)stepWalker(1/60);const d=3-player.position.z;clearInput();return d;};

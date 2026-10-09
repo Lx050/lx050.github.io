@@ -1,0 +1,161 @@
+{
+  "version": "2026-10-09-anonymized-v1",
+  "entries": [
+    {
+      "index": 0,
+      "path": "0.json?v=d5a52bfed32af0ed",
+      "title": "墨息",
+      "coverage": "summary"
+    },
+    {
+      "index": 1,
+      "path": "1.json?v=432dbde23955185b",
+      "title": "画韵新生",
+      "coverage": "summary"
+    },
+    {
+      "index": 2,
+      "path": "2.json?v=c06a4553178704fb",
+      "title": "画韵新生·旧址",
+      "coverage": "summary"
+    },
+    {
+      "index": 3,
+      "path": "3.json?v=dbfe88d98dbcc806",
+      "title": "墨生",
+      "coverage": "summary"
+    },
+    {
+      "index": 4,
+      "path": "4.json?v=e6fafb5c6a12ecbe",
+      "title": "暖聆",
+      "coverage": "summary"
+    },
+    {
+      "index": 5,
+      "path": "5.json?v=15fc93b5312ec636",
+      "title": "暖聆App",
+      "coverage": "summary"
+    },
+    {
+      "index": 6,
+      "path": "6.json?v=05399a1b6dd4876f",
+      "title": "排版助手",
+      "coverage": "summary"
+    },
+    {
+      "index": 7,
+      "path": "7.json?v=3124392424660cd0",
+      "title": "金陵专利局",
+      "coverage": "summary"
+    },
+    {
+      "index": 8,
+      "path": "8.json?v=6404a7023aab41a0",
+      "title": "RSS",
+      "coverage": "entrance-only"
+    },
+    {
+      "index": 9,
+      "path": "9.json?v=c5297014c2656e98",
+      "title": "Vaultwarden",
+      "coverage": "entrance-only"
+    },
+    {
+      "index": 10,
+      "path": "10.json?v=13d6aba564d21e3f",
+      "title": "API",
+      "coverage": "summary"
+    },
+    {
+      "index": 11,
+      "path": "11.json?v=00efb1222f6c3fbc",
+      "title": "知虾标书",
+      "coverage": "entrance-only"
+    },
+    {
+      "index": 12,
+      "path": "12.json?v=084fc18f9ca2ca9b",
+      "title": "Reme",
+      "coverage": "summary"
+    },
+    {
+      "index": 13,
+      "path": "13.json?v=ba4d5d8af168f533",
+      "title": "与 AI 同行的两年：一份 session log",
+      "coverage": "privacy-edited"
+    },
+    {
+      "index": 14,
+      "path": "14.json?v=5f71c7aba61156c5",
+      "title": "凝结核·列传：人物篇十二传",
+      "coverage": "privacy-edited"
+    },
+    {
+      "index": 15,
+      "path": "15.json?v=cebf7b4f9dfdbd0f",
+      "title": "从因到果，中间不只是一条线：因果网",
+      "coverage": "privacy-edited"
+    },
+    {
+      "index": 16,
+      "path": "16.json?v=892df363a00939da",
+      "title": "一个爱哭的城市：南京、巴别兽与三个附近",
+      "coverage": "full-text"
+    },
+    {
+      "index": 17,
+      "path": "17.json?v=f8b82e9d0042ddc5",
+      "title": "双星记：崔兴中观测报告",
+      "coverage": "full-text"
+    },
+    {
+      "index": 18,
+      "path": "18.json?v=720e9c2266958a92",
+      "title": "思想者的五个版本：一个人的预印本档案",
+      "coverage": "full-text"
+    },
+    {
+      "index": 19,
+      "path": "19.json?v=7f7c3c4c87cc0a56",
+      "title": "置身青媒内",
+      "coverage": "privacy-edited"
+    },
+    {
+      "index": 20,
+      "path": "20.json?v=670c911abb8d146a",
+      "title": "月色与雪色之外：二年记",
+      "coverage": "anonymized"
+    },
+    {
+      "index": 21,
+      "path": "21.json?v=f002fc0bb04f2d08",
+      "title": "清样之前：高小倩人物故事",
+      "coverage": "full-text"
+    },
+    {
+      "index": 22,
+      "path": "22.json?v=9244bc2d39f71204",
+      "title": "画韵新生：从拓片到知识网络",
+      "coverage": "full-text"
+    },
+    {
+      "index": 23,
+      "path": "23.json?v=da8aa3f6765e04b6",
+      "title": "未上色的蝴蝶：周杭一百天",
+      "coverage": "full-text"
+    },
+    {
+      "index": 24,
+      "path": "24.json?v=1cdecd74aa6e3667",
+      "title": "MindCareAI · 灵愈AI",
+      "coverage": "summary"
+    },
+    {
+      "index": 25,
+      "path": "25.json?v=590131625cc39797",
+      "title": "GitHub · Lx050",
+      "coverage": "summary"
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "index": 5,
+  "title": "暖聆App",
+  "source": "https://nuanling.maniforld.com/app/",
+  "access": "public",
+  "reviewedAt": "2026-10-09",
+  "summary": "同一个照护概念，在长者侧首先变成清楚、容易触及的动作：看一看、听留言、说句话、联系家人。公开入口明确标注为演示版。",
+  "sections": [
+    {
+      "id": "roles",
+      "title": "先选择使用的一侧",
+      "source": "https://nuanling.maniforld.com/app/",
+      "paragraphs": [
+        "移动入口区分子女端和老人端。子女端介绍远程守护、语音留言与音色设置；老人端强调大字、耳机配对、识物与留言。这种区分首先服务于两种不同的使用情境。"
+      ]
+    },
+    {
+      "id": "connected",
+      "title": "连接状态放在最前面",
+      "source": "https://nuanling.maniforld.com/elder",
+      "paragraphs": [
+        "长者侧先展示耳机是否连接，再排列主要动作。连接信息应先被理解，因为后面的收听、说话和通话依赖设备是否可用。公开演示里的具体状态与电量不是本庭测量结果。"
+      ]
+    },
+    {
+      "id": "four-actions",
+      "title": "四个动作，不让人猜",
+      "source": "https://nuanling.maniforld.com/elder",
+      "paragraphs": [
+        "拍照识物对应“看”：帮助理解眼前物品的产品入口；听留言对应“听”：进入家人发来的内容；录留言对应“说”：把自己的话传回去；打电话对应“聊”：进入实时联系。",
+        "这些动作以大尺寸、图标与文字共同呈现，名称直接表达目的。比起把所有功能藏进一串小图标，短而清楚的顺序让访问者容易知道自己在哪里。"
+      ]
+    },
+    {
+      "id": "support",
+      "title": "日常支持与求助分开",
+      "source": "https://nuanling.maniforld.com/elder",
+      "paragraphs": [
+        "页面还把日常提醒、天气与紧急求助放在不同位置。它们在界面中的重要程度不同，不能把紧急求助变成装饰性按钮，也不能让示例提醒看起来是实际医疗建议。",
+        "本展只介绍这些入口的角色，不展示个人事项，不给出服药安排，也不把原站的演示状态解释为现场求助系统。"
+      ]
+    },
+    {
+      "id": "boundary",
+      "title": "在庭内理解可达性",
+      "source": "https://nuanling.maniforld.com/app/",
+      "paragraphs": [
+        "本地体验可以让观众选择看、听、说、聊四个说明面板。每次选择都显示该动作的目的、依赖和返回方式；不需要相机或麦克风权限。",
+        "真实拍照、识别、耳机连接、录音与呼叫需要原服务及设备。把操作名称做大、把返回路径保持清楚，可以在庭内实现；假装完成这些服务则不能。"
+      ]
+    }
+  ],
+  "coverageNotes": [
+    "本日复核 /app/ 演示角色页并经老人端按钮进入 /elder。直接加载 /elder 返回 404；入口保留 /app/。",
+    "与 index 4 为同一产品的不同界面，不包装成独立医疗产品。"
+  ],
+  "wordCount": 565,
+  "wordCountMethod": "Chinese characters plus Latin/numeric tokens; summary, section headings and prose only",
+  "coverage": "summary"
+}

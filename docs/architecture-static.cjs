@@ -3,11 +3,12 @@ const fs=require('fs'),vm=require('vm'),assert=require('assert/strict'),path=req
 const root=path.resolve(__dirname,'..'),THREE=require(path.join(root,'vendor/three.min.js'));
 const context={THREE,window:{},console,document:{createElement(){return{width:0,height:0,getContext(){return {fillStyle:'',strokeStyle:'',lineWidth:1,fillRect(){},strokeRect(){},clearRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},fillText(){},arc(){},fill(){},createLinearGradient(){return{addColorStop(){}}},measureText(t){return{width:t.length*10}}}}}}}};
 context.window=context;vm.createContext(context);
-for(const file of ['assets/architecture.js','assets/content-core.js','assets/content-creation-care.js','assets/content-services.js','assets/content-narratives.js','assets/content-literary.js','assets/infrastructure.js','assets/courtyard-runtime.js']){const src=fs.readFileSync(path.join(root,file),'utf8');new vm.Script(src,{filename:file}).runInContext(context);}
+for(const file of ['assets/architecture.js','assets/content-core.js','assets/content-creation-care.js','assets/content-services.js','assets/content-narratives.js','assets/content-literary.js','assets/moon-snow-garden.js','assets/infrastructure.js','assets/courtyard-runtime.js','assets/reading-catalog.js','assets/reading-panels.js']){const src=fs.readFileSync(path.join(root,file),'utf8');new vm.Script(src,{filename:file}).runInContext(context);}
 const rows=[];
 for(let i=0;i<29;i++){
  if(i===23)continue;
  const b=i<26?context.window.CourtyardArchitecture.build({THREE,index:i,title:'Test '+i,zone:i<8?0:i<13?1:i<24?2:3}):context.window.CourtyardInfrastructure.buildMath({THREE,index:i-26});
+ if(i<26)context.window.CourtyardReadingPanels.attach({THREE,building:b,index:i,entry:{title:'Test '+i},preview:context.window.CourtyardReadingCatalog[i]});
  assert(b.root?.isGroup,'root '+i);assert(b.width>0&&b.depth>0,'dimensions '+i);assert(b.collisionBoxes?.length,'collisions '+i);
  b.root.updateMatrixWorld(true);let instances=0,meshes=0,triangles=0;
  b.root.traverse(o=>{if(!o.isMesh)return;meshes++;const count=o.isInstancedMesh?o.count:1;instances+=count;triangles+=(o.geometry.index?o.geometry.index.count:o.geometry.attributes.position.count)/3*count;});

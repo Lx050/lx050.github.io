@@ -1,0 +1,43 @@
+/* Pure Node checks; no browser driver. UI/race checks live in reader-fixture.html. */
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+const source = fs.readFileSync(path.resolve(__dirname, '../../assets/reading-room.js'), 'utf8');
+const sandbox = { window: { location: { origin: 'https://courtyard.test' } }, URL, console };
+vm.runInNewContext(source.replace('global.CourtyardReading = Object.freeze({ install });', 'global.test = { externalURL, staticURL, normalizeReading, manifestPath };'), sandbox);
+const { externalURL, staticURL, normalizeReading, manifestPath } = sandbox.window.test;
+const base = 'https://courtyard.test/assets/readings/index.json';
+for (const unsafe of ['javascript:alert(1)', 'data:text/html,test', '//example.com', 'http://example.com', 'https://user:pass@example.com/', 'file:///a']) assert.equal(externalURL(unsafe), null);
+assert.equal(externalURL('https://example.com/a#chapter'), 'https://example.com/a#chapter');
+assert.equal(externalURL({ url: 'https://example.com/a' }), 'https://example.com/a');
+for (const unsafe of ['https://elsewhere.test/a.json', '/account.json?token=x', './a.json#x', '../a.json', './a.html', 'data:application/json,{}']) {
+  assert.throws(() => staticURL(unsafe, base, '/assets/readings/'));
+}
+assert.equal(staticURL('0.json', base, '/assets/readings/'), 'https://courtyard.test/assets/readings/0.json');
+assert.equal(staticURL('/assets/readings/0.json', base, '/assets/readings/'), 'https://courtyard.test/assets/readings/0.json');
+assert.equal(manifestPath({ entries: [{ index: 2, path: 'two.json' }] }, 2), 'two.json');
+assert.equal(manifestPath({ 2: 'two.json' }, 2), 'two.json');
+assert.equal(manifestPath({ readings: { 2: { file: 'two.json' } } }, 2), 'two.json');
+assert.equal(manifestPath({ entries: [] }, 1), null);
+const raw = { index: 0, title: '示例', source: 'https://example.com', coverage: 'summary', sections: [{ id: 'intro', title: '序', paragraphs: ['<script>test</script>', ' 中文正文 '], tables: [{ caption: '比较表', columns: ['一', '二'], rows: [['正文', '<svg>']] }] }] };
+let data = normalizeReading(raw, 0, {});
+assert.equal(data.coverage, 'summary');
+assert.equal(normalizeReading({ ...raw, title: ' ' }, 0, {title:'Fallback'}).title, 'Fallback');
+assert.equal(normalizeReading({ ...raw, attribution:'梁博星 / Lx', provenance:{sourceFile:'javascript:alert(1)',publicTextAttribution:'作者说明'} }, 0, {}).attribution, '梁博星 / Lx');
+assert.equal(normalizeReading({ ...raw, attribution:'梁博星 / Lx', provenance:{sourceFile:'javascript:alert(1)'} }, 0, {}).provenance.sourceFile, null);
+const withInlineTable = JSON.parse(JSON.stringify(raw)); withInlineTable.sections[0].tables[0].afterParagraphIndex = 0;
+assert.equal(normalizeReading(withInlineTable, 0, {}).sections[0].tables[0].afterParagraphIndex, 0);
+assert.equal(data.sections[0].paragraphs[0], '<script>test</script>', 'preserve prose as plain data, never HTML');
+assert.equal(data.sections[0].paragraphs[1], '中文正文');
+assert.equal(data.sections[0].tables[0].rows[0][1], '<svg>');
+assert.equal(normalizeReading({ ...raw, coverage: undefined }, 0, {}).coverage, 'unknown', 'never infer full-text');
+assert.equal(normalizeReading({ ...raw, source: 'javascript:alert(1)' }, 0, { url: 'https://example.com/fallback' }).source, 'https://example.com/fallback');
+assert.equal(normalizeReading({ ...raw, coverage: 'entrance-only', sections: [] }, 0, {}).sections.length, 0);
+assert.throws(() => normalizeReading({ ...raw, index: 1 }, 0, {}));
+assert.throws(() => normalizeReading({ ...raw, sections: null }, 0, {}));
+assert.throws(() => normalizeReading({ ...raw, sections: [{ id: 'one', paragraphs: [1] }] }, 0, {}));
+assert.throws(() => normalizeReading({ ...raw, sections: [{ id: 'one', paragraphs: [] }, { id: 'one', paragraphs: [] }] }, 0, {}));
+assert.throws(() => normalizeReading({ ...raw, sections: [{ id: 'one', paragraphs: [], tables: [{ columns: ['title'], rows: [[{}]] }] }] }, 0, {}));
+assert.equal(/innerHTML|insertAdjacentHTML|eval\(/.test(source), false, 'reader does not evaluate content or parse it as HTML');
+console.log('PASS: HTTPS source validation, static same-origin JSON paths, manifest variants, identity/schema checks, explicit coverage, safe table/prose preservation');

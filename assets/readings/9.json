@@ -1,0 +1,41 @@
+{
+  "index": 9,
+  "title": "Vaultwarden",
+  "source": "https://vault.maniforld.com/#/login",
+  "access": "login-limited",
+  "reviewedAt": "2026-10-09",
+  "summary": "一处保留访问边界的入口。公开页面只展示 Vaultwarden 的登录门，内部保管内容不属于庭院展览。",
+  "sections": [
+    {
+      "id": "entry",
+      "title": "先识别账户，再继续",
+      "source": "https://vault.maniforld.com/#/login",
+      "paragraphs": [
+        "可见页面先要求邮箱，并提供记住邮箱与继续按钮。此次没有填写任何信息，也没有进入密码库。界面呈现的是分步登录的起点。"
+      ]
+    },
+    {
+      "id": "identity",
+      "title": "它怎样说明自身",
+      "source": "https://vault.maniforld.com/#/login",
+      "paragraphs": [
+        "页脚说明该界面是为 Vaultwarden 修改的 Bitwarden Web Vault，并将 Vaultwarden 说明为非官方的服务器重写；同时明确不隶属于 Bitwarden 项目或公司。展位保留这层区别，不把两个名称混作同一官方服务。"
+      ]
+    },
+    {
+      "id": "boundary",
+      "title": "没有展出的内容",
+      "source": "https://vault.maniforld.com/#/login",
+      "paragraphs": [
+        "内部项目、文件夹、共享与凭据都没有被查看或复制。庭内不设置仿真的密码输入框，不展示示例秘密，也不承诺任何未核实的保管或分享功能。需要使用时，请从原服务入口继续。"
+      ]
+    }
+  ],
+  "coverageNotes": [
+    "本日复核邮箱优先登录页及产品免责声明；不记录版本为长期承诺。",
+    "未登录、未输入邮箱、未读取或处理任何凭据。"
+  ],
+  "wordCount": 249,
+  "wordCountMethod": "Chinese characters plus Latin/numeric tokens; summary, section headings and prose only",
+  "coverage": "entrance-only"
+}

@@ -11,7 +11,7 @@ document.getElementById('run').onclick=async()=>{
  const w=frame.contentWindow,g=w.__garden,report={mode,at:new Date().toISOString(),buildings:[],checks:[],errors:[],screenshots:[]};
  if(!g?.architectureQA){status.textContent='Architecture test API not ready';return;}
  const a=g.architectureQA,assert=(ok,label,detail)=>{report.checks.push({label,passed:!!ok,detail});if(!ok)report.errors.push(label);};
- async function shot(name){if(!localReporter)return;g.__w2bTest('render');const uri=g.renderer.domElement.toDataURL('image/png');await fetch('/__qa_artifact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:mode+'-'+name+'.png',base64:uri.split(',')[1]})});report.screenshots.push(mode+'-'+name+'.png');}
+ async function shot(name){if(!localReporter)return;if(!['court-overview','mechanical-butterfly','inner-biological-butterfly','exterior-0','interior-20'].includes(name))return;g.__w2bTest('render');const uri=g.renderer.domElement.toDataURL('image/png');await fetch('/__qa_artifact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:mode+'-'+name+'.png',base64:uri.split(',')[1]})});report.screenshots.push(mode+'-'+name+'.png');}
  try{
   g.start();g.setSky(.28);g.__w2bTest('prepare');
   assert(a.buildings.length===28,'25 buildings and 3 math pavilions exist',a.buildings.length);
@@ -29,9 +29,6 @@ document.getElementById('run').onclick=async()=>{
    assert(b.collisionBoxes.length>0,'Physical collisions '+b.title,b.collisionBoxes.length);
    const states=[];for(const value of [0,1,.5,1,0,1]){a.mechanism(b.index,value,true);states.push({target:value,states:b.mechanisms.map(m=>({openness:m.openness,quaternion:m.object.quaternion.toArray()})),passed:b.mechanisms.every(m=>Number.isFinite(m.object.rotation.x)&&Number.isFinite(m.object.rotation.y)&&Math.abs(m.openness-value)<1e-6)});}
    row.mechanisms=states;assert(states.every(s=>s.passed),'Repeat mechanisms '+b.title,states);
-   if([0,4,9,10,12,17,20,24,25,26,27,28].includes(b.index)){
-    const vantage=b.point(b.width*.75,-b.depth*.9-6);g.teleport(vantage.x,vantage.z);g.cameraState.yaw=b.yaw+.52;g.cameraState.pitch=.22;g.cameraState.distance=9;for(let i=0;i<90;i++)a.step(1/60,[]);await shot('building-'+b.index);
-   }
    await pause(0);
   }
   // Fixed camera world render captures are for visual QA only; do not alter orbit behavior.
@@ -47,6 +44,7 @@ document.getElementById('run').onclick=async()=>{
    assert(g.worldHost.state==='WORLD','Enter inner scroll '+cycle);
    const loadUntil=performance.now()+60000;while(!w.WorldS.butterfly.biologicalButterfly?.loaded&&performance.now()<loadUntil)await pause(100);
    const bio=w.WorldS.butterfly.biologicalButterfly;report.biological.push(bio);assert(bio?.loaded,'Biological Papilio loaded '+cycle,bio);
+   if(cycle===0&&g.reader){w.document.getElementById('world-read').click();await pause(120);assert(g.reader.isOpen&&g.reader.currentIndex===23,'Read original inside biological world');g.reader.close();await pause(120);assert(g.worldHost.state==='WORLD','Return from reading to biological world');}
    g.player.position.set(0,0,-120);g.cameraState.yaw=0;g.cameraState.pitch=-.05;for(let i=0;i<120;i++)g.__w2bTest('step',1/60,{});report.biological[cycle]=w.WorldS.butterfly.biologicalButterfly;if(cycle===0){g.camera.position.set(15,12,-126);g.camera.lookAt(0,8.7,-151);g.camera.fov=40;g.camera.updateProjectionMatrix();await shot('inner-biological-butterfly');}
    g.worldHost.exit();const exitUntil=performance.now()+20000;while(g.worldHost.state!=='HUB'&&performance.now()<exitUntil){g.__w2bTest('step',.1);await pause(20);}
    assert(g.worldHost.state==='HUB','Return to courtyard '+cycle);

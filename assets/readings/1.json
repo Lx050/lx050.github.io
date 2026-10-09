@@ -1,0 +1,72 @@
+{
+  "index": 1,
+  "title": "画韵新生",
+  "source": "https://huayun.maniforld.com/",
+  "access": "public",
+  "reviewedAt": "2026-10-09",
+  "summary": "从五类艺术的观看进入具体的数字处理任务。画韵新生把馆藏浏览、虚拟复原、创作与文化活化放在同一平台里。",
+  "sections": [
+    {
+      "id": "collection",
+      "title": "五类材料，五种观看方式",
+      "source": "https://huayun.maniforld.com/",
+      "paragraphs": [
+        "首页按书法、壁画、国画、青铜、剪纸组织常设展览，又把碑刻书法、国画等内容放入艺术作品目录。分类提醒观众：墨迹、墙面、纸本、金属器物和剪纸并不是同一种图像对象。",
+        "传世名画区域展示《千里江山图》《清明上河图》《富春山居图》《汉宫春晓图》等入口。长卷让人沿画面移动视线，单件目录则更便于集中观察某个对象；两种尺度共同构成平台的观看方式。"
+      ]
+    },
+    {
+      "id": "restoration",
+      "title": "先分清任务，再谈修复",
+      "source": "https://huayun.maniforld.com/virtual-restoration",
+      "paragraphs": [
+        "虚拟复原目录列出古画修复、壁画修复、书法碑林、轮廓解析、语义分割、超分重建与融合修复。它们分别面向缺损与褪色、墙画的结构与风格、碑刻拓片、线条、区域类别、分辨率和多信息融合。",
+        "轮廓解析强调提取线稿；语义分割强调把图像划分成有意义的区域；超分重建针对低分辨率。它们可能为后续观察或处理提供材料，却不应被混写成一次点击就得到确定历史原貌。"
+      ]
+    },
+    {
+      "id": "mask",
+      "title": "一张图像与一张遮罩",
+      "source": "https://huayun.maniforld.com/ancient-painting-restoration",
+      "paragraphs": [
+        "古画界面需要一张待处理图像，并允许附加遮罩。页面规定遮罩的白色区域表示希望修复的部位。于是，完整作品与计划介入的范围是两份不同的信息。",
+        "假设一幅示意画的右下角有一个缺口，遮罩只需把这块区域标出来。全幅画面仍应留下，便于比较局部改变是否影响整体关系。这个例子解释遮罩的含义，不提供真实文物的修复结论。"
+      ]
+    },
+    {
+      "id": "parameters",
+      "title": "模型选择与介入强度",
+      "source": "https://huayun.maniforld.com/ancient-painting-restoration",
+      "paragraphs": [
+        "公开面板提供 SGRGAN、Mamba、ALICE 与自动选择，并有从弱到强的修复强度控制。模型名称与强度设置表明这是需要选择参数的数字处理流程，而非无条件成立的恢复结果。",
+        "算法表现、文物适用性与页面宣传的精度数值没有在本次阅读中独立验证。展陈保留任务、输入和参数的关系，不把宣传统计当作质量证书。"
+      ]
+    },
+    {
+      "id": "activation",
+      "title": "作品之后还有交流",
+      "source": "https://huayun.maniforld.com/",
+      "paragraphs": [
+        "平台还有智绘生成、活化应用和数字人入口。首页以李白、岳飞、苏轼、花木兰等角色说明其历史人物互动方向：艺术目录之后，还有面向公众的文化体验。",
+        "这些入口是公开的产品组织方式。本次未开启对话、提交作品或运行生成，因此这里不展出任何虚构的模型回复，也不把角色对话当作历史人物的原话。"
+      ]
+    },
+    {
+      "id": "boundary",
+      "title": "可以在庭内比较什么",
+      "source": "https://huayun.maniforld.com/ancient-painting-restoration",
+      "paragraphs": [
+        "本地展台可以把一幅固定示意图的原图、轮廓层、区域层和遮罩层叠在一起，让观众逐层查看。开关改变的是显示方式，遮罩改变的是准备介入的位置。",
+        "真正运行修复模型、提交图像和取得输出需要原服务。对预先准备的图层进行切换，不等于重新完成了修复，也不能替代实体文物保护。"
+      ]
+    }
+  ],
+  "coverageNotes": [
+    "本日复核首页、七类虚拟复原目录和古画修复参数界面。",
+    "不复制未经核实的精度、成功案例数量与营销数据；不把数字增强称为历史真实性证明。",
+    "展陈用图如需复制，应使用用户已有素材或核实权利的资源。"
+  ],
+  "wordCount": 887,
+  "wordCountMethod": "Chinese characters plus Latin/numeric tokens; summary, section headings and prose only",
+  "coverage": "summary"
+}

@@ -1,0 +1,81 @@
+{
+  "index": 25,
+  "title": "GitHub · Lx050",
+  "source": "https://github.com/Lx050",
+  "access": "public",
+  "reviewedAt": "2026-10-09",
+  "summary": "公开项目目录把纸墨实验、编辑工具、文化研究和可检查的工程连接起来。理解这间工坊，需要同时看作品、来源与使用权利。",
+  "sections": [
+    {
+      "id": "catalog",
+      "title": "从作品进入，而不是从计数进入",
+      "source": "https://github.com/Lx050?tab=repositories",
+      "paragraphs": [
+        "公开仓库目录包含多篇人物与关系叙事网页，也有数字毛笔、公众号排版、文档图像工具、拓片研究与原生应用工程。它呈现一组从文化内容到制作工具的往返。",
+        "仓库数量、星标和贡献图只能说明平台上的部分活动。更具体的问题是：这个项目试图做什么，提供什么材料，哪些部分能运行，又有哪些边界被明确写出。"
+      ]
+    },
+    {
+      "id": "brush",
+      "title": "纸墨方向：墨魂与墨息",
+      "source": "https://github.com/Lx050/mo-hun",
+      "paragraphs": [
+        "mo-hun 的公开说明称其为细劲笔锋毛笔模拟；同一目录中的 moxi 被介绍为数字毛笔书写工具。两者把书写手感作为数字实验的对象。",
+        "“仓库中有数字毛笔项目”并不意味着庭内已嵌入它的完整算法。可以介绍笔迹、参数与画布的关系，但实际接入前仍要查看代码、运行条件与权利。"
+      ]
+    },
+    {
+      "id": "tools",
+      "title": "编辑方向：版式与图像资产",
+      "source": "https://github.com/Lx050?page=2&tab=repositories",
+      "paragraphs": [
+        "wx-layout 的目录说明是纯前端的公众号版式装配引擎；DocAssetKit 介绍从文档提取图像、分类并去重；1921editor 也在公开目录中。这组项目把可重复的编辑劳动拆成具体工具。",
+        "例如，一份文档中的图片先被取出，再判断用途与重复关系，最后才进入版式。这里解释目录描述里的任务关联，没有读取私人文档，也没有对这些工具作完整代码验收。"
+      ]
+    },
+    {
+      "id": "research",
+      "title": "文化研究与工程复核",
+      "source": "https://github.com/Lx050/mosheng-ios-public",
+      "paragraphs": [
+        "rubbing-to-knowledge 的公开目录强调可复现证据链；mosheng-ios-public 则公开原生应用源码、测试与接口契约。它们展示了作品背后如何组织材料与检查。",
+        "墨生 README 明确把仓库定位为比赛评审源码，默认使用内置示例和本地状态机。文化展示、可构建工程和远程生产服务是不同的层次，阅读工程说明能把它们分清。"
+      ]
+    },
+    {
+      "id": "forks",
+      "title": "一份收藏也有它的来处",
+      "source": "https://github.com/Lx050?page=2&tab=repositories",
+      "paragraphs": [
+        "目录中有明确标记 Forked from 的仓库。例如 wewe-rss 指向 cooderl/wewe-rss，CodexGuide 指向 freestylefly/CodexGuide，agent-memory-vault 指向 mcncarl/agent-memory-vault。它们不能因为出现在 Lx050 名下，就全部被称为独立原创。",
+        "Fork 体现的是从上游继续保存或开发的关系。是否有独立改动、改动由谁完成，需要继续查看相应提交；仅凭列表不作推断。对未标记 fork 的项目，也只说明其在账号下公开，不以此代替完整作者证明。"
+      ]
+    },
+    {
+      "id": "rights",
+      "title": "公开不等于无限制使用",
+      "source": "https://github.com/Lx050/mosheng-ios-public#readme-ov-file",
+      "paragraphs": [
+        "不同仓库显示不同许可证，使用时需逐一查看。墨生公开仓库特别说明未附开源许可证，默认没有授予复制、修改或商业分发的权利。读得到的代码与获准复用的代码，是两个分别需要确认的问题。",
+        "庭内保留项目名称、公开说明、来源与许可提示，使用归纳后的短文介绍其意义。没有权利依据时，不把整个仓库代码或作品素材搬进展览。"
+      ]
+    },
+    {
+      "id": "local",
+      "title": "在庭内翻阅一张项目卡",
+      "source": "https://github.com/Lx050",
+      "paragraphs": [
+        "每张项目卡可以包含目标、公开材料、来源关系与运行边界四项。观众可按纸墨、编辑、研究、原生应用几个方向切换阅读，也能清楚识别哪些条目来自上游 fork。",
+        "这种目录浏览可以完全在本地完成。真正检查代码、运行工程或查看最新提交，仍应回到对应仓库；本地卡片不显示伪造的构建成功状态，也不将未测试项目标记为可用服务。"
+      ]
+    }
+  ],
+  "coverageNotes": [
+    "本日复核公开仓库目录两页、mo-hun 概览及 mosheng-ios-public README；未使用私有源码。",
+    "明确区分账号下的公开项目、fork 来源与使用许可；不把无 fork 标记等同于原创作者证明。",
+    "不复用代码或素材；展陈文本为带来源的归纳。"
+  ],
+  "wordCount": 1002,
+  "wordCountMethod": "Chinese characters plus Latin/numeric tokens; summary, section headings and prose only",
+  "coverage": "summary"
+}

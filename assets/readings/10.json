@@ -1,0 +1,72 @@
+{
+  "index": 10,
+  "title": "API",
+  "source": "https://api.maniforld.com/",
+  "access": "public",
+  "reviewedAt": "2026-10-09",
+  "summary": "统一的入口连接不同模型路由。这个 maniforld 网关基于 New API 的公开界面，强调配置、连接与观察使用情况。",
+  "sections": [
+    {
+      "id": "gateway",
+      "title": "网关解决哪一层问题",
+      "source": "https://api.maniforld.com/",
+      "paragraphs": [
+        "首页介绍用统一或兼容协议接入模型服务。应用向熟悉的接口形状发出请求，网关再将请求路由到已配置的上游。它还展示 Chat、Responses、Claude、Gemini 等请求形式，以及 Cherry Studio、CC Switch 的接入入口。",
+        "这些首页演示描述协议与配置的方向，不等于每一种模型、地区或路由都在当前部署中可用。读网关时，需要把产品能力介绍和本站实际目录分开。"
+      ]
+    },
+    {
+      "id": "three-steps",
+      "title": "配置、连接、观察",
+      "source": "https://api.maniforld.com/",
+      "paragraphs": [
+        "配置阶段组织渠道和访问权限；连接阶段让客户端使用兼容路线；观察阶段关注用量、成本和性能。负载均衡、限流、权限与计费，是首页列出的管理主题。",
+        "这里没有读取控制台、添加密钥或发出推理请求。公开说明能解释这些管理主题之间的关系，却不能证明某个具体渠道已配置成功或可持续使用。"
+      ]
+    },
+    {
+      "id": "catalog",
+      "title": "当前公开模型目录",
+      "source": "https://api.maniforld.com/pricing",
+      "paragraphs": [
+        "2026 年 10 月 9 日读取的模型广场显示两项模型标识：glm_for_coding 与 stealth/ox-alpha。两项卡片都列出 anthropic 和 openai 两类端点。它们是本站公开显示的路由名称，不据此推断上游模型的真实身份。",
+        "目录提供搜索、筛选、卡片与表格视图，以及按 Token 单位比较价格的方式。模型、价格和配置随服务变化，因此展览保留查看日期，不把价格固化为长期承诺。"
+      ]
+    },
+    {
+      "id": "metrics",
+      "title": "横线也有意义",
+      "source": "https://api.maniforld.com/pricing",
+      "paragraphs": [
+        "模型卡片中的近二十四小时成功状态、延迟与吞吐量显示为缺省横线，灰色条说明没有相应数据。缺失数据不是零延迟，也不是服务健康的证明。",
+        "首页示例里的成功响应和耗时是说明界面的内容。若庭内放置状态灯，应保持中性，不能用持续闪动的成功光效取代实际测量。"
+      ]
+    },
+    {
+      "id": "example",
+      "title": "一次请求经过哪些位置",
+      "source": "https://api.maniforld.com/",
+      "paragraphs": [
+        "本地示意可以从“应用”开始，经过“兼容端点”，到达“模型路由”，最后返回“响应”。切换端点时，只展示请求外形和路由关系的变化，始终注明没有实际发送。",
+        "例如，选择 openai 或 anthropic 的说明标签，再查看两项公开路由的对应关系。这个练习帮助观众区分协议与模型名称，不需要任何密钥，也不产生费用。"
+      ]
+    },
+    {
+      "id": "boundary",
+      "title": "什么时候才算真正调用",
+      "source": "https://api.maniforld.com/pricing",
+      "paragraphs": [
+        "模型推理需要服务凭据、可用上游和实际网络请求；费用与限制取决于原平台当前配置。庭内可以真实运行本地路由动画和说明切换，不能制造一段输出并称它来自模型。",
+        "本地演示不接收 API 密钥，不提供虚构健康指标，也不把目录中的端点标记当作运行验证。"
+      ]
+    }
+  ],
+  "coverageNotes": [
+    "本日复核公开首页与模型广场；两模型与缺失指标仍与前次观察一致。",
+    "未读取账户控制台、凭据或费用记录；未发送模型请求。",
+    "模型标识保留为页面名称，不归因于未知供应商或原始模型。"
+  ],
+  "wordCount": 800,
+  "wordCountMethod": "Chinese characters plus Latin/numeric tokens; summary, section headings and prose only",
+  "coverage": "summary"
+}

@@ -1,0 +1,41 @@
+{
+  "index": 2,
+  "title": "画韵新生·旧址",
+  "source": "https://hyxs.art/",
+  "access": "public",
+  "reviewedAt": "2026-10-09",
+  "summary": "这是画韵新生的另一处公开入口。复核时，旧址首页与 huayun.maniforld.com 呈现相同的平台栏目，未发现独立的历史馆藏。",
+  "sections": [
+    {
+      "id": "same-platform",
+      "title": "从另一扇门进入同一平台",
+      "source": "https://hyxs.art/",
+      "paragraphs": [
+        "旧址首页同样以传统艺术创作与数字活化为主题，列出书法、壁画、国画、青铜和剪纸，连接传世名画、修复工坊及历史人物互动。这里的“旧址”是入口的称呼，不代表展示内容一定属于更早的版本。"
+      ]
+    },
+    {
+      "id": "shared-content",
+      "title": "这扇门后面有什么",
+      "source": "https://hyxs.art/",
+      "paragraphs": [
+        "观众可以循着艺术门类认识材料差异，再观察数字处理怎样区分原图、轮廓、遮罩和输出。对于这些共同内容，可回到庭内画韵新生主展继续阅读，避免把同一套作品讲成两部互不相关的历史。"
+      ]
+    },
+    {
+      "id": "boundary",
+      "title": "仍然保留的差别",
+      "source": "https://hyxs.art/",
+      "paragraphs": [
+        "此次只确认了两处首页内容的一致，并未证明所有内页、账户、数据和后台都相同。旧址自己的导航仍使用 hyxs.art 域名，因此保留这扇门，也保留它原本指向的网址。"
+      ]
+    }
+  ],
+  "coverageNotes": [
+    "本日分别打开两个首页确认栏目与主要内容相同；未假造独立旧版史。",
+    "作为薄入口展示，并在庭内链接至 index 1 的完整解释；不重复复制全部馆藏内容。"
+  ],
+  "wordCount": 288,
+  "wordCountMethod": "Chinese characters plus Latin/numeric tokens; summary, section headings and prose only",
+  "coverage": "summary"
+}

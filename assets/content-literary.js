@@ -7,8 +7,8 @@
   const C = global.CourtyardContent;
   const B = global.CourtyardContentBuilders = global.CourtyardContentBuilders || {};
   const sources = {
-    19: ['https://inside-qingmei.maniforld.com/'],
-    20: ['https://moon-snow.maniforld.com/#c4', 'https://moon-snow.maniforld.com/#c7', 'https://moon-snow.maniforld.com/#c10'],
+    19: ['/?read=19'],
+    20: ['/?read=20', '/?read=20', '/?read=20'],
     21: ['https://qingyang-before-proof.maniforld.com/#draft', 'https://qingyang-before-proof.maniforld.com/#red-pencil', 'https://qingyang-before-proof.maniforld.com/#final-proof'],
     22: ['https://rubbing.maniforld.com/cases/shichen-multiwitness/#workflow', 'https://rubbing.maniforld.com/cases/shichen-multiwitness/', 'https://rubbing.maniforld.com/cases/shichen-multiwitness/report/#knowledge-network', 'https://rubbing.maniforld.com/#report'],
     25: ['https://github.com/Lx050?tab=repositories', 'https://github.com/Lx050/mo-hun', 'https://github.com/Lx050/mosheng-ios-public#readme-ov-file', 'https://github.com/Lx050?page=2&tab=repositories']

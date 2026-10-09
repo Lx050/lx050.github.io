@@ -1,0 +1,7 @@
+const frame=document.querySelector('iframe'),status=document.querySelector('pre');frame.onload=()=>status.textContent='Ready';
+document.querySelector('button').onclick=async()=>{try{
+const w=frame.contentWindow,g=w.__garden,a=g.architectureQA,T=w.THREE,b=a.buildings.find(b=>b.index===20);g.start();g.player.visible=false;const report={at:new Date().toISOString(),shots:[],checks:[]};
+for(const view of b.metadata.compositionViews.filter(v=>!location.search.includes('entry')||v.name.includes('entry'))){status.textContent=view.name;const position=b.root.localToWorld(new T.Vector3(...view.position)).toArray(),target=b.root.localToWorld(new T.Vector3(...view.target)).toArray();a.renderView({position,target,sky:.28});a.renderView({position,target,sky:.28});await fetch('/__qa_artifact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:view.name+'.png',base64:g.renderer.domElement.toDataURL('image/png').split(',')[1]})});report.shots.push(view.name);}
+for(const anchor of b.metadata.readingAnchors){await g.reader.open(20,anchor.sectionId);report.checks.push({section:anchor.sectionId,passed:g.reader.isOpen&&g.reader.currentIndex===20});g.reader.close();}
+g.player.visible=true;await fetch('/__qa_artifact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'composition-report.json',text:JSON.stringify(report,null,2)})});status.textContent=JSON.stringify(report,null,2);
+}catch(e){status.textContent=e.stack;}};

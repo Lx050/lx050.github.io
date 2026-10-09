@@ -102,25 +102,25 @@
 - 来源：[页面1](https://reme.maniforld.com/)；[页面2](https://reme.maniforld.com/home)；[页面3](https://reme.maniforld.com/family)
 
 ### 14 AI两年
-- 庭院入口原地址：https://ai-two-years.maniforld.com
+- 庭院入口原地址：/?read=13
 - 页面依据：十段经历包含访问受阻、伦理边界、模仿失败、分工、疲惫与自我模型；工具增强并未取代人的判断。
 - 建筑实现：连续的人本梁带旁增加工具层与十段光影框架；失败处可绕行，疲惫处可停，最终核心仍未完全封闭。
 - 阅读状态：人的线 / 分工 / 自持
-- 来源：[页面1](https://ai-two-years.maniforld.com/#s1)；[页面2](https://ai-two-years.maniforld.com/#s2)；[页面3](https://ai-two-years.maniforld.com/#s5)；[页面4](https://ai-two-years.maniforld.com/#s6)；[页面5](https://ai-two-years.maniforld.com/#s7)；[页面6](https://ai-two-years.maniforld.com/#s8)；[页面7](https://ai-two-years.maniforld.com/#s9)；[页面8](https://ai-two-years.maniforld.com/#s10)
+- 来源：[页面1](/?read=13)；[页面2](/?read=13)；[页面3](/?read=13)；[页面4](/?read=13)；[页面5](/?read=13)；[页面6](/?read=13)；[页面7](/?read=13)；[页面8](/?read=13)
 
 ### 15 凝结核列传
-- 庭院入口原地址：https://biographies.maniforld.com
+- 庭院入口原地址：/?read=14
 - 页面依据：十二个人物关系以不同距离和作用参与身份形成；不是均质名人陈列。
 - 建筑实现：十二个大小、深浅和相望关系不同的停留处共同承托一庭，旧梁痕迹持续可见。
 - 阅读状态：距离 / 相见 / 留痕
-- 来源：[页面1](https://biographies.maniforld.com/)
+- 来源：[页面1](/?read=14)
 
 ### 16 从因到果
-- 庭院入口原地址：https://causal-web.maniforld.com
+- 庭院入口原地址：/?read=15
 - 页面依据：文本组织七股人物脉络与三次有后果的交汇；有一条分支终止，其他关系继续。
 - 建筑实现：七股梁带和地面细线在三个可停留节点相交；保留一处真实终止的支线，不把全部路线画成成功闭环。
 - 阅读状态：来路 / 交汇 / 延续
-- 来源：[页面1](https://causal-web.maniforld.com/)
+- 来源：[页面1](/?read=15)
 
 ### 17 哭泣的城市
 - 庭院入口原地址：https://crying-city.maniforld.com
@@ -144,18 +144,18 @@
 - 来源：[页面1](https://five-versions.maniforld.com/#c1)；[页面2](https://five-versions.maniforld.com/#c2)；[页面3](https://five-versions.maniforld.com/#c3)；[页面4](https://five-versions.maniforld.com/#c4)；[页面5](https://five-versions.maniforld.com/#c5)；[页面6](https://five-versions.maniforld.com/#c6)；[页面7](https://five-versions.maniforld.com/#c7)；[页面8](https://five-versions.maniforld.com/#c8)；[页面9](https://five-versions.maniforld.com/)
 
 ### 20 置身青媒内
-- 庭院入口原地址：https://inside-qingmei.maniforld.com
+- 庭院入口原地址：/?read=19
 - 页面依据：十五节交接性文章重视材料、分工、审核、归档和相互补位；不可见的协调劳动才是连接。
 - 建筑实现：低矮非对称工作湾由连续服务梁和灯轨缝合；保留接任者的空位与可继续使用的出口。
 - 阅读状态：接件 / 共作 / 交接
-- 来源：[页面1](https://inside-qingmei.maniforld.com/)
+- 来源：[页面1](/?read=19)
 
 ### 21 月雪
-- 庭院入口原地址：https://moon-snow.maniforld.com
+- 庭院入口原地址：/?read=20
 - 页面依据：十节关系书写中，称呼和语气逐渐改变，私人情感转成可靠协作；“月”“雪”不是建筑的唯一线索。
 - 建筑实现：七层错开的框架让两条路线逐步并行，终点是日常共同工作面；不再用月亮圆环代替内容。
 - 阅读状态：称呼 / 改写 / 并肩
-- 来源：[页面1](https://moon-snow.maniforld.com/#c4)；[页面2](https://moon-snow.maniforld.com/#c7)；[页面3](https://moon-snow.maniforld.com/#c10)
+- 来源：[页面1](/?read=20)；[页面2](/?read=20)；[页面3](/?read=20)
 
 ### 22 清样之前
 - 庭院入口原地址：https://qingyang-before-proof.maniforld.com

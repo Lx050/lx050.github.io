@@ -1,0 +1,61 @@
+{
+  "index": 4,
+  "title": "暖聆",
+  "source": "https://nuanling.maniforld.com/",
+  "access": "public",
+  "reviewedAt": "2026-10-09",
+  "summary": "暖聆的家庭侧界面围绕设备状态、日常照护与语音往来展开。它关心的不只是“有没有异常”，也包括家人能否听到彼此、作出回应。",
+  "sections": [
+    {
+      "id": "family-desk",
+      "title": "家人守护台怎样组织信息",
+      "source": "https://nuanling.maniforld.com/dashboard",
+      "paragraphs": [
+        "公开家庭主页把设备连接与电量、日常活动摘要、提醒和最近动态放在同一界面。入口以家庭成员为观看对象，让照护者先了解设备与信息是否可用，再查看需要关注的内容。",
+        "页面中出现的人名、年龄、健康事项和数值属于所见界面的展示内容。这里仅介绍信息结构，不将它们作为任何真实家庭的事实，也不复制到公共展板。"
+      ]
+    },
+    {
+      "id": "messages",
+      "title": "留言是往返的",
+      "source": "https://nuanling.maniforld.com/messages",
+      "paragraphs": [
+        "语音留言页展示双方交流和是否已经收听，旁边是录制入口。留言因此不仅是向长者发送提醒，也为长者回应家人留出位置。",
+        "本展关心的是“发出、收到、回应”的关系。它可以用无个人内容的状态示意来说明：一条信息已发出，并不等于对方已经听到；显示已听，也不是对健康或安全的保证。"
+      ]
+    },
+    {
+      "id": "device",
+      "title": "耳机与家庭服务的连接",
+      "source": "https://nuanling.maniforld.com/",
+      "paragraphs": [
+        "相关移动入口把产品描述为骨传导视觉 AI 耳机的家庭照护演示。家庭侧提供耳机通话、语音留言、亲情音色与提醒等入口。设备和服务连接，才可能让这些入口产生实际作用。",
+        "网页上显示一个通话按钮、在线状态或提醒模块，只能说明可见交互的组织方式。本次没有连接耳机、发起通话、录音、克隆声音、设置提醒或检验后台。"
+      ]
+    },
+    {
+      "id": "two-sides",
+      "title": "与长者侧相邻",
+      "source": "https://nuanling.maniforld.com/app/",
+      "paragraphs": [
+        "暖聆 App 展示同一概念的长者侧：大字、清楚的动作和首先可见的连接状态。家庭侧偏向汇总与安排，长者侧偏向当下要做的事。两者需要彼此回应，而不是让一个人永远成为被观看的对象。"
+      ]
+    },
+    {
+      "id": "boundary",
+      "title": "庭内的相互回应",
+      "source": "https://nuanling.maniforld.com/messages",
+      "paragraphs": [
+        "本地展台可以用两端指示灯说明一条无个人内容的信息如何从发出走到收到与回应，或让观众在家庭侧和长者侧的说明之间切换。全部状态应明确标为展陈示意。",
+        "真正向家人留言、调用麦克风、通话、设备配对或同步提醒需要原服务与相应授权。庭内不会因按下一块说明牌而执行这些照护动作。"
+      ]
+    }
+  ],
+  "coverageNotes": [
+    "本日经根入口进入家庭界面并读取语音页。直接请求 /dashboard 返回 404，而根入口可由前端导航进入，故主 source 使用原根网址。",
+    "未复制任何演示人物姓名、年龄、用药内容、数值或原始留言；未触发设备及健康操作。"
+  ],
+  "wordCount": 669,
+  "wordCountMethod": "Chinese characters plus Latin/numeric tokens; summary, section headings and prose only",
+  "coverage": "summary"
+}
