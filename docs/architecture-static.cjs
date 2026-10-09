@@ -2,8 +2,8 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert/strict'),path=require('path');
 const root=path.resolve(__dirname,'..'),THREE=require(path.join(root,'vendor/three.min.js'));
 const context={THREE,window:{},console,document:{createElement(){return{width:0,height:0,getContext(){return {fillStyle:'',strokeStyle:'',lineWidth:1,fillRect(){},strokeRect(){},clearRect(){},beginPath(){},moveTo(){},lineTo(){},stroke(){},fillText(){},arc(){},fill(){},createLinearGradient(){return{addColorStop(){}}},measureText(t){return{width:t.length*10}}}}}}}};
-vm.createContext(context);
-for(const file of ['assets/architecture.js','assets/infrastructure.js','assets/courtyard-runtime.js']){const src=fs.readFileSync(path.join(root,file),'utf8');new vm.Script(src,{filename:file}).runInContext(context);}
+context.window=context;vm.createContext(context);
+for(const file of ['assets/architecture.js','assets/content-core.js','assets/content-creation-care.js','assets/content-services.js','assets/content-narratives.js','assets/content-literary.js','assets/infrastructure.js','assets/courtyard-runtime.js']){const src=fs.readFileSync(path.join(root,file),'utf8');new vm.Script(src,{filename:file}).runInContext(context);}
 const rows=[];
 for(let i=0;i<29;i++){
  if(i===23)continue;

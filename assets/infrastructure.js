@@ -24,7 +24,7 @@
       brick: [0x985a46, .92, 0], brickLight: [0xb47759, .9, 0],
       brickDark: [0x714e43, .96, 0], oak: [0x695038, .88, 0],
       oakEnd: [0x977453, .92, 0], walnut: [0x493c32, .9, 0],
-      iron: [0x383f3d, .63, .66], bronze: [0xa58a52, .46, .68],
+      iron: [0x383f3d, .63, .66], bronze: [0x857962, .64, .46],
       patina: [0x477c72, .69, .46], copper: [0x6e8980, .65, .45],
       slate: [0x404c51, .81, .1], slateLight: [0x526069, .84, .08],
       vermilion: [0xad4632, .81, .04], vermilionLight: [0xc15a3f, .79, .03],

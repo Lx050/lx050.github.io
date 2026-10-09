@@ -18,4 +18,6 @@ class QAHandler(SimpleHTTPRequestHandler):
    (out/name).write_bytes(raw)
    self.send_response(200); self.end_headers(); self.wfile.write(b'ok')
   except Exception as e: self.send_error(400,str(e))
-ThreadingHTTPServer(('127.0.0.1',8874),QAHandler).serve_forever()
+import argparse
+parser=argparse.ArgumentParser();parser.add_argument('--port',type=int,default=8874);args=parser.parse_args()
+ThreadingHTTPServer(('127.0.0.1',args.port),QAHandler).serve_forever()

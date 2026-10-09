@@ -1,0 +1,25 @@
+<!doctype html><html><meta charset="utf-8"><title>Same-angle dusk colour comparison</title><style>body{font:16px system-ui;background:#e9ece8;margin:20px}button{padding:12px;margin:8px}iframe{width:1280px;height:900px;border:0}pre{white-space:pre-wrap}</style><h1>Same-angle dusk colour comparison</h1><button id="before">Load before</button><button id="after">Load after</button><button id="capture">Capture fixed dusk views</button><button id="check">Check motion and mechanisms</button><pre id="status">Loading after</pre><iframe id="frame" src="../index.html?architectureQA=1"></iframe><script>
+let version='after';const frame=document.getElementById('frame'),status=document.getElementById('status');
+const beforeURL=new URLSearchParams(location.search).get('before');document.getElementById('before').disabled=!beforeURL;document.getElementById('before').title='Optional archived baseline URL supplied by ?before=';
+for(const v of ['before','after'])document.getElementById(v).onclick=()=>{version=v;status.textContent='Loading '+v;frame.src=v==='before'?beforeURL:'../index.html?architectureQA=1&color=after';};
+frame.onload=()=>status.textContent='Ready '+version;
+async function save(name,data){await fetch('/__qa_artifact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(typeof data==='string'?{name,text:data}:{name,base64:data.base64})});}
+document.getElementById('capture').onclick=async()=>{
+ const w=frame.contentWindow,g=w.__garden,a=g?.architectureQA,T=w.THREE;if(!a){status.textContent='Not ready';return;}
+ g.start();g.teleport(0,3);g.setSky(.28);g.setRoofState('open');for(let i=0;i<180;i++)g.mechanicalStep(.1);
+ for(const b of a.buildings)a.mechanism(b.index,0,true);
+ const root=g.butterfly.root;
+ const views=[{name:'overview',position:[235,210,360],target:[0,3,0]},{name:'butterfly',position:root.localToWorld(new T.Vector3(80,38,-128)).toArray(),target:root.localToWorld(new T.Vector3(0,18,0)).toArray()}];
+ const records=[];
+ for(const view of views){
+  // Match reveal and mechanics in both captures. Only the palette/light changes.
+  g.butterfly.reveal=0;for(const wing of g.butterfly.wings){const u=wing.material.userData.revealUniforms;u.uReveal.value=0;u.uTime.value=0;}
+  a.renderView(view);a.renderView(view);
+  const capture=g.renderer.domElement.toDataURL('image/png').split(',')[1];
+  records.push({...view,skyT:g.skyT,roofState:g.butterfly.mechanical.state,reveal:0,viewport:[w.innerWidth,w.innerHeight]});
+  await save('color-'+version+'-'+view.name+'.png',{base64:capture});
+ }
+ await save('color-'+version+'-capture.json',JSON.stringify({version,records,errors:w.__courtyardErrors||[]},null,2));status.textContent='Saved '+version+' overview and butterfly, fixed sky .28 / open wings / reveal zero';
+};
+document.getElementById('check').onclick=async()=>{const w=frame.contentWindow,g=w.__garden,a=g?.architectureQA;if(!a)return;g.start();const result={version,movement:a.movementAudit(),mechanical:a.butterflyAudit(),errors:w.__courtyardErrors||[]};result.passed=result.movement.passed&&result.mechanical.passed&&!result.errors.length;await save('color-motion-report.json',JSON.stringify(result,null,2));status.textContent=JSON.stringify(result,null,2);};
+</script></html>

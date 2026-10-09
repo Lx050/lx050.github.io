@@ -6,7 +6,7 @@ function bounds(THREE,root){
 }
 function register(THREE,b,root,index,title){
  root.updateWorldMatrix(true,true);b.root=root;b.index=index;b.title=title;b.inverse=root.matrixWorld.clone().invert();b.origin=root.getWorldPosition(new THREE.Vector3());b.yaw=Math.atan2(root.matrixWorld.elements[8],root.matrixWorld.elements[10]);
- b.point=(x,z)=>new THREE.Vector3(x,0,z).applyMatrix4(root.matrixWorld);b.local=p=>p.clone().applyMatrix4(b.inverse);b.collisionBoxes=b.collisionBoxes||[];b.mechanisms=b.mechanisms||[];b.open=1;b.targetOpen=1;
+ b.point=(x,z)=>new THREE.Vector3(x,0,z).applyMatrix4(root.matrixWorld);b.local=p=>p.clone().applyMatrix4(b.inverse);b.collisionBoxes=b.collisionBoxes||[];b.mechanisms=b.mechanisms||[];b.open=b.metadata?.initialPhase??1;b.targetOpen=b.open;
  b.cameraMeshes=[];root.traverse(o=>{if(!o.isMesh)return;let fine=false;for(let p=o;p&&p!==root;p=p.parent)if(p===b.detail)fine=true;if(!fine)b.cameraMeshes.push(o);});
  b.cameraBoxes=[];
  // Subdivide long rotated walls before their broad AABB is used by camera sweeps.

@@ -69,5 +69,10 @@ document.getElementById('camera').onclick=async()=>{
   const start=g.player.position.clone().add(new T.Vector3(0,1.55,0)),direction=g.camera.position.clone().sub(start),length=direction.length();direction.normalize();
   const ray=new T.Raycaster(start,direction,.15,Math.max(.15,length-.12)),hits=ray.intersectObjects(b.cameraMeshes,false);rows.push({index:b.index,pitch,angle,length,passed:hits.length===0});
  }}
- const b=a.buildings.find(b=>b.mechanisms.length),p=b.point(0,0);g.teleport(p.x,p.z);g.__w2bTest('prepare');const controls=[];for(const v of [0,1,.5,0,1]){w.document.querySelector('[data-craft="'+v+'"]').click();controls.push({value:v,target:b.targetOpen,passed:b.targetOpen===v});}const result={samples:rows.length,passed:rows.every(r=>r.passed)&&controls.every(r=>r.passed),controls,failed:rows.filter(r=>!r.passed),rows};await persist(mode+'-camera.json',JSON.stringify(result,null,2));status.textContent=JSON.stringify({samples:result.samples,passed:result.passed,failed:result.failed},null,2);
+ const controls=[];
+ for(const b of a.buildings.filter(b=>b.mechanisms.length)){
+  const p=b.point(0,0);g.teleport(p.x,p.z);g.__w2bTest('prepare');
+  for(const v of [0,1,.5,0,1]){const button=w.document.querySelector('[data-craft="'+v+'"]');button.click();controls.push({index:b.index,value:v,label:button.textContent,target:b.targetOpen,passed:b.targetOpen===v});}
+ }
+ const result={samples:rows.length,passed:rows.every(r=>r.passed)&&controls.every(r=>r.passed),controls,failed:rows.filter(r=>!r.passed),rows};await persist(mode+'-camera.json',JSON.stringify(result,null,2));status.textContent=JSON.stringify({samples:result.samples,passed:result.passed,failed:result.failed},null,2);
 };

@@ -41,9 +41,9 @@
     };
     const M = {
       limestone: mat(0xc7c3b2), chalk: mat(0xddd8c8), masonry: mat(0x92988c),
-      joint: mat(0x3c433d), cedar: mat(0x75604b), oak: mat(0x99826a),
+      joint: mat(0x3c433d), cedar: mat(0x786b55), oak: mat(0x9c8c72),
       walnut: mat(0x453f35), steel: mat(0x303e42, { metalness: .62, roughness: .47 }),
-      bronze: mat(0xa58453, { metalness: .63, roughness: .39 }),
+      bronze: mat(0x84785e, { metalness: .48, roughness: .61 }),
       copper: mat(0x728b7d, { metalness: .55, roughness: .57 }),
       tile: mat(0x42574f, { roughness: .77 }), ceramic: mat(0x899b96, { roughness: .46 }),
       clay: mat(0xaa6f55), paper: mat(0xe0d5b4, { roughness: .97 }),
@@ -492,6 +492,7 @@
     const { box, cyl, sphere, beam, ring, column, deck, frame, screenSide, endPanels, gutter,
       gable, lean, barrel, hip, lantern, table, bench, books, cabinet, paper, scroll,
       plant, display, artwork, monitor, plaque, hingeLeaf, skylight } = b;
+    const contentBuild=global.CourtyardContent?.build({index:i,b,options,T});if(contentBuild)return contentBuild;
     let w = 16, d = 14, signY = 4.5, description = '';
 
     if (i === 0) {
