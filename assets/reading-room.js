@@ -107,6 +107,25 @@
     const manifestUrl = staticURL(options.manifestUrl || './assets/readings/index.json', document.baseURI);
     const manifestDirectory = new URL('.', manifestUrl).pathname;
     const cache = new Map();
+    // v1 uses source identity + stable section IDs, independent of catalog order.
+    // Unknown future versions are left untouched; blocked storage falls back to this visit.
+    const progressKey = 'courtyard-reading-progress-v1';
+    let progress = Object.create(null), canPersist = true, saveTimer = null, restoring = false;
+    try {
+      const saved = JSON.parse(global.localStorage.getItem(progressKey) || 'null');
+      if (saved && saved.version === 1 && saved.entries && typeof saved.entries === 'object' && !Array.isArray(saved.entries)) progress = saved.entries;
+      else if (saved) canPersist = false;
+    } catch (_) { /* Corrupt or unavailable storage never blocks reading. */ }
+    function identity(i) { return externalURL(entries[i] && entries[i].url) || 'building:' + i; }
+    function savedPosition(i) {
+      const value = Object.prototype.hasOwnProperty.call(progress, identity(i)) ? progress[identity(i)] : null;
+      return value && typeof value.sectionId === 'string' && Number.isFinite(value.scrollTop) && value.scrollTop >= 0 ? value : null;
+    }
+    function remember() {
+      if (!opened || !data || !data.sections[sectionIndex] || restoring) return;
+      progress[identity(index)] = { sectionId: data.sections[sectionIndex].id, scrollTop: query ? 0 : scroll.scrollTop };
+      if (canPersist) { try { global.localStorage.setItem(progressKey, JSON.stringify({ version: 1, entries: progress })); } catch (_) {} }
+    }
     let manifest = null, opened = false, index = null, data = null, sectionIndex = 0;
     let token = 0, controller = null, returnFocus = null, query = '', historyOwned = false;
     let fallbackInert = [], historyClosing = false;
@@ -144,11 +163,13 @@
     const status = node('p', 'cr-status'); status.setAttribute('role', 'status'); status.setAttribute('aria-live', 'polite');
     const results = node('section', 'cr-results'); results.hidden = true; results.setAttribute('aria-label', '正文搜索结果');
     const article = node('article', 'cr-article');
+    const workshop = node('section', 'cr-workshop'); workshop.hidden = true;
+    let cleanupWorkshop = null;
     const footer = node('footer', 'cr-footer');
     const prevButton = button('cr-page-button cr-prev', '← 上一篇');
     const position = node('span', 'cr-position'); position.setAttribute('aria-live', 'polite');
     const nextButton = button('cr-page-button cr-next', '下一篇 →');
-    footer.append(prevButton, position, nextButton); scroll.append(status, results, article);
+    footer.append(prevButton, position, nextButton); scroll.append(status, results, workshop, article);
     main.append(toolbar, scroll, footer); body.append(aside, main); shell.append(head, body); dialog.append(shell);
     document.body.append(dialog);
 
@@ -163,6 +184,7 @@
       article.setAttribute('aria-busy', busy ? 'true' : 'false');
     }
     function resetView() {
+      if (cleanupWorkshop) cleanupWorkshop(); cleanupWorkshop = null; workshop.replaceChildren(); workshop.hidden = true;
       data = null; query = ''; sectionIndex = 0; searchInput.value = '';
       nav.replaceChildren(); chapterSelect.replaceChildren(); article.replaceChildren(); metadata.replaceChildren();
       results.replaceChildren(); results.hidden = true; footer.hidden = true;
@@ -210,6 +232,7 @@
       controller = new AbortController();
       const signal = controller.signal;
       const wasOpen = opened;
+      remember();
       index = nextIndex; opened = true; resetView();
       title.textContent = text(entries[index] && entries[index].title, '庭中阅览');
       kicker.textContent = '庭中阅览 · ' + String(index + 1).padStart(2, '0');
@@ -233,10 +256,17 @@
         }
         if (request !== token || !opened) return false;
         data = reading; title.textContent = reading.title;
+        if (index === 6 && global.CourtyardTypography) { workshop.hidden = false; cleanupWorkshop = global.CourtyardTypography.mount(workshop); }
         renderMetadata(); renderChapters();
         toolbar.hidden = !data.sections.length;
-        const requestedSection = data.sections.findIndex(section => section.id === sectionId);
+        const resume = !sectionId ? savedPosition(index) : null;
+        const requestedSection = data.sections.findIndex(section => section.id === (sectionId || (resume && resume.sectionId)));
+        restoring = true;
         selectSection(requestedSection < 0 ? 0 : requestedSection, false);
+        setStatus('', false);
+        scroll.scrollTop = resume && requestedSection >= 0 ? resume.scrollTop : 0;
+        restoring = false;
+        remember();
         setStatus('', false);
         notify('onVisit', index, data);
         return true;
@@ -246,7 +276,7 @@
         const explanation = node('p', 'cr-error-copy', error instanceof SyntaxError ? '文本数据暂时无法解析，请稍后重试。' : error instanceof TypeError ? '暂时无法取得本站的文本文件，请检查连接后重试。' : text(error.message, '加载失败，请稍后重试。'));
         const retry = button('cr-retry', '重新载入'); retry.addEventListener('click', () => open(nextIndex, sectionId));
         article.replaceChildren(explanation, retry);
-        const source = externalURL(entries[nextIndex] && entries[nextIndex].url);
+        const source = entries[nextIndex] && !entries[nextIndex].protectSource ? externalURL(entries[nextIndex].url) : null;
         if (source) { const sourceLine = node('p', 'cr-error-source'); sourceLine.append(link('cr-source-link', '查看原站 ↗', source)); article.append(sourceLine); }
         return false;
       }
@@ -292,6 +322,7 @@
     }
     function selectSection(n, focus, paragraphNumber) {
       if (!data) return;
+      if (n !== sectionIndex) remember();
       sectionIndex = Math.min(Math.max(0, n), Math.max(0, data.sections.length - 1));
       const section = data.sections[sectionIndex];
       updateHistory(section && section.id);
@@ -339,6 +370,7 @@
         const paragraph = typeof paragraphNumber === 'number' ? article.querySelector('[data-paragraph="' + paragraphNumber + '"]') : article.querySelector('[data-table-row="' + paragraphNumber + '"]');
         if (paragraph) paragraph.scrollIntoView({ behavior: 'instant', block: 'center' });
       }
+      remember();
       notify('onSection', index, section, data);
     }
     function runSearch() {
@@ -368,6 +400,8 @@
     }
     function close(fromHistory) {
       if (!opened) return;
+      remember();
+      if (cleanupWorkshop) cleanupWorkshop(); cleanupWorkshop = null;
       const closedIndex = index;
       opened = false; ++token;
       if (controller) controller.abort();
@@ -381,6 +415,9 @@
       notify('onClose', closedIndex);
       if (returnFocus && returnFocus.isConnected && typeof returnFocus.focus === 'function') returnFocus.focus({ preventScroll: true });
     }
+    scroll.addEventListener('scroll', () => { clearTimeout(saveTimer); saveTimer = setTimeout(remember, 160); }, { passive: true });
+    global.addEventListener('pagehide', remember);
+    document.addEventListener('visibilitychange', () => { if (document.hidden) remember(); });
     exitButton.addEventListener('click', () => close());
     dialog.addEventListener('cancel', event => { event.preventDefault(); close(); });
     dialog.addEventListener('close', () => { if (opened && !dialog.open) close(); });
@@ -396,7 +433,7 @@
     dialog.addEventListener('keydown', function (event) {
       if (event.key === 'Escape') { event.preventDefault(); close(); return; }
       if (event.key !== 'Tab') return;
-      const focusable = Array.from(dialog.querySelectorAll('a[href],button:not(:disabled),input,select,summary,[tabindex="0"]')).filter(el => !el.hidden && el.getClientRects().length);
+      const focusable = Array.from(dialog.querySelectorAll('a[href],button:not(:disabled),input,textarea,select,summary,[tabindex="0"]')).filter(el => !el.hidden && el.getClientRects().length);
       const first = focusable[0], last = focusable[focusable.length - 1];
       if (event.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) { event.preventDefault(); if (last) last.focus(); }
       else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); if (first) first.focus(); }

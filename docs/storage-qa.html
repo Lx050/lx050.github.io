@@ -1,0 +1,6 @@
+<!doctype html><html><meta charset="utf-8"><title>Reader storage resilience</title><link rel="stylesheet" href="../assets/reading-room.css"><button id="run">Test blocked storage</button><pre id="result"></pre><script>
+Object.defineProperty(window,'localStorage',{configurable:true,get(){throw new DOMException('Blocked','SecurityError');}});
+</script><script src="../assets/reading-room.js"></script><script>
+const reader=CourtyardReading.install({entries:Array.from({length:26},(_,i)=>({title:'Reading '+i,url:'https://example.com/'+i})),manifestUrl:'../assets/readings/index.json'});
+document.querySelector('#run').onclick=async()=>{try{await reader.open(20,'c5');document.querySelector('.cr-scroll').scrollTop=140;reader.close();await new Promise(r=>setTimeout(r,100));await reader.open(20);const passed=document.querySelector('.cr-chapter-select').value==='5'&&document.querySelector('.cr-scroll').scrollTop===140;reader.close();document.querySelector('#result').textContent=JSON.stringify({passed,blockedStorageSessionResume:passed});}catch(e){document.querySelector('#result').textContent=String(e);}};
+</script></html>
