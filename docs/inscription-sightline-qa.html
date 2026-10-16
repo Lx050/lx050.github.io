@@ -1,0 +1,19 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><title>Local inscription sightline QA</title>
+<style>body{margin:16px;background:#e9e6dd;color:#262b28;font:14px system-ui}button,select{padding:8px;margin:0 6px 8px 0}iframe{display:block;border:1px solid #999;max-width:none}pre{white-space:pre-wrap;max-width:1000px}</style>
+<h1>Local inscription sightline QA</h1><p>These controls exist only on this test page. No production text, camera aim, or avatar visibility is overridden.</p>
+<button id="desktop">1280 × 900</button><button id="portrait">390 × 844</button>
+<select id="building"><option value="0">Wall inscription · 0</option><option value="6">Sloping worktable rest · 6</option><option value="20">Integrated Moon Snow · 20</option></select>
+<button id="pose">Approach at normal orbit</button><button id="side">Orbit sideways</button><button id="far">Move away</button><button id="resume">Resume actual controls</button>
+<pre id="status">Loading…</pre><iframe id="frame" title="Courtyard preview" width="1280" height="900" src="../index.html?architectureQA=1"></iframe>
+<script>
+const frame=document.querySelector('#frame'),status=document.querySelector('#status');let pose=null;
+function report(label){const g=frame.contentWindow.__garden;status.textContent=JSON.stringify({label,geometry:g.architectureQA.inscriptionSightline(),cameraDistance:g.cameraState.effectiveDistance,player:g.player.position.toArray(),note:'Inspect the actual image. Geometry success does not certify visual legibility.'},null,2);}
+function settle(){const w=frame.contentWindow,g=w.__garden,a=g.architectureQA;w.CourtyardReadingPanels.update(a.buildings,g.player.position);for(let i=0;i<40;i++)a.step(1/60,[]);g.__w2bTest('prepare');a.renderFrame();}
+function place(){const w=frame.contentWindow,g=w.__garden;if(!g?.architectureQA)return;g.start();const a=g.architectureQA;a.pauseRendering();g.setSky(.28);g.weather?.setMode('clear');const b=a.buildings.find(b=>b.index===+document.querySelector('#building').value),p=b.readingPanels.panels[0],T=w.THREE;p.face.updateWorldMatrix(true,false);const center=p.face.getWorldPosition(new T.Vector3()),normal=new T.Vector3(0,0,1).transformDirection(p.face.matrixWorld);normal.y=0;normal.normalize();const v=center.clone().addScaledVector(normal,1.35);g.teleport(v.x,v.z);g.cameraState.yaw=Math.atan2(normal.x,normal.z);g.cameraState.pitch=.2;g.cameraState.distance=6.5;g.cameraState.initialized=false;pose={x:v.x,z:v.z,yaw:g.cameraState.yaw,normal};settle();report('Approach: use physical text, ordinary orbit, and collision safety');}
+frame.onload=()=>{status.textContent='Click Approach after the courtyard finishes loading';};
+document.querySelector('#pose').onclick=place;document.querySelector('#building').onchange=place;
+document.querySelector('#side').onclick=()=>{if(!pose)return;const g=frame.contentWindow.__garden;g.cameraState.yaw=pose.yaw+Math.PI/2;settle();report('Side orbit: visitor should return when it clears the text');};
+document.querySelector('#far').onclick=()=>{if(!pose)return;const g=frame.contentWindow.__garden;g.teleport(pose.x+pose.normal.x*6,pose.z+pose.normal.z*6);settle();report('Far: reading-specific fade should release');};
+document.querySelector('#resume').onclick=()=>{const g=frame.contentWindow.__garden;g.architectureQA.pauseRendering(false);frame.focus();report('Actual movement, drag, and touch controls resumed');};
+for(const [id,width,height] of [['desktop',1280,900],['portrait',390,844]])document.querySelector('#'+id).onclick=()=>{frame.width=width;frame.height=height;setTimeout(place,100);};
+</script></html>

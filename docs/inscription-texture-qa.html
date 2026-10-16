@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>建筑题刻 · 二维纹理检查</title>
+<style>
+:root{color-scheme:light;font-family:system-ui,"Noto Sans CJK SC","Noto Sans CJK JP",sans-serif;color:#233c30;background:#efeee8}
+*{box-sizing:border-box}body{max-width:1600px;margin:0 auto;padding:28px}
+h1{font-size:25px;margin:0 0 12px;font-weight:650}p{line-height:1.65;margin:8px 0}.note{max-width:1050px;color:#4f5b50}
+#status{margin:18px 0;padding:12px 16px;background:#e0e6dc;border-left:3px solid #557358}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;margin-top:24px}
+article{min-width:0}h2{font-size:18px;margin:0 0 8px;line-height:1.55;min-height:56px}
+label{display:flex;gap:10px;align-items:center;font-size:14px;margin:12px 0}select{font:inherit;color:inherit;background:#fffef9;border:1px solid #a7b2a5;border-radius:4px;padding:8px;min-width:160px}
+.caption{font-size:13px;line-height:1.6;min-height:58px;color:#53614f;overflow-wrap:anywhere}.texture{background:#dedbcc}.texture canvas{display:block;width:100%;height:auto}
+footer{font-size:13px;color:#63705d;margin-top:24px;line-height:1.6}
+@media(max-width:1000px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:620px){body{padding:18px}.grid{grid-template-columns:1fr}h2{min-height:0}}
+</style>
+</head>
+<body>
+<h1>建筑题刻 · 二维纹理检查</h1>
+<p class="note">以下直接展示生产模块生成的 Canvas 纹理，用于检查汉字、字号、对比度与断行。每馆可切换三个实际内容状态；文字来自当前本地内容目录。</p>
+<p class="note">此页没有 WebGL 渲染器，也不展示真实三维场景。它不能验证建筑中的遮挡、灯光、透视、可见距离或行走体验，不能据此认定三维验收通过。</p>
+<div id="status" role="status">正在生成三处实际题刻纹理…</div>
+<main class="grid" id="surfaces"></main>
+<footer>AI 两年保留当前局部隐私处理。RSS 仅展示已核实的公开入口说明，不访问账户或订阅内容。排版助手展示源文题刻；本页不模拟其编辑器功能。</footer>
+<script src="../vendor/three.min.js"></script>
+<script src="../assets/architecture.js"></script>
+<script src="../assets/content-core.js"></script>
+<script src="../assets/content-creation-care.js"></script>
+<script src="../assets/content-services.js"></script>
+<script src="../assets/content-narratives.js"></script>
+<script src="../assets/content-literary.js"></script>
+<script src="../assets/reading-catalog.js"></script>
+<script src="../assets/reading-panels.js"></script>
+<script>
+(function () {
+  'use strict';
+  const records = [], host = document.getElementById('surfaces'), status = document.getElementById('status');
+  const states = () => records.map(({index,controller}) => ({
+    index, phase: controller.phase, sectionId: controller.panels[0].section?.id || null,
+    title: controller.panels[0].section?.title || controller.content.title,
+    coverage: controller.content.coverage,
+    texture: [controller.panels[0].texture?.image.width, controller.panels[0].texture?.image.height]
+  }));
+  function paint(record, phase) {
+    const {controller, building, canvasHost, caption} = record;
+    controller.setPhase(phase);
+    const panel = controller.panels[0];
+    CourtyardReadingPanels.update([building], new THREE.Vector3(panel.placement.view[0], 1.7, panel.placement.view[1]));
+    if (!panel.texture?.image) throw new Error('题刻纹理未生成：' + record.index);
+    const canvas = panel.texture.image;
+    canvas.setAttribute('role', 'img');
+    canvas.setAttribute('aria-label', (panel.section?.title || controller.content.title) + '，源文节录纹理');
+    canvasHost.replaceChildren(canvas);
+    caption.textContent = (panel.section?.title || controller.content.title) + ' · ' +
+      (panel.section?.id || 'summary') + ' · ' + canvas.width + ' × ' + canvas.height;
+    record.select.value = String(controller.phase);
+    document.documentElement.dataset.ready = 'true';
+  }
+  try {
+    for (const index of [13, 8, 6]) {
+      const preview = CourtyardReadingCatalog[index];
+      const building = CourtyardArchitecture.build({THREE, index, title: preview.title, zone: index < 8 ? 0 : index < 13 ? 1 : 2});
+      const controller = CourtyardReadingPanels.attach({THREE, building, index, preview});
+      if (!controller?.panels.length) throw new Error('该馆没有生成题刻：' + index);
+      const article = document.createElement('article'), heading = document.createElement('h2');
+      heading.textContent = String(index + 1).padStart(2, '0') + ' · ' + preview.title;
+      const label = document.createElement('label'); label.textContent = '内容状态';
+      const select = document.createElement('select');
+      select.setAttribute('aria-label', preview.title + '的题刻状态');
+      (building.metadata.phaseLabels || ['公开入口', '未读取的范围', '入口边界']).forEach((title, phase) => {
+        const option = document.createElement('option'); option.value = String(phase); option.textContent = (phase + 1) + ' · ' + title; select.append(option);
+      });
+      label.append(select);
+      const caption = document.createElement('p'); caption.className = 'caption';
+      const canvasHost = document.createElement('div'); canvasHost.className = 'texture';
+      article.append(heading, label, caption, canvasHost); host.append(article);
+      const record = {index, building, controller, select, caption, canvasHost}; records.push(record);
+      select.addEventListener('change', () => paint(record, Number(select.value)));
+      paint(record, 0);
+    }
+    status.textContent = '已生成 3 处实际二维纹理。请选择不同状态，检查文字显示；三维遮挡与灯光仍须另行验收。';
+    window.__inscriptionTextureQA = Object.freeze({
+      states,
+      setPhase(index, phase) { const record = records.find(r => r.index === index); if (!record) return null; paint(record, phase); return states().find(r => r.index === index); }
+    });
+  } catch (error) {
+    document.documentElement.dataset.ready = 'error';
+    status.textContent = '纹理生成失败：' + error.message;
+    status.style.borderColor = '#a54137';
+    console.error(error);
+  }
+})();
+</script>
+</body>
+</html>

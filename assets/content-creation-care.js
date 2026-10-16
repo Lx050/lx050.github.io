@@ -273,7 +273,7 @@
   B[4] = function ({ b, options, T }) {
     const w = 16.4, d = 14.8;
     b.deck(w, d, 'wood'); b.frame(14.4, 12.8, 5.35, { bays: 3, material: 'oak', post: .27 });
-    b.hip(0, 0, 17.3, 15.8, 5.52, 2.22, 'tile');
+    b.hip(0, 0, 17.3, 15.8, 5.52, 2.22, 'tile', { shellThickness: .16 });
     b.endPanels(14.4, 13.5, 3.65, 'chalk');
     // Domestic acoustic rooms within the taller weather roof: low, sheltered, inward-looking.
     for (const side of [-1, 1]) {
