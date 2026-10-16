@@ -76,7 +76,7 @@ new Promise((resolve,reject)=>new THREE.GLTFLoader().parse(bytes.buffer.slice(by
  });
  const entryFiles=['island.html'];check('The two 3D entry aliases are identical',()=>entryFiles.forEach(f=>assert.equal(fs.readFileSync(path.join(root,f),'utf8'),html)));
  const digest=s=>require('crypto').createHash('sha256').update(s).digest('hex');
- check('Only the explicit mobile layout changes; mobile input handlers remain byte-identical',()=>{
+ check('Approved disclosure header snapshot; all other mobile input handlers remain byte-identical',()=>{
   const narrowJumpRule='/* Narrow touch layout: keep the full jump target above the joystick and clear of the world return button. */\n@media(max-width:384px){#jump{bottom:calc(var(--joy-bottom) + var(--joy-size) + 24px)}}\n';
   assert(html.includes(narrowJumpRule));
   const uiStyle=html.match(/<style id="mobile-nearby-layout">[\s\S]*?<\/style>\n/)[0];
@@ -85,9 +85,11 @@ new Promise((resolve,reject)=>new THREE.GLTFLoader().parse(bytes.buffer.slice(by
   const interaction=group.match(/^  <section id="interaction"[\s\S]*?^  <\/section>/m)[0];
   let originalHeader=html.slice(0,html.indexOf('const avatarMeshes=')).replace(narrowJumpRule,'').replace(uiStyle,'').replace(group,craft);
   originalHeader=originalHeader.replace('  <section id="world-hud"',interaction+'\n  <section id="world-hud"');
-  // Asset cache versions change with geometry; normalize only version tokens.
-  assert.equal(digest(originalHeader.replace(/\?v=[a-f0-9]{16}/g,'?v=ASSET_VERSION')),'9d9cc927eb4412f4aae5375ab504c152b2aa8d99ae8c387e506a514267e45275');
-  assert.equal(digest(html.slice(html.indexOf('let joyPointer='),html.indexOf("window.addEventListener('resize',resize);resize();"))),'7cc1e549a4b03cd62290ec78e84bc5d1c633fcf4d5e9f063e9474f2018f96f0b');
+  // Approved progressive-disclosure header snapshot; normalize only asset version tokens.
+  // Input snapshot below permits only the explicit card/summary joystick exclusion.
+  assert(html.includes('#viewpad,#interaction,#craft-controls,.mapbox,#sprint,button,a,input,summary,#directory,#atlas,#intro'));
+  assert.equal(digest(originalHeader.replace(/\?v=[a-f0-9]{16}/g,'?v=ASSET_VERSION')),'48db6a1d58c23e3fe3dd84103e4dd81a5d2ca470829e66dd92230439a2b25637');
+  assert.equal(digest(html.slice(html.indexOf('let joyPointer='),html.indexOf("window.addEventListener('resize',resize);resize();")).replace('#viewpad,#interaction,#craft-controls,.mapbox,#sprint,button,a,input,summary,#directory,#atlas,#intro','#viewpad,#interaction,.mapbox,#sprint,button,a,input,#directory,#atlas,#intro')),'7cc1e549a4b03cd62290ec78e84bc5d1c633fcf4d5e9f063e9474f2018f96f0b');
  });
  const report={passed:true,checks:count,checkNames:checks,actualBuildingSamples:rows.length,occlusionDetected:rows.filter(r=>r.blocked).length,rows,geometry500CallsMs:milliseconds,visualEvidence:'NOT RUN: Chromium process launch is blocked by local Unix socket permissions. These are GPU-free geometry/state tests, not screenshots or user-device touch tests.'};
  fs.mkdirSync(path.join(root,'qa-results'),{recursive:true});fs.writeFileSync(path.join(root,'qa-results/inscription-sightline-check.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify({passed:true,checks:count,actualBuildingSamples:rows.length,occlusionDetected:report.occlusionDetected,geometry500CallsMs:milliseconds},null,2));

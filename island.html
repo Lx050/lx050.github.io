@@ -139,7 +139,7 @@ const TRACKS=[
 @media(max-width:760px){.world-title{left:20px;font-size:18px}#world-exit{bottom:max(24px,env(safe-area-inset-bottom));right:20px}.scroll-inscription{font-size:19px;letter-spacing:4px}}
 </style>
 <style>
-#craft-controls{position:absolute;right:20px;top:220px;max-width:220px;padding:10px 12px;background:#162224ee;border:1px solid #a98c5877;border-radius:5px;pointer-events:auto;z-index:4}#craft-controls[hidden],.world-active #craft-controls{display:none!important}#craft-controls p{margin:0 0 6px;font-size:11px}#craft-controls button{min-width:44px;min-height:44px;border:1px solid #aa996666;border-radius:3px;padding:7px 10px;margin:2px;font-size:11px}#craft-controls[data-content] button{font-size:10px;padding:7px 6px;margin:2px 1px}#craft-controls button[aria-pressed="true"]{background:#a78c4933}@media(max-width:600px){#craft-controls{top:215px;right:12px;max-width:180px}}
+#craft-controls{position:absolute;right:20px;top:220px;max-width:220px;padding:10px 12px;background:#162224ee;border:1px solid #a98c5877;border-radius:5px;pointer-events:auto;z-index:4}#craft-controls[hidden],.world-active #craft-controls{display:none!important}#craft-more-summary .craft-collapse{display:none}#craft-more[open] .craft-expand{display:none}#craft-more[open] .craft-collapse{display:inline}#craft-controls summary{min-width:44px;min-height:44px;cursor:pointer;padding:12px 8px;font-size:11px;box-sizing:border-box}#craft-controls summary:focus-visible,#craft-controls button:focus-visible{outline:2px solid #f3d795;outline-offset:2px}#craft-primary>button{font-weight:600}#craft-more:not([open]) #craft-secondary-actions{display:none}#craft-secondary-actions{display:grid;grid-template-columns:repeat(2,minmax(44px,1fr));gap:4px}#craft-controls p{margin:0 0 6px;font-size:11px}#craft-controls button{min-width:44px;min-height:44px;border:1px solid #aa996666;border-radius:3px;padding:7px 10px;margin:2px;font-size:11px}#craft-controls[data-content] button{font-size:10px;padding:7px 6px;margin:2px 1px}#craft-controls button[aria-pressed="true"]{background:#a78c4933}@media(max-width:600px){#craft-controls{top:215px;right:12px;max-width:180px}}
 </style><link rel="stylesheet" href="assets/reading-room.css?v=1c6755065ee7ac11">
 <style>#enter-link[hidden]{display:none!important}.directory-entry{display:flex;align-items:center;gap:8px;border-bottom:1px solid #e8e2d514}.directory-entry button{flex:1;text-align:left;min-height:48px;padding:10px 0;font:inherit;color:var(--paper)}.directory-grid .directory-entry a{flex:0 0 auto;border:0;font-size:11px;color:var(--muted)}#read-entry{min-height:44px;padding:9px 16px;border:1px solid #d1c4a577;color:#eee7d5;background:#263a34;border-radius:4px;font:13px var(--serif)}#read-entry small{display:block;font:9px sans-serif;opacity:.7;margin-top:4px}#world-read{position:absolute;bottom:max(34px,env(safe-area-inset-bottom));left:20px;pointer-events:auto;min-height:44px;padding:10px 17px;color:#eee7d5;border:1px solid #bdab8777;background:#263a34d9;border-radius:4px}.reading-open #hud,.reading-open #intro{pointer-events:none}.reading-open #craft-controls{visibility:hidden}#interaction #enter-link{font-size:10px;padding:9px;white-space:nowrap}@media(max-width:600px){#interaction{flex-wrap:wrap}#interaction .entry-copy{flex-basis:100%}#read-entry{flex:1}#world-read{bottom:max(190px,calc(var(--joy-size) + 60px));left:20px}}</style><link rel="stylesheet" href="assets/typography-workshop.css?v=17a3e0990911d58b">
 <link rel="stylesheet" href="assets/reading-directory.css?v=24f73da810119a57">
@@ -151,7 +151,11 @@ const TRACKS=[
   #nearby-controls{position:absolute;display:flex;flex-direction:column-reverse;gap:8px;left:max(14px,calc(12px + env(safe-area-inset-left)));right:max(14px,calc(12px + env(safe-area-inset-right)));bottom:calc(var(--joy-bottom) + var(--joy-size) + 28px);pointer-events:none;z-index:4}
   #nearby-controls #interaction{position:static;width:100%;transform:none;margin:0}
   #nearby-controls #interaction:not(.visible){display:none}
-  #nearby-controls #craft-controls{position:static;max-width:none;width:100%;padding:6px 8px;display:grid;grid-template-columns:repeat(3,minmax(44px,1fr));gap:4px}
+  #nearby-controls #craft-controls{position:static;max-width:none;width:100%;padding:6px 8px;display:grid;grid-template-columns:minmax(44px,1fr) minmax(88px,1fr);gap:4px}
+  #nearby-controls #craft-controls:has(#craft-more[open]){grid-template-columns:repeat(4,minmax(44px,1fr))}
+  #nearby-controls #craft-more[open]{grid-column:2/-1;position:relative;min-height:44px}
+  #nearby-controls #craft-more[open]>#craft-secondary-actions{margin-left:calc((100% - 8px)/3 + 4px)}
+  #nearby-controls #craft-more[open]>summary{position:absolute;left:0;top:0;width:calc((100% - 8px)/3);padding:12px 2px}
   #nearby-controls #craft-status{grid-column:1/-1;font-size:10px;line-height:1.3;margin:0}
   #nearby-controls #craft-controls button{width:100%;min-height:44px;min-width:44px;margin:0}
 }
@@ -174,11 +178,11 @@ const TRACKS=[
   <div class="bottom-note"><div class="desktop-help"><p><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> / 方向键 · 行走</p><p><kbd>↵</kbd> · 访问　<kbd>Shift</kbd> · 跑步　<kbd>空格</kbd> · 跳跃　拖动 · 环顾</p></div></div>
   <div id="joystick" aria-label="移动摇杆"><div id="stick"></div><small>拖动行走</small></div>
   <div id="nearby-controls">
-  <section id="craft-controls" hidden aria-label="建筑构件"><p id="craft-status">建筑构件</p><button data-craft="1">开启</button><button data-craft="0.5">半开</button><button data-craft="0">收合</button></section>
+  <section id="craft-controls" hidden aria-label="建筑体验"><p id="craft-status">建筑体验</p><div id="craft-primary"><button type="button" data-craft="1">开启</button></div><details id="craft-more"><summary id="craft-more-summary" aria-label="更多体验，另外两项"><span class="craft-expand">更多体验 · 2</span><span class="craft-collapse">收起</span></summary><div id="craft-secondary-actions"><button type="button" data-craft="0.5">半开</button><button type="button" data-craft="0">收合</button></div></details></section>
   <section id="interaction" aria-label="附近的入口">
     <div class="entry-copy" aria-live="polite"><div class="eyebrow" id="entry-zone"></div><h2 id="entry-title"></h2><p id="entry-desc"></p></div>
     <button id="world-enter" type="button" hidden>展卷 · 入《未上色的蝴蝶》<small>按 E 展卷</small></button>
-    <button id="read-entry" type="button">翻阅碑文<small>ENTER · 字留庭中</small></button>
+    <button id="read-entry" type="button"><span id="read-entry-label">翻阅碑文</span><small>ENTER · 字留庭中</small></button>
     <a id="enter-link" target="_blank" rel="noopener noreferrer">原站 ↗</a>
   </section>
   </div>
@@ -210,7 +214,7 @@ const TRACKS=[
 <script src="vendor/three/ShaderPass.js?v=2e64890b8e4c4daf"></script>
 <script src="vendor/three/UnrealBloomPass.js?v=1ed342b273e9b077"></script>
 <script src="assets/reading-catalog.js?v=9e87b54f43dd64cb"></script>
-<script src="assets/reading-panels.js?v=d0b73b34a611e22f"></script>
+<script src="assets/reading-panels.js?v=fb2abecd1d8d016f"></script>
 <script src="assets/typography-workshop.js?v=c249dfdbdaac5ada"></script>
 <script src="assets/reading-directory.js?v=d530328c1f56c134"></script>
 <script src="assets/reading-room.js?v=2e56f3c06f215e58"></script>
@@ -1656,11 +1660,27 @@ function setupCraftedLandmark(lm){
  for(let z=-15;z< -b.depth/2;z+=.82){const q=b.point(0,z);instance(G.box,M.path,q.x,lm.site.groundY+.019,q.z,3.3,.032,.77,angle);}
  for(const side of [-1.65,1.65])for(let z=-15;z< -b.depth/2;z+=1.2){const q=b.point(side,z);instance(G.box,M.wood,q.x,lm.site.groundY+.042,q.z,.055,.018,1.04,angle);}
 }
+// Each building foregrounds its characteristic experience; all 78 phase actions remain available.
+const CRAFT_PRIMARY_PHASES=[0,2,1,0,1,1,1,1,0,0,1,0,1,1,1,1,1,1,1,1,1,1,1,0,0,0];
+function arrangeCraftActions(next,previous){
+ const controls=$('craft-controls'),more=$('craft-more'),primary=$('craft-primary'),secondary=$('craft-secondary-actions');
+ if(next===previous)return; // Never collapse the visitor's disclosure during animation frames.
+ const ownedFocus=controls.contains(document.activeElement);
+ more.open=false;
+ if(!next){if(ownedFocus)$('world').focus({preventScroll:true});return;}
+ const phase=CRAFT_PRIMARY_PHASES[next.index]??2;
+ const buttons=[...controls.querySelectorAll('[data-craft]')].sort((a,b)=>Number(a.dataset.craft)-Number(b.dataset.craft));
+ for(const button of buttons)(Number(button.dataset.craft)*2===phase?primary:secondary).appendChild(button);
+ if(ownedFocus)primary.querySelector('button').focus({preventScroll:true});
+}
 function updateCraftControls(){
  let best=15,next=null;
  if(started&&!worldActive())for(const b of architecturalRecords){const d=Math.hypot(player.position.x-b.origin.x,player.position.z-b.origin.z);if(d<best){best=d;next=b;}}
- activeCraft=next;const controls=$('craft-controls');controls.hidden=!next;controls.toggleAttribute('data-content',!!next?.metadata.contentGrounded);
- if(next){$('craft-status').textContent=next.title+' · '+(next.metadata.contentGrounded?'构件演示 / '+next.metadata.interactionHint:(next.metadata.mechanism||'通风与采光构件'));controls.querySelectorAll('button').forEach(el=>{const n=Number(el.dataset.craft)*2;const state=buildingActions?.inspect(next.index);el.setAttribute('aria-pressed',String(state?state.phase===n:Number(el.dataset.craft)===next.targetOpen));el.textContent=buildingActions?.describe(next.index)?.labels?.[n]||next.metadata.shortPhaseLabels?.[n]||next.metadata.phaseLabels?.[n]||['收合','半开','开启'][n];el.title=buildingActions?.describe(next.index)?.actions?.[n]?.description||next.metadata.phaseLabels?.[n]||el.textContent;});}
+ const previous=activeCraft;activeCraft=next;const controls=$('craft-controls');controls.hidden=!next;controls.toggleAttribute('data-content',!!next?.metadata.contentGrounded);
+ arrangeCraftActions(next,previous);
+ $('read-entry').hidden=!!next&&nearest?.index===next.index;
+ if(next){const description=buildingActions?.describe(next.index),state=buildingActions?.inspect(next.index);$('craft-status').textContent=next.title;$('craft-status').title=next.metadata.interactionHint||next.metadata.mechanism||'建筑构件';
+ controls.querySelectorAll('[data-craft]').forEach(el=>{const n=Number(el.dataset.craft)*2;el.setAttribute('aria-pressed',String(state?state.phase===n:Number(el.dataset.craft)===next.targetOpen));el.textContent=description?.labels?.[n]||next.metadata.shortPhaseLabels?.[n]||next.metadata.phaseLabels?.[n]||['收合','半开','开启'][n];el.title=description?.actions?.[n]?.description||next.metadata.phaseLabels?.[n]||el.textContent;});}
 }
 document.querySelectorAll('[data-craft]').forEach(el=>el.onclick=()=>{if(activeCraft)applyBuildingAction(activeCraft,Math.round(Number(el.dataset.craft)*2));});
 
@@ -2086,6 +2106,8 @@ function setNear(next){
   if(next===nearest)return;
   nearest=next;document.body.classList.toggle('nearby',!!next);$('interaction').classList.toggle('visible',!!next);
   if(next){
+    $('read-entry-label').textContent=architecturalRecords.some(b=>b.index===next.index)?(buildingActions?.describe(next.index)?.labels?.[CRAFT_PRIMARY_PHASES[next.index]??0]||'翻阅碑文'):'翻阅碑文';
+    $('read-entry').hidden=activeCraft?.index===next.index;
     $('entry-title').textContent=next.entry.title;$('entry-desc').textContent=next.entry.desc;$('entry-zone').textContent=ZONES[next.entry.zone].name+' / '+String(next.index+1).padStart(2,'0');$('enter-link').href=next.entry.url;$('enter-link').hidden=true;
   }else $('enter-link').removeAttribute('href');
 }
@@ -2094,7 +2116,9 @@ function visit(lm,sectionId){
  // Inscriptions remain attached to their architecture; no panel or navigation.
  markVisited(lm.index);const b=architecturalRecords.find(b=>b.index===lm.index);
  if(sectionId){b?.readingPanels?.setSection?.(sectionId);return;}
- const current=buildingActions?.inspect(lm.index)?.phase??-1;applyBuildingAction(b||lm.index,(current+1)%3);
+ // The butterfly has no craft card: keep its three reading/wing phases reachable.
+ const phase=b?(CRAFT_PRIMARY_PHASES[lm.index]??0):((buildingActions?.inspect(lm.index)?.phase??-1)+1)%3;
+ applyBuildingAction(b||lm.index,phase);
 }
 $('read-entry').onclick=()=>visit(nearest);
 $('world-read').hidden=true;
@@ -2123,7 +2147,7 @@ window.addEventListener('keydown',e=>{
   if(e.code==='KeyE'&&!e.repeat){e.preventDefault();if(WorldHost.state==='WORLD')WorldHost.current?.requestExit();else if(atButterflyGate())WorldHost.enter('butterfly');else visit(nearest);return;}
   if(worldActive()&&WorldHost.state!=='WORLD')return;
   if(e.target.closest('#viewpad'))return;
-  if(e.target.closest('button,a')&&(e.code==='Enter'||e.code==='Space'))return;
+  if(e.target.closest('button,a,summary')&&(e.code==='Enter'||e.code==='Space'))return;
   if(moveKeys.includes(e.code)||e.code==='ShiftLeft'||e.code==='ShiftRight'){e.preventDefault();if(!e.repeat)interruptWorldReveal();keys.add(e.code);}
   if(e.code==='Space'&&!e.repeat){e.preventDefault();requestJump();}
   if(e.code==='Enter'&&!e.repeat){e.preventDefault();visit(nearest);}
@@ -2146,7 +2170,7 @@ function resetJoystick(immediate=false){
 function updateJoystick(e){interruptWorldReveal();const rect=joystick.getBoundingClientRect();let x=e.clientX-rect.left-rect.width/2,y=e.clientY-rect.top-rect.height/2;const max=rect.width*.34,length=Math.hypot(x,y);if(length>max){x*=max/length;y*=max/length;}joy.x=x/max;joy.y=y/max;$('stick').style.transform=`translate(${x}px,${y}px)`;}
 function joystickZoneTop(){return Math.max(96,innerHeight*.28,worldActive()?$('world-hud').querySelector('.world-title').getBoundingClientRect().bottom+14:0);}
 function inJoystickZone(e){
-  if(e.target.closest('#viewpad,#interaction,.mapbox,#sprint,button,a,input,#directory,#atlas,#intro'))return false;
+  if(e.target.closest('#viewpad,#interaction,#craft-controls,.mapbox,#sprint,button,a,input,summary,#directory,#atlas,#intro'))return false;
   return e.target.closest('#joystick')||floatingJoystick()&&e.clientX<=innerWidth*.52&&e.clientY>=joystickZoneTop();
 }
 // Capture before the canvas look/pick handlers, only for our owned pointer.

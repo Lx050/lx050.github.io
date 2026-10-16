@@ -9,10 +9,11 @@ specs=json.loads(re.search(r'const SPECS = (\[.*?\]);',(root/'assets/building-ac
 links=re.findall(r"\{zone:(\d+),title:'([^']+)',desc:'([^']+)',url:",source)
 core=(root/'assets/content-core.js').read_text();moon=(root/'assets/moon-snow-garden.js').read_text()
 hints={6:re.search(r"const hints=\{.*?6:'([^']+)'",core).group(1),20:re.search(r"interactionHint: '([^']+)'",moon).group(1)}
+primary_phases=json.loads(re.search(r'const CRAFT_PRIMARY_PHASES=(\[.*?\]);',source).group(1))
 content={}
 for index in [6,20]:
  zone,title,description=links[index]
- content[str(index)]={'title':title,'description':description,'zone':['作品','服务','项目','连接'][int(zone)]+' / '+str(index+1).zfill(2),'craftStatus':title+' · 构件演示 / '+hints[index],'labels':specs[index]['labels']}
+ content[str(index)]={'title':title,'description':description,'zone':['作品','服务','项目','连接'][int(zone)]+' / '+str(index+1).zfill(2),'craftStatus':title,'interactionHint':hints[index],'primaryPhase':primary_phases[index],'labels':specs[index]['labels']}
 meta={'source':'index.html + assets/content-core.js + assets/moon-snow-garden.js + assets/building-actions.js','cssBlocks':styles.count('<style'),'cssSHA256':hashlib.sha256(styles.encode()).hexdigest(),'hudSHA256':hashlib.sha256(hud.encode()).hexdigest(),'cssBytes':len(styles.encode()),'hudBytes':len(hud.encode()),'content':content}
 html=(root/'docs/mobile-controls-fixture-template.html').read_text()
 for key,value in [('__CSS__',styles),('__HUD__',hud),('__CONTENT__',content),('__META__',meta)]:html=html.replace(key,json.dumps(value,ensure_ascii=False))

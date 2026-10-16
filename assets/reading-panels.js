@@ -288,12 +288,13 @@
     return chosen === next ? [chosen] : [chosen, next];
   }
 
-  function textureFor(T, panel, content) {
+  function textureFor(T, panel, content, distant = false) {
     const canvas = global.document.createElement('canvas');
-    canvas.width = TEXTURE_WIDTH; canvas.height = TEXTURE_HEIGHT;
+    canvas.width = distant ? 128 : TEXTURE_WIDTH; canvas.height = distant ? 160 : TEXTURE_HEIGHT;
     const c = canvas.getContext('2d'); if (!c) return null;
+    if (distant) c.scale(.2, .2);
     const margin = 47, width = TEXTURE_WIDTH - margin * 2;
-    c.fillStyle = '#dedbcc'; c.fillRect(0, 0, canvas.width, canvas.height);
+    c.fillStyle = '#dedbcc'; c.fillRect(0, 0, TEXTURE_WIDTH, TEXTURE_HEIGHT);
     // A quiet mineral surface instead of an interface card or a sheet of paper.
     // Deterministic, bounded grain neither flickers nor allocates another texture.
     for (let n = 0; n < 280; n++) {
@@ -315,9 +316,18 @@
     const fallback = content.unavailable ? '仅入口。原站须登录，庭内未收录账户内容。' : '此处保留作品题名。';
     // Excerpts come only from the reviewed local catalog. They may be abridged
     // to this physical stone, but are never rewritten as fictional quotations.
-    const availableLines = Math.max(3, Math.floor((footerY - bodyY - 38) / 54));
-    lines(c, content.unavailable && !panel.section ? fallback : (body || fallback), width, availableLines)
-      .forEach((line, i) => inscription(line, margin, bodyY + i * 54));
+    const bodyText = content.unavailable && !panel.section ? fallback : (body || fallback);
+    let bodySize = 38, step = 54, bodyLines;
+    // A window never divides the extract into an angle puzzle. Fit the whole
+    // reviewed catalog extract onto its one face; the provenance still says excerpt.
+    do {
+      c.font = bodySize + 'px ' + font; step = bodySize * 1.42;
+      bodyLines = lines(c, bodyText, width, 10000);
+      if (bodyLines.length * step <= footerY - bodyY - 24 || bodySize <= 24) break;
+      bodySize -= 2;
+    } while (true);
+    const availableLines = Math.max(1, Math.floor((footerY - bodyY - 24) / step));
+    lines(c, bodyText, width, availableLines).forEach((line, i) => inscription(line, margin, bodyY + i * step));
     c.font = '24px ' + font; c.fillStyle = '#4d554a';
     const provenance = content.unavailable ? '仅入口 · 未收录私有内容' :
       /anonymized/.test(content.coverage) ? '匿名化改编 · 节录' :
@@ -363,6 +373,33 @@
         meshPart('reading-rest-support', resources.wood, x, 0, 0, 1, 1, 1, 0, support);
       meshPart('reading-rest-foot', resources.foot, 0, baseY + .0325 - d.y, 0, .82, .065, .86);
     }
+    // Deep, wall-supported window reveals in two literary rooms. Both the
+    // portrait alcoves and the proof room keep a broad, direct reading approach;
+    // only passing oblique views are cropped by the real three-dimensional jambs.
+    // Never add a window to the narrow rain passage or the authored Moon Snow garden.
+    let framed = false;
+    if ([14, 21].includes(index) && placement.kind === 'wall') {
+      const pieces = [
+        ['inscription-window-left-jamb', -.75, 1.31 - d.y, .39, .13, 2.53, .70],
+        ['inscription-window-right-jamb', .75, 1.31 - d.y, .39, .13, 2.53, .70],
+        ['inscription-window-lintel', 0, 2.645 - d.y, .39, 1.63, .14, .70]
+      ];
+      group.updateMatrix();
+      const bounds = pieces.map(([, x, y, z, w, h, depth]) => new T.Box3(
+        new T.Vector3(x-w/2,y-h/2,z-depth/2), new T.Vector3(x+w/2,y+h/2,z+depth/2)).applyMatrix4(group.matrix));
+      const routes = routesFor(building, index), swept = mechanismBounds(T, building);
+      const safe = bounds.every(box => !(box.min.x < 2.18 && box.max.x > -2.18) &&
+        !routes.some(route => route.points.some((point,n) => n && segmentBlocked(route.points[n-1],point,box,BODY_RADIUS))) &&
+        !segmentBlocked(placement.view,placement.view,box,BODY_RADIUS,2.9) &&
+        !swept.some(other => other.intersectsBox(box)) &&
+        !building.collisionBoxes.some(other => other !== placement.host && other.intersectsBox(box)));
+      if (safe) {
+        for (const [name,x,y,z,w,h,depth] of pieces) meshPart(name,resources.wood,x,y,z,w,h,depth);
+        framed = true;
+        group.userData.framedReading = {kind:'deep-window-reveal', apertureWidth:1.37, projection:.74,
+          directView:placement.view.slice(), source:'reviewed-local-catalog', requiresAlignment:false};
+      }
+    }
     const material = new T.MeshStandardMaterial({color: 0xdedbcc, roughness: 1, metalness: 0,
       depthTest: true, depthWrite: true, side: T.FrontSide});
     material.color.convertSRGBToLinear();
@@ -374,7 +411,7 @@
     face.userData.architecturalInscription = true;
     group.add(face);
     return {group, face, placement, colliders, section, ordinal,
-      sectionNumber: section ? content.sections.indexOf(section) + 1 : 0, texture: null};
+      sectionNumber: section ? content.sections.indexOf(section) + 1 : 0, texture: null, framed, distantTexture: null};
   }
 
   function setText(controller, panel, active) {
@@ -383,7 +420,8 @@
       if (!panel.texture) return;
       panel.face.material.color.set(0xffffff); panel.face.material.map = panel.texture; panel.face.material.needsUpdate = true;
     } else if (!active && panel.texture) {
-      panel.face.material.map = null; panel.face.material.color.set(0xdedbcc).convertSRGBToLinear();
+      panel.face.material.map = panel.distantTexture;
+      panel.face.material.color.set(panel.distantTexture ? 0xffffff : 0xdedbcc).convertSRGBToLinear();
       panel.face.material.needsUpdate = true; panel.texture.dispose(); panel.texture = null;
     }
   }
@@ -397,6 +435,12 @@
       panel.section = section;
       panel.sectionNumber = section ? controller.content.sections.indexOf(section) + 1 : 0;
       panel.face.userData.readingPanel.sectionId = section?.id || null;
+      if (panel.framed) {
+        panel.distantTexture?.dispose();
+        panel.distantTexture = textureFor(controller.THREE, panel, controller.content, true);
+        panel.face.material.map = panel.distantTexture;
+        panel.face.material.color.set(0xffffff); panel.face.material.needsUpdate = true;
+      }
       if (active) setText(controller, panel, true);
     }
     controller.selectedSectionId = controller.panels[0]?.section?.id || null;
@@ -536,7 +580,7 @@
     if (!placements.length) { const rest = chooseEntrance(T, building, mechanisms, routes); if (rest) placements.push(rest); }
     const controller = {THREE: T, building, content, panels: [], faces: [],
       update(player) { update([controller], player); },
-      dispose() { for (const p of this.panels) { setText(this, p, false); p.face.material.dispose(); p.group.userData.ownedGeometry?.dispose(); p.group.parent?.remove(p.group); }
+      dispose() { for (const p of this.panels) { setText(this, p, false); p.distantTexture?.dispose(); p.face.material.dispose(); p.group.userData.ownedGeometry?.dispose(); p.group.parent?.remove(p.group); }
         const added = new Set(this.panels.flatMap(p => p.colliders));
         building.collisionBoxes = building.collisionBoxes.filter(b => !added.has(b));
         building.readingPanels = null; this.panels.length = this.faces.length = 0; }
@@ -554,8 +598,13 @@
       textureSize: [TEXTURE_WIDTH, TEXTURE_HEIGHT], maxLiveTextures: MAX_TEXTURES,
       placement: controller.panels.map(p => ({kind: p.placement.kind, x: p.placement.x, z: p.placement.z,
         yaw: p.placement.yaw, view: p.placement.view, interior: p.placement.interior || walls.length > 0,
-        mountedOn: p.placement.mountedOn || null, wallPart: p.placement.wallPart || null, sectionId: p.section?.id || null}))};
+        mountedOn: p.placement.mountedOn || null, wallPart: p.placement.wallPart || null, framed: !!p.framed, sectionId: p.section?.id || null}))};
     addControls(controller, index).setPhase(0);
+    for (const panel of controller.panels) if (panel.framed && !panel.distantTexture) {
+      panel.distantTexture = textureFor(T, panel, content, true);
+      panel.face.material.map = panel.distantTexture;
+      panel.face.material.color.set(0xffffff); panel.face.material.needsUpdate = true;
+    }
     building.root.updateWorldMatrix(true, true); return controller;
   }
 
@@ -590,7 +639,7 @@
     }
   }
 
-  global.CourtyardReadingPanels = Object.freeze({attach, attachButterfly, update, version: '2.1.0',
+  global.CourtyardReadingPanels = Object.freeze({attach, attachButterfly, update, version: '2.2.0',
     limits: Object.freeze({maxPanelsPerBuilding: MAX_PANELS, maxLiveTextures: MAX_TEXTURES,
       textureWidth: TEXTURE_WIDTH, textureHeight: TEXTURE_HEIGHT, bodyRadius: BODY_RADIUS})});
 })(typeof window !== 'undefined' ? window : globalThis);

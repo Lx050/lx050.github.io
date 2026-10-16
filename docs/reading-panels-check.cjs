@@ -63,7 +63,7 @@ for (let index = 0; index < 26; index++) {
   if (index === 24) routes.push({points: [[8.75, -9.5], [8.75, 9.5]]});
   routes.push({points: [[-1.8, -16], [-1.8, 16]]}, {points: [[0, -16], [0, 16]]}, {points: [[1.8, -16], [1.8, 16]]});
   for (const box of added) {
-    assert(box.max.y <= 2.23, 'Architectural inscriptions stay below 2.23 m');
+    assert(box.max.y <= (box.userData?.part?.startsWith('inscription-window-') ? 2.72 : 2.23), 'Text stays below 2.23 m; window lintels below 2.72 m');
     for (const route of routes) for (let n = 1; n < route.points.length; n++)
       assert(!segmentHits(route.points[n - 1], route.points[n], box), 'Clear route: ' + index + ' ' + (route.name || 'axial'));
   }
