@@ -247,7 +247,10 @@
       }
       for (const s of [-1, 1]) gutter(cx + s * w / 2, spring - .16, cz, d, false);
     }
-    function hip(cx, cz, w, d, y, rise, roof) {
+    function hip(cx, cz, w, d, y, rise, roof, options) {
+      // Opt-in enclosed roof assembly. Thickness is vertical, in world metres;
+      // the exterior roof plane and its shelter silhouette remain unchanged.
+      const shellThickness = options && options.shellThickness || 0;
       const topW = w * .23, topD = d * .22;
       const verts = [
         -w / 2, 0, -d / 2, w / 2, 0, -d / 2, topW / 2, rise, -topD / 2, -topW / 2, rise, -topD / 2,
@@ -255,9 +258,31 @@
         w / 2, 0, d / 2, -w / 2, 0, d / 2, -topW / 2, rise, topD / 2, topW / 2, rise, topD / 2,
         -w / 2, 0, d / 2, -w / 2, 0, -d / 2, -topW / 2, rise, -topD / 2, -topW / 2, rise, topD / 2
       ];
-      const key = ['hip', w, d, rise].join(':');
+      const key = ['hip', w, d, rise, shellThickness].join(':');
       const geo = R.geometry(key, () => {
-        const g = new T.BufferGeometry(); g.setAttribute('position', new T.Float32BufferAttribute(verts, 3));
+        const g = new T.BufferGeometry();
+        if (shellThickness > 0) {
+          const points = [], faces = [];
+          // Four closed trapezoidal solids meet at the hips. The existing roof
+          // cap overlaps their upper edges; no new object plugs the interior.
+          for (let side = 0; side < 4; side++) {
+            const base = points.length / 3, quad = verts.slice(side * 12, side * 12 + 12);
+            points.push(...quad);
+            for (let j = 0; j < 4; j++) points.push(quad[j * 3], quad[j * 3 + 1] - shellThickness, quad[j * 3 + 2]);
+            const triangles = [0,3,1, 1,3,2, 4,5,7, 5,6,7,
+              0,1,4, 1,5,4, 1,2,5, 2,6,5,
+              2,3,6, 3,7,6, 3,0,7, 0,4,7];
+            faces.push(...triangles.map(n => base + n));
+          }
+          g.setAttribute('position', new T.Float32BufferAttribute(points, 3)); g.setIndex(faces);
+          // Separate normals at eaves/undersides: smoothing the rim would make
+          // the solid assembly look inflated instead of crisply fabricated.
+          const solid = g.toNonIndexed(); g.dispose(); solid.computeVertexNormals();
+          solid.name = 'enclosed-hip-roof-shell';
+          solid.userData = { construction: 'four-closed-roof-slabs', verticalThickness: shellThickness, slopePanels: 4, width: w, depth: d, rise };
+          return solid;
+        }
+        g.setAttribute('position', new T.Float32BufferAttribute(verts, 3));
         g.setIndex([0, 3, 1, 1, 3, 2, 4, 7, 5, 5, 7, 6, 8, 11, 9, 9, 11, 10, 12, 15, 13, 13, 15, 14]);
         g.computeVertexNormals(); return g;
       });

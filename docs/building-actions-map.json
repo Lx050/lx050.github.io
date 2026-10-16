@@ -1,0 +1,950 @@
+{
+  "version": "1.0.0",
+  "inWorldOnly": true,
+  "source": "assets/reading-catalog.js, reviewed public content already shipped with courtyard",
+  "globalLimits": [
+    "No external-service implementation is inferred from a local exhibit",
+    "Original geometry and collisions remain intact; additions are flush sheets or tiny side-bay exhibit marks",
+    "No unpublished personal material is introduced; narrative actions select only existing catalog section IDs",
+    "The integrated moon-snow garden receives no new panels, paths or architecture",
+    "Only explicitly matched content mechanisms are controlled; unrelated vents and all original geometry are retained"
+  ],
+  "buildings": [
+    {
+      "index": 0,
+      "title": "墨息",
+      "oldLabels": [
+        "生成",
+        "标注",
+        "归档"
+      ],
+      "labels": [
+        "试写",
+        "框选",
+        "入格"
+      ],
+      "sectionGroups": [
+        [
+          "generation"
+        ],
+        [
+          "annotation",
+          "workflow"
+        ],
+        [
+          "archive"
+        ]
+      ],
+      "effects": [
+        "Re-draw a deterministic three-stroke ink study on the physical generation sheet; successive presses vary pressure",
+        "Toggle a rectangle and polygon boundary over the same local ink study",
+        "Copy the local study into a visible three-slot session archive on the same desk"
+      ],
+      "kind": "ink",
+      "mechanism": "annotation-registration",
+      "scope": "Local, reversible 3D-world exhibit only; no navigation, account operations, network submission, or inferred private data."
+    },
+    {
+      "index": 1,
+      "title": "画韵新生",
+      "oldLabels": [
+        "馆藏",
+        "轮廓",
+        "介入"
+      ],
+      "labels": [
+        "馆藏",
+        "轮廓",
+        "遮罩"
+      ],
+      "sectionGroups": [
+        [
+          "collection"
+        ],
+        [
+          "restoration"
+        ],
+        [
+          "mask",
+          "parameters"
+        ]
+      ],
+      "effects": [
+        "Remove only the derived overlay layers, retaining the whole original",
+        "Show the contour layer alone",
+        "Show contour plus a selectable fixed mask; do not fabricate repaired output"
+      ],
+      "kind": "conservation",
+      "mechanism": "same-frame-conservation-layers",
+      "scope": "Local, reversible 3D-world exhibit only; no navigation, account operations, network submission, or inferred private data."
+    },
+    {
+      "index": 2,
+      "title": "画韵新生·旧址",
+      "oldLabels": [
+        "次门",
+        "透见",
+        "相望"
+      ],
+      "labels": [
+        "入口",
+        "透见",
+        "同馆"
+      ],
+      "sectionGroups": [
+        [
+          "same-platform"
+        ],
+        [
+          "shared-content"
+        ],
+        [
+          "boundary"
+        ]
+      ],
+      "effects": [
+        "Close the secondary entrance light filter and read its verified identity",
+        "Open the shared-gallery filter and illuminate its alternating panes",
+        "Show the shared five-media entry relationship, preserving the separate URL boundary"
+      ],
+      "kind": "secondary-entry",
+      "mechanism": "secondary-entrance-light-filter",
+      "scope": "Local, reversible 3D-world exhibit only; no navigation, account operations, network submission, or inferred private data."
+    },
+    {
+      "index": 3,
+      "title": "墨生",
+      "oldLabels": [
+        "全幅",
+        "停留",
+        "回看"
+      ],
+      "labels": [
+        "全幅",
+        "暂停·续播",
+        "重放"
+      ],
+      "sectionGroups": [
+        [
+          "whole-picture"
+        ],
+        [
+          "four-stages"
+        ],
+        [
+          "boundary"
+        ]
+      ],
+      "effects": [
+        "Stop the inspection light at the full-composition start and show all four stage names",
+        "Start or pause the real four-stage inspection-light animation",
+        "Restart the four-stage local animation at its first stage"
+      ],
+      "kind": "process",
+      "mechanism": "conservation-process-revisit",
+      "scope": "Local, reversible 3D-world exhibit only; no navigation, account operations, network submission, or inferred private data."
+    },
+    {
+      "index": 4,
+      "title": "暖聆",
+      "oldLabels": [
+        "守护",
+        "留言",
+        "回应"
+      ],
+      "labels": [
+        "守护",
+        "留言",
+        "回应"
+      ],
+      "sectionGroups": [
+        [
+          "family-desk"
+        ],
+        [
+          "messages"
+        ],
+        [
+          "two-sides"
+        ]
+      ],
+      "effects": [
+        "Light the two labelled exhibit endpoints without inventing device status",
+        "Animate one anonymous exhibit signal from one end to the other",
+        "Return the exhibit signal in the opposite direction and open the acoustic leaves"
+      ],
+      "kind": "care-relay",
+      "mechanism": "domestic-acoustic-enclosure",
+      "scope": "Local, reversible 3D-world exhibit only; no navigation, account operations, network submission, or inferred private data."
+    },
+    {
+      "index": 5,
+      "title": "暖聆App",
+      "oldLabels": [
+        "连接",
+        "可达",
+        "相伴"
+      ],
+      "labels": [
+        "连接",
+        "四项",
+        "往返"
+      ],
+      "sectionGroups": [
+        [
+          "connected"
+        ],
+        [
+          "four-actions"
+        ],
+        [
+          "roles"
+        ]
+      ],
+      "effects": [
+        "Show a fixed device-to-family connection diagram labelled demonstration",
+        "Cycle four physical action symbols for see, hear, speak, and call without permissions",
+        "Animate a return signal between the two demonstration endpoints"
+      ],
+      "kind": "elder-controls",
+      "mechanism": "reachable-elder-controls",
+      "scope": "Local, reversible 3D-world exhibit only; no navigation, account operations, network submission, or inferred private data."
+    },
+    {
+      "index": 6,
+      "title": "排版助手",
+      "oldLabels": [
+        "采集",
+        "编排",
+        "校看"
+      ],
+      "labels": [
+        "取样",
+        "编排",
+        "校看"
+      ],
+      "sectionGroups": [
+        [
+          "input"
+        ],
+        [
+          "editing",
+          "modes"
+        ],
+        [
+          "boundary"
+        ]
+      ],
+      "effects": [
+        "Place the fixed courtyard sample title, two sentences, caption and source as collected material",
+        "Actually lay out that sample on the physical proof sheet; repeated presses cycle four source-backed template modes",
+        "Show the composed local proof with visible title, paragraph, caption and source checks"
+      ],
+      "kind": "layout",
+      "mechanism": "publishing-mode-selection",
+      "scope": "Local, reversible 3D-world exhibit only; no navigation, account operations, network submission, or inferred private data."
+    },
+    {
+      "index": 7,
+      "title": "金陵专利局",
+      "oldLabels": [
+        "入册",
+        "比照",
+        "归档"
+      ],
+      "labels": [
+        "入册",
+        "比照",
+        "归档"
+      ],
+      "sectionGroups": [
+        [
+          "patent"
+        ],
+        [
+          "classification",
+          "trademark"
+        ],
+        [
+          "archive",
+          "example"
+        ]
+      ],
+      "effects": [
+        "Open the physical fixed portable-blender example intake leaf",
+        "Turn the four preparation leaves, retaining a visible not-searched status",
+        "Close the preparation bundle into its local exhibit record, with no invented assessment"
+      ],
+      "kind": "album",
+      "mechanism": "album-page-comparison",
+      "scope": "Local, reversible 3D-world exhibit only; no navigation, account operations, network submission, or inferred private data."
+    },
+    {
+      "index": 8,
+      "title": "RSS",
+      "oldLabels": [
+        "收合",
+        "半开",
+        "开启"
+      ],
+      "labels": [
+        "入口",
+        "未读",
+        "边界"
+      ],
+      "sectionGroups": [
+        [
+          "entry"
+        ],
+        [
+          "unknown"
+        ],
+        [
+          "boundary"
+        ]
+      ],
+      "effects": [
+        "Turn the public RSS entry leaf",
+        "Turn to the explicit uninspected-subscriptions leaf",
+        "Turn to the access-boundary leaf; no login or made-up news stream"
+      ],
+      "kind": "public-entry",
+      "mechanism": null,
+      "scope": "Local, reversible 3D-world exhibit only; no navigation, account operations, network submission, or inferred private data."
+    },
+    {
+      "index": 9,
+      "title": "Vaultwarden",
+      "oldLabels": [
+        "收合",
+        "半开",
+        "开启"
+      ],
+      "labels": [
+        "入口",
+        "身份",
+        "边界"
+      ],
+      "sectionGroups": [
+        [
+          "entry"
+        ],
+        [
+          "identity"
+        ],
+        [
+          "boundary"
+        ]
+      ],
+      "effects": [
+        "Turn the public login-entry description leaf",
+        "Turn the verified Vaultwarden / Bitwarden identity leaf",
+        "Turn the privacy-boundary leaf; no credential fields or example secrets"
+      ],
+      "kind": "public-entry",
+      "mechanism": null,
+      "scope": "Local, reversible 3D-world exhibit only; no navigation, account operations, network submission, or inferred private data."
+    },
+    {
+      "index": 10,
+      "title": "API",
+      "oldLabels": [
+        "配置",
+        "连接",
+        "观察"
+      ],
+      "labels": [
+        "路由",
+        "往返",
+        "观察"
+      ],
+      "sectionGroups": [
+        [
+          "three-steps"
+        ],
+        [
+          "example"
+        ],
+        [
+          "metrics"
+        ]
+      ],
+      "effects": [
+        "Switch the local endpoint branch diagram between the two public endpoint families",
+        "Animate a local request-shaped marker to the route and back, labelled not sent",
+        "Stop the route animation and keep the actual missing metrics as em dashes"
+      ],
+      "kind": "api-route",
+      "mechanism": "content-articulation",
+      "scope": "Local, reversible 3D-world exhibit only; no navigation, account operations, network submission, or inferred private data."
+    },
+    {
+      "index": 11,
+      "title": "知虾标书",
+      "oldLabels": [
+        "收合",
+        "半开",
+        "开启"
+      ],
+      "labels": [
+        "定位",
+        "未读",
+        "边界"
+      ],
+      "sectionGroups": [
+        [
+          "identity"
+        ],
+        [
+          "unknown"
+        ],
+        [
+          "boundary"
+        ]
+      ],
+      "effects": [
+        "Turn the verified public product-positioning leaf",
+        "Turn the uninspected-workroom leaf",
+        "Turn the access-boundary leaf, with no fake tender or export"
+      ],
+      "kind": "public-entry",
+      "mechanism": null,
+      "scope": "Local, reversible 3D-world exhibit only; no navigation, account operations, network submission, or inferred private data."
+    },
+    {
+      "index": 12,
+      "title": "Reme",
+      "oldLabels": [
+        "匿名",
+        "事件",
+        "归隐"
+      ],
+      "labels": [
+        "匿名",
+        "短显",
+        "归隐"
+      ],
+      "sectionGroups": [
+        [
+          "privacy"
+        ],
+        [
+          "events",
+          "local-demo"
+        ],
+        [
+          "boundary"
+        ]
+      ],
+      "effects": [
+        "Close the event shutters and show only an anonymous geometric pose",
+        "Run an eight-second local event-window countdown; no image, camera, or person data",
+        "Immediately clear the synthetic event and close both shutters"
+      ],
+      "kind": "privacy-window",
+      "mechanism": "time-limited-privacy-shutter",
+      "scope": "Local, reversible 3D-world exhibit only; no navigation, account operations, network submission, or inferred private data."
+    },
+    {
+      "index": 13,
+      "title": "与 AI 同行的两年：一份 session log",
+      "oldLabels": [
+        "人的线",
+        "分工",
+        "自持"
+      ],
+      "labels": [
+        "人的线",
+        "逐节",
+        "自持"
+      ],
+      "sectionGroups": [
+        [
+          "opening"
+        ],
+        [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5",
+          "s6",
+          "s7",
+          "s8",
+          "s9",
+          "s10"
+        ],
+        [
+          "s10",
+          "source-note"
+        ]
+      ],
+      "effects": [
+        "Return to the continuous human-spine opening",
+        "Read the next of ten actual session sections while lighting its matching tool layer",
+        "Read the concluding section and retain the human/tool boundary"
+      ],
+      "kind": "narrative",
+      "mechanism": "tool-layer-comparison",
+      "scope": "Local, reversible 3D-world exhibit only; no navigation, account operations, network submission, or inferred private data."
+    },
+    {
+      "index": 14,
+      "title": "凝结核·列传：人物篇十二传",
+      "oldLabels": [
+        "距离",
+        "相见",
+        "留痕"
+      ],
+      "labels": [
+        "总览",
+        "十二传",
+        "留痕"
+      ],
+      "sectionGroups": [
+        [
+          "opening"
+        ],
+        [
+          "biography-01",
+          "biography-02",
+          "biography-03",
+          "biography-04",
+          "biography-05",
+          "biography-06",
+          "biography-07",
+          "biography-08",
+          "biography-09",
+          "biography-10",
+          "biography-11",
+          "biography-12"
+        ],
+        [
+          "biography-11",
+          "source-note"
+        ]
+      ],
+      "effects": [
+        "Read the opening with all relationship thresholds visible",
+        "Read the next of twelve actual biographies and light its matching threshold",
+        "Read the retained-trace/source section while keeping the old room intact"
+      ],
+      "kind": "narrative",
+      "mechanism": "relationship-sightlines",
+      "scope": "Local, reversible 3D-world exhibit only; no navigation, account operations, network submission, or inferred private data."
+    },
+    {
+      "index": 15,
+      "title": "从因到果，中间不只是一条线：因果网",
+      "oldLabels": [
+        "来路",
+        "交汇",
+        "延续"
+      ],
+      "labels": [
+        "来路",
+        "三结",
+        "延续"
+      ],
+      "sectionGroups": [
+        [
+          "causal-diagram"
+        ],
+        [
+          "chapter-01",
+          "chapter-02",
+          "chapter-03"
+        ],
+        [
+          "chapter-03",
+          "source-note"
+        ]
+      ],
+      "effects": [
+        "Read the source route diagram without altering its seven paths",
+        "Read the next actual chapter and light the corresponding crossing-court pair",
+        "Read the continuation/source boundary; the terminated branch remains terminated"
+      ],
+      "kind": "narrative",
+      "mechanism": "cross-court-light",
+      "scope": "Local, reversible 3D-world exhibit only; no navigation, account operations, network submission, or inferred private data."
+    },
+    {
+      "index": 16,
+      "title": "一个爱哭的城市：南京、巴别兽与三个附近",
+      "oldLabels": [
+        "雨巷",
+        "共建",
+        "晴庭"
+      ],
+      "labels": [
+        "雨巷",
+        "共建",
+        "晴庭"
+      ],
+      "sectionGroups": [
+        [
+          "route-map",
+          "c1",
+          "c2",
+          "c3"
+        ],
+        [
+          "c4",
+          "c5",
+          "c6",
+          "c7",
+          "c8"
+        ],
+        [
+          "c9",
+          "c10",
+          "c11"
+        ]
+      ],
+      "effects": [
+        "Read the arrival sections with the returning light baffles sheltered",
+        "Cycle the actual shared-building chapters and lift the existing sightline",
+        "Cycle the actual late chapters with the sunny return fully visible"
+      ],
+      "kind": "narrative",
+      "mechanism": "rain-to-sun-sightline",
+      "scope": "Local, reversible 3D-world exhibit only; no navigation, account operations, network submission, or inferred private data."
+    },
+    {
+      "index": 17,
+      "title": "双星记：崔兴中观测报告",
+      "oldLabels": [
+        "各自",
+        "往返",
+        "并肩"
+      ],
+      "labels": [
+        "各自",
+        "四语",
+        "并肩"
+      ],
+      "sectionGroups": [
+        [
+          "o1",
+          "o2"
+        ],
+        [
+          "o3",
+          "o4",
+          "o5",
+          "o6"
+        ],
+        [
+          "o7",
+          "o8"
+        ]
+      ],
+      "effects": [
+        "Read the separate-voices opening",
+        "Cycle the actual middle observations and highlight a corresponding pair of equal screens",
+        "Read the ending observations while retaining the two independent rooms"
+      ],
+      "kind": "narrative",
+      "mechanism": "reciprocal-registers",
+      "scope": "Local, reversible 3D-world exhibit only; no navigation, account operations, network submission, or inferred private data."
+    },
+    {
+      "index": 18,
+      "title": "思想者的五个版本：一个人的预印本档案",
+      "oldLabels": [
+        "母题",
+        "五稿",
+        "未完"
+      ],
+      "labels": [
+        "母题",
+        "五稿",
+        "未完"
+      ],
+      "sectionGroups": [
+        [
+          "version-tree",
+          "c1"
+        ],
+        [
+          "c2",
+          "c3",
+          "c4",
+          "c5",
+          "c6"
+        ],
+        [
+          "c7",
+          "c8"
+        ]
+      ],
+      "effects": [
+        "Read the actual version tree and common question",
+        "Cycle five retained source versions and light one retained layer at a time",
+        "Read the final open questions; no sixth proof or conclusive roof is created"
+      ],
+      "kind": "narrative",
+      "mechanism": "retained-revision-comparison",
+      "scope": "Local, reversible 3D-world exhibit only; no navigation, account operations, network submission, or inferred private data."
+    },
+    {
+      "index": 19,
+      "title": "置身青媒内",
+      "oldLabels": [
+        "接件",
+        "共作",
+        "交接"
+      ],
+      "labels": [
+        "接件",
+        "共作",
+        "交接"
+      ],
+      "sectionGroups": [
+        [
+          "s01-一-我离开的时候-最先想起的不是荣誉-而是一条消",
+          "s02-二-青媒不是一个-写稿组织-它是一个小型生产系统",
+          "s03-三-我第一次真正意识到-负责人-不是一个称呼"
+        ],
+        [
+          "s04-四-我在青媒学会的-不是怎么写漂亮话-而是怎么让",
+          "s05-五-我见过青媒最好的样子-是大家在混乱里仍然愿意",
+          "s06-六-青媒让我明白-所谓-能力-很多时候是对麻烦的",
+          "s07-七-关于-AI-和工具-我不想把它们当成炫技-而"
+        ],
+        [
+          "s09-九-如果要说我留下了什么",
+          "s10-十-写给下一届-不要只继承任务-也要继承判断",
+          "s12-十二-离开不是把自己摘出去-而是把路标留下来",
+          "s13-十三-我愿意留下的几条具体原则",
+          "s15-十五-最后的交接清单"
+        ]
+      ],
+      "effects": [
+        "Read the actual receiving-work chapters and return the task lamp to the first receiving bay",
+        "Cycle coordination chapters while the task lamp makes a bounded shared-work transfer",
+        "Cycle the real handover principles/checklist while the task lamp reaches the successor station"
+      ],
+      "kind": "handover",
+      "mechanism": "service-light-transfer",
+      "scope": "Local, reversible 3D-world exhibit only; no navigation, account operations, network submission, or inferred private data."
+    },
+    {
+      "index": 20,
+      "title": "月色与雪色之外：二年记",
+      "oldLabels": [
+        "收窗",
+        "借景",
+        "通明"
+      ],
+      "labels": [
+        "收窗",
+        "借景",
+        "通明"
+      ],
+      "sectionGroups": [
+        [
+          "preface",
+          "c1",
+          "c2",
+          "c3",
+          "c4"
+        ],
+        [
+          "c5",
+          "c6"
+        ],
+        [
+          "c7",
+          "c8",
+          "c9",
+          "c10"
+        ]
+      ],
+      "effects": [
+        "Close the existing lattice and focus the source-backed threshold inscription",
+        "Part-open the existing lattice and focus the self-cultivation inscription at the quiet turn",
+        "Open the existing lattice and focus the existing final inscription beside the received picture"
+      ],
+      "kind": "integrated-garden",
+      "mechanism": "sliding-garden-lattice",
+      "scope": "Local, reversible 3D-world exhibit only; no navigation, account operations, network submission, or inferred private data."
+    },
+    {
+      "index": 21,
+      "title": "清样之前：高小倩人物故事",
+      "oldLabels": [
+        "毛稿",
+        "共修",
+        "页边"
+      ],
+      "labels": [
+        "毛稿",
+        "共修",
+        "页边"
+      ],
+      "sectionGroups": [
+        [
+          "draft",
+          "first-proof"
+        ],
+        [
+          "red-pencil",
+          "revision",
+          "columns"
+        ],
+        [
+          "margin",
+          "final-proof",
+          "outside-page"
+        ]
+      ],
+      "effects": [
+        "Return the retained annotation lintel and read the first proofs",
+        "Reveal the retained earlier proof and cycle the actual revision chapters",
+        "Read the actual margin/final-proof chapters; no invented private text is added"
+      ],
+      "kind": "narrative",
+      "mechanism": "retained-layer-reveal",
+      "scope": "Local, reversible 3D-world exhibit only; no navigation, account operations, network submission, or inferred private data."
+    },
+    {
+      "index": 22,
+      "title": "画韵新生：从拓片到知识网络",
+      "oldLabels": [
+        "原件",
+        "比照",
+        "未决"
+      ],
+      "labels": [
+        "原件",
+        "比照",
+        "未决"
+      ],
+      "sectionGroups": [
+        [
+          "case-intro",
+          "case-workflow"
+        ],
+        [
+          "case-repair",
+          "report-process-repair"
+        ],
+        [
+          "report-limits",
+          "report-next"
+        ]
+      ],
+      "effects": [
+        "Hide only the derived glass overlay while retaining the unaltered record plane",
+        "Show and separate the non-generative overlay for physical comparison",
+        "Park the overlay apart and read the published limitations; fill no uncertain mark"
+      ],
+      "kind": "evidence-overlay",
+      "mechanism": "reversible-overlay-translation",
+      "scope": "Local, reversible 3D-world exhibit only; no navigation, account operations, network submission, or inferred private data."
+    },
+    {
+      "index": 23,
+      "title": "未上色的蝴蝶：周杭一百天",
+      "oldLabels": [
+        "收合",
+        "半开",
+        "开启"
+      ],
+      "labels": [
+        "展翼",
+        "半展",
+        "收翼"
+      ],
+      "sectionGroups": [
+        [
+          "chapter-4"
+        ],
+        [
+          "chapter-6"
+        ],
+        [
+          "afterword"
+        ]
+      ],
+      "effects": [
+        "Open the existing mechanical butterfly roof and read shared-time chapter",
+        "Half-open the existing roof and read the uncoloured butterfly chapter",
+        "Close the existing roof while retaining its blank interpretation"
+      ],
+      "kind": "butterfly",
+      "mechanism": null,
+      "scope": "Local, reversible 3D-world exhibit only; no navigation, account operations, network submission, or inferred private data."
+    },
+    {
+      "index": 24,
+      "title": "MindCareAI · 灵愈AI",
+      "oldLabels": [
+        "驻足",
+        "调息",
+        "静观"
+      ],
+      "labels": [
+        "开始",
+        "暂停·续行",
+        "结束"
+      ],
+      "sectionGroups": [
+        [
+          "daily"
+        ],
+        [
+          "time"
+        ],
+        [
+          "local"
+        ]
+      ],
+      "effects": [
+        "Start or restart a real local three-minute quiet timer",
+        "Pause or resume the timer and its existing light-baffle rhythm",
+        "End the timer and return baffles to rest; no mood collection or medical result"
+      ],
+      "kind": "quiet-timer",
+      "mechanism": "content-articulation",
+      "scope": "Local, reversible 3D-world exhibit only; no navigation, account operations, network submission, or inferred private data."
+    },
+    {
+      "index": 25,
+      "title": "GitHub · Lx050",
+      "oldLabels": [
+        "手艺",
+        "连接",
+        "接续"
+      ],
+      "labels": [
+        "试墨",
+        "活字",
+        "接续"
+      ],
+      "sectionGroups": [
+        [
+          "brush"
+        ],
+        [
+          "tools"
+        ],
+        [
+          "research",
+          "forks",
+          "rights"
+        ]
+      ],
+      "effects": [
+        "Draw a repeatable local pressure-stroke ink study on the existing workshop paper",
+        "Recompose fixed sample glyphs into a print/layout study on that paper",
+        "Separate the existing modular joint and read project provenance and rights"
+      ],
+      "kind": "maker",
+      "mechanism": "shallow-exploded-joint",
+      "scope": "Local, reversible 3D-world exhibit only; no navigation, account operations, network submission, or inferred private data."
+    }
+  ]
+}
