@@ -384,6 +384,7 @@
     // One persistent question remains legible through five retained revisions.
     floor(b,'ceramic',-2.47,0,.27,20.2);
     for(const x of [-2.66,-2.28]) b.box('bronze',x,.067,0,.028,.045,20.3,null,true);
+    global.CourtyardVersionsDetail.attach(b);
     const compare=new b.T.Group();compare.name='five-retained-proof-layers';b.root.add(compare);
     const layers=[];
     const heights=[6.05,6.45,6.8,7.13,7.42];
@@ -412,6 +413,7 @@
       for(const s of [-1,1]) b.box('bronze',s*1.0,h+1.15,z,.08,.12,2.9);
       b.box('glass',0,h+1.15,z,2.05,.055,2.65);
       const p=abovePanel(b,compare,5.0,4.37,z,3.1,1.1,.065,n%2?'glassDark':'glass','retained-draft-'+(n+1));
+      global.CourtyardVersionsDetail.attachScreen(b,p);
       layers.push({p,n,z});
       for(const s of [-1,1]) b.box('bronze',s*2.96,h-.35,z-.14,.22,.16,.05,null,true);
     }
