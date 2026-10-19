@@ -313,8 +313,7 @@
     rooms.forEach(({s,x})=>{
       // Equal footprint, height and roof section; distinct textures, neither is a satellite.
       for(const xx of [x-3.05,x+3.05]) for(const z of [-7.45,0,7.45]) pier(b,xx,z,6.0,.25);
-      b.barrel(x,0,6.55,16.6,6.27,2.72,'copper');
-      b.box('cedar',x,5.97,0,6.55,.18,15.7);
+      // The equal closed vault shells and exposed ribs are authored in Blender.
       finWall(b,s*9.34,0,14.3,4.7,s<0?.38:.64,'cedar');
       // Four outer light slots pair with the four playful conversation registers.
       for(const z of [-5.55,-1.85,1.85,5.55]) {
@@ -347,12 +346,14 @@
       workTable(b,s*2.77,0,.72,2.55,.95,'oak');
       b.box('bronze',s*2.77,1.044,0,.68,.028,.055,null,true);
     }
+    global.CourtyardTwinstarsDetail.attach(b);
     const registers=new b.T.Group();registers.name='four-reciprocal-registers';b.root.add(registers);
     const pairs=[];
     for(let k=0;k<4;k++) {
       const z=-5.55+k*3.7;
       for(const s of [-1,1]) {
         const p=abovePanel(b,registers,s*3.17,4.5,z,.085,1.5,2.65,k%2?'paper':'linen','register-'+k+'-'+s);
+        global.CourtyardTwinstarsDetail.attachScreen(b,p);
         pairs.push({p,s,k});
       }
     }
