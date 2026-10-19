@@ -10,7 +10,7 @@ let count=0;const checks=[],check=(name,fn)=>{fn();checks.push(name);count++;};
 const ctx={console,THREE,TextDecoder,TextEncoder,URL,Blob,performance,document:{createElement(){
  const canvas={width:0,height:0},c=new Proxy({measureText:s=>({width:[...s].length*18}),createLinearGradient:()=>({addColorStop(){}})}, {get:(o,k)=>k in o?o[k]:(()=>{})});canvas.getContext=()=>c;return canvas;
 }}};ctx.window=ctx;ctx.self=ctx;vm.createContext(ctx);
-for(const file of ['vendor/three/GLTFLoader.js','assets/architecture.js','assets/content-core.js','assets/nuanling-detail.js','assets/nuanling-app-detail.js','assets/content-creation-care.js','assets/content-services.js','assets/content-narratives.js','assets/content-literary.js','assets/moon-snow-garden.js','assets/reading-catalog.js','assets/reading-panels.js','assets/courtyard-runtime.js'])new vm.Script(fs.readFileSync(path.join(root,file),'utf8'),{filename:file}).runInContext(ctx);
+for(const file of ['vendor/three/GLTFLoader.js','assets/architecture.js','assets/content-core.js','assets/nuanling-detail.js','assets/nuanling-app-detail.js','assets/editor-detail.js','assets/content-creation-care.js','assets/content-services.js','assets/content-narratives.js','assets/content-literary.js','assets/moon-snow-garden.js','assets/reading-catalog.js','assets/reading-panels.js','assets/courtyard-runtime.js'])new vm.Script(fs.readFileSync(path.join(root,file),'utf8'),{filename:file}).runInContext(ctx);
 const bytes=fs.readFileSync(path.join(root,'assets/models/Visitor.glb'));
 new Promise((resolve,reject)=>new THREE.GLTFLoader().parse(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'',resolve,reject)).then(gltf=>{
  const scene=new THREE.Scene(),player=new THREE.Group(),body=new THREE.Group(),camera=new THREE.PerspectiveCamera(40,1280/900,.1,2400);scene.add(player);player.add(body);body.add(gltf.scene);
@@ -93,6 +93,7 @@ new Promise((resolve,reject)=>new THREE.GLTFLoader().parse(bytes.buffer.slice(by
   // Explicit flight control/module allowance; every other header/input remains pinned.
   originalHeader=originalHeader.replace(/<script src="assets\/butterfly-flight\.js\?v=[^"]+"><\/script>\n/,'').replace('<p id="mechanical-status">自动飞行</p><button id="roof-flight" aria-pressed="true">自动飞行 · 暂停</button>','<p id="mechanical-status">展开 · 已锁止</p>');
   originalHeader=originalHeader.replace(/<script src="assets\/nuanling-app-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'');
+  originalHeader=originalHeader.replace(/<script src="assets\/editor-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'');
   assert.equal(digest(originalHeader.replace(/\?v=[a-f0-9]{16}/g,'?v=ASSET_VERSION')),'33c6ac9112b35a2b552f6a0c9ab0350e13b42d785b15d9cd9f67438883beb7b7');
   assert.equal(digest(html.slice(html.indexOf('let joyPointer='),html.indexOf("window.addEventListener('resize',resize);resize();")).replace('#viewpad,#interaction,#craft-controls,.mapbox,#sprint,button,a,input,summary,#directory,#atlas,#intro','#viewpad,#interaction,.mapbox,#sprint,button,a,input,#directory,#atlas,#intro')),'7cc1e549a4b03cd62290ec78e84bc5d1c633fcf4d5e9f063e9474f2018f96f0b');
  });
