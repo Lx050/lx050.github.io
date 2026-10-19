@@ -5,7 +5,7 @@ const root=path.resolve(__dirname,'..'),T=require(root+'/vendor/three.min.js'),o
 const baseline='7910ab80772cbe494be7d2b5dd3e055aa91056ee';
 function load(old){
   const c={console};c.window=c;vm.createContext(c);
-  for(const name of ['architecture','content-core',...(!old?['rubbing-detail']:[]),'content-literary']){
+  for(const name of ['architecture','content-core',...(!old?['rubbing-detail']:[]),...(!old?['proof-detail']:[]),'content-literary']){
     const file='assets/'+name+'.js',source=old?cp.execFileSync('git',['-C',root,'show',baseline+':'+file],{encoding:'utf8',maxBuffer:32*1024*1024}):fs.readFileSync(root+'/'+file,'utf8');
     vm.runInContext(source,c,{filename:file});
   }
