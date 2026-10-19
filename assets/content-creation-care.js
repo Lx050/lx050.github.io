@@ -333,6 +333,19 @@
     const w = 14.2, d = 17.6;
     b.deck(w, d, 'wood'); b.frame(12.4, 15.6, 5.25, { bays: 4, material: 'oak', post: .25 });
     b.barrel(0, 0, 15.0, 18.5, 5.48, 1.98, 'tile');
+    // Blender-authored tactile details preserve the original four-bay arrangement.
+    if (global.CourtyardNuanlingAppDetail) {
+      global.CourtyardNuanlingAppDetail.attach(b);
+      // The larger stone shoes are real solids, entirely outside the axial route.
+      for (const x of [-6.2, 6.2]) for (const z of [-7.8, -3.9, 0, 3.9, 7.8]) {
+        const foot = new T.Box3(new T.Vector3(x - .215, .01, z - .215), new T.Vector3(x + .215, .31, z + .215));
+        foot.userData = { architectural: true, part: 'elder-column-stone-shoe' }; b.collisionBoxes.push(foot);
+      }
+      for (const x of [-3.25, 3.25]) {
+        const foot = new T.Box3(new T.Vector3(x - .445, .005, -7.16), new T.Vector3(x + .445, .155, -6.84));
+        foot.userData = { architectural: true, part: 'connection-post-stone-shoe' }; b.collisionBoxes.push(foot);
+      }
+    }
     for (const z of [-7.8, 7.8]) {
       C.portal(b, z, 5.45, 3.65, 'oak'); b.box('linen', 0, 3.95, z, 6.6, .1, 1.3, null, true);
     }
@@ -381,6 +394,7 @@
       phaseLabels: ['连接就绪', '四项可达', '家人相伴'], mechanism: '四个侧湾操作面缓缓调整阅读倾角，不影响通行'
     });
     result.metadata.sharedProgramWith = 4; result.metadata.requestedDestination = 'https://nuanling.maniforld.com/app/';
+    if (global.CourtyardNuanlingAppDetail) result.metadata.blenderDetail = { parts: global.CourtyardNuanlingAppDetail.data.parts, triangles: global.CourtyardNuanlingAppDetail.data.triangles, purpose: 'four distinct reachable action bays' };
     return result;
   };
 

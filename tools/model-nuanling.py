@@ -5,6 +5,7 @@ Three.js metres (x,y-up,z) are mapped to Blender (x,-z,y).
 import bpy, json, math, pathlib
 from mathutils import Vector
 ROOT=pathlib.Path(__file__).resolve().parents[1]
+(ROOT/'qa-results/nuanling').mkdir(parents=True,exist_ok=True)
 bpy.ops.object.select_all(action='SELECT'); bpy.ops.object.delete(use_global=False)
 colors={'oak':'9c8c72','cedar':'786b55','walnut':'453f35','limestone':'c7c3b2','ceramic':'899b96','copper':'728b7d','linen':'b9b4a2','tile':'42574f'}
 materials={}
