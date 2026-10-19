@@ -1,0 +1,65 @@
+# Cumulative courtyard detail budget
+
+Audit: 2026-10-19. Existing eight buildings measured at commit `685a2a603b94986c48927cfc832d66d57fe39c3e`; restoration building 3 and secondary-detail LOD measured in this change. Reproduce current numbers with `node docs/detail-lod-check.cjs`.
+
+## Measurement and limits
+
+The audit instantiates the actual builders using vendored Three.js r128, counts indexed/non-indexed triangles with InstancedMesh multiplicity, and counts material draw batches. Moving prototypes are counted at their actual multiplicity. These are **assembly budgets**, not browser/GPU frame measurements. Figures exclude subsequently attached reading panels, unrelated scenery and postprocessing. Frustum culling, existing fine-joinery LOD and shadows change actual frame costs. Gzip figures below use local gzip level 9, not observed HTTP transfers.
+
+All eight legacy Blender assemblies were outside `b.detail`. Existing `CourtyardRuntime.update` only distance-hides `b.detail` at 30m in light quality and 58m otherwise. Whole crafted buildings remain visible when within 22m or intersecting the camera frustum; they have no far-distance silhouette replacement. The ordinary landmark distance-LOD branch explicitly excludes crafted buildings.
+
+## Actual assembly budgets
+
+| Building | Moving detail copies | Added detail triangles / batches | Entire builder triangles / batches | New far-LOD savings triangles / batches |
+|---|---:|---:|---:|---:|
+| 0 Ink | 1 carriage | 17,864 / 8 | 30,220 / 49 | 352 / 2 |
+| 4 Nuanling | 0 | 20,464 / 5 | 29,816 / 58 | 0 / 0 |
+| 5 Nuanling App | 0 | 15,940 / 8 | 25,682 / 52 | 0 / 0 |
+| 6 Editor | 4 drawers | 11,572 / 22 | 21,056 / 105 | 1,584 / 16 |
+| 15 Causal | 6 vents | 18,092 / 18 | 38,218 / 57 | 1,584 / 12 |
+| 17 Twin Stars | 8 screens | 11,888 / 21 | 22,906 / 69 | 2,464 / 16 |
+| 18 Versions | 5 screens | 8,360 / 15 | 26,626 / 57 | 1,100 / 10 |
+| 22 Rubbing | 1 overlay | 14,668 / 9 | 26,010 / 36 | 308 / 2 |
+| Existing eight | 25 | 118,848 / 106 | 220,534 / 483 | 7,392 / 58 |
+| 3 Restoration | 1 light | 4,912 / 4 | 12,326 / 37 | 176 / 2 |
+| All nine | 26 | 123,760 / 110 | 232,860 / 520 | 7,568 / 60 |
+
+When every listed building is beyond its applicable cutoff, the new module reduces the detail subtotal from 123,760 triangles / 110 batches to 116,192 / 50. The complete-builder arithmetic becomes 225,292 / 460 before accounting for existing fine-detail and frustum culling. This is an aggregate potential saving; do not present it as a measured view or frame-rate increase. Near the buildings, all additions return and the original totals apply. All targeted detail meshes cast shadows, so hiding them also avoids their eligible shadow draws; no permanent shadow property is changed.
+
+For cumulative history, the same original eight builders at pre-detail-series commit `ed2cab4` total 107,806 triangles / 373 batches. Their current net change is +112,728 triangles / +110 batches, rather than the gross Blender additions above. Other edits and replaced roof geometry produce a net -6,120 triangles / +4 batches in the non-Blender remainder. Restoration adds 4,912 triangles / 4 batches to its own prior 7,414 / 33 builder.
+
+## Transfer budget
+
+| Asset | Raw bytes | Gzip-9 bytes |
+|---|---:|---:|
+| ink-detail.js | 1,215,082 | 136,045 |
+| nuanling-detail.js | 1,214,115 | 121,722 |
+| nuanling-app-detail.js | 1,012,504 | 105,474 |
+| editor-detail.js | 646,212 | 62,631 |
+| causal-detail.js | 1,180,602 | 143,316 |
+| twinstars-detail.js | 595,228 | 56,957 |
+| versions-detail.js | 434,759 | 45,167 |
+| rubbing-detail.js | 910,204 | 90,344 |
+| Existing eight | 7,208,706 | 761,656 |
+| restoration-detail.js | 292,967 | 29,299 |
+| All nine | 7,501,673 | 790,955 |
+
+All detail scripts remain eagerly loaded. Visibility LOD saves rendering work, not downloaded bytes, JavaScript parse cost or resident geometry memory.
+
+## Bounded mitigation in this change
+
+`assets/detail-lod.js` loads after `courtyard-runtime.js`, wraps `register` and `update` once, and caches explicit known secondary moving groups in a WeakMap per building. It uses the identical strict distance comparison and quality cutoffs as existing fine-detail LOD. It also supports records registered before module loading through lazy collection.
+
+Only these exact groups are affected: `editor-blender-drawer`, `twinstars-blender-screen`, `causal-blender-vent`, `versions-blender-screen`, `rubbing-blender-overlay`, `ink-blender-carriage`, and `restoration-blender-light`. Original moving pivots, original mechanism meshes, transforms, articulation and all static Blender geometry are untouched. In particular, replacement roof shells stay visible. No broad suffix matching is used.
+
+The new check exercises all nine actual builders with and without a camera, both quality tiers, exact cutoff boundaries, near/far/near transitions and repeated mechanism target states. Full original node transforms, non-target visibility and shadow flags are compared against a separate unwrapped-runtime control. It also checks duplicate loading, lazy collection, untouched unrelated groups and exact expected savings.
+
+## Mechanical butterfly, separate budget
+
+The actual palace root after `prepareButterflySea` and `installRoofMechanism` has 34,199 triangles / 99 mesh batches; the creature subtree has 28,739 / 86, including the 2,064 / 3 crown. These counts precede later butterfly reading/content attachments and include nodes whose visibility can vary. Seven palace batches cast shadows; crown batches do not. The creature is separately cloned into the planar reflection scene, refreshed up to 15 Hz on both quality tiers, adding eligible creature draws and celestial reflection geometry on those updates. This LOD module does not modify the butterfly.
+
+## Remaining budget risk and next candidates
+
+The cumulative increase is meaningful, especially mobile CPU draw submission, shadow passes and eager JavaScript geometry. Triangle counts alone do not prove an FPS failure. Avoid adopting a repeated allowance of roughly 20 extra batches per building without a cumulative budget.
+
+The largest future batching opportunity is actual moving prototypes: editor drawer detail could theoretically use 4 shared material instance batches instead of 16; Twin Stars screens 2 instead of 16; causal vents 2 instead of 12; versions screens 2 instead of 10. This would save another 44 near-view batches with unchanged triangle counts, but requires careful instance-matrix synchronization and is deliberately outside this minimal change. Essential silhouettes should remain separate from future distance-culled ornament. Binary/indexed geometry or measured deferred loading could address startup cost separately.

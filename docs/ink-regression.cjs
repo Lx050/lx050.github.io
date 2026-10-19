@@ -6,18 +6,19 @@ const baseline='308d01f920cf05a68de7f93d29c3c45a4143fa29';
 function source(file,old){return old?cp.execFileSync('git',['-C',root,'show',baseline+':'+file],{maxBuffer:32*1024*1024}):fs.readFileSync(root+'/'+file);}
 function load(old){
   const c={console};c.window=c;vm.createContext(c);
-  for(const name of ['architecture','content-core','nuanling-detail','nuanling-app-detail','editor-detail','rubbing-detail',...(!old?['ink-detail']:[]),'content-creation-care','content-services','twinstars-detail','causal-detail','versions-detail','content-narratives','content-literary','moon-snow-garden','infrastructure'])
+  for(const name of ['architecture','content-core','nuanling-detail','nuanling-app-detail','editor-detail','rubbing-detail',...(!old?['ink-detail']:[]),...(!old?['restoration-detail']:[]),'content-creation-care','content-services','twinstars-detail','causal-detail','versions-detail','content-narratives','content-literary','moon-snow-garden','infrastructure'])
     vm.runInContext(source('assets/'+name+'.js',old).toString(),c,{filename:name+'.js'});
   return c;
 }
 function digest(value){return crypto.createHash('sha256').update(typeof value==='string'||Buffer.isBuffer(value)?value:JSON.stringify(value)).digest('hex');}
+function restorationAddition(b,o){if(b.metadata?.index!==3)return false;for(let p=o;p;p=p.parent)if(p.name==='restoration-blender-static'||p.name==='restoration-blender-light')return true;return false;}
 function shape(b){
   b.root.updateMatrixWorld(true);const rows=[];
-  b.root.traverse(o=>{if(!o.isMesh)return;const materials=(Array.isArray(o.material)?o.material:[o.material]).map(m=>[m.color?.toArray(),m.opacity,m.metalness,m.roughness,m.side,m.transparent]);
+  b.root.traverse(o=>{if(!o.isMesh||restorationAddition(b,o))return;const materials=(Array.isArray(o.material)?o.material:[o.material]).map(m=>[m.color?.toArray(),m.opacity,m.metalness,m.roughness,m.side,m.transparent]);
     rows.push([o.name,Array.from(o.geometry.attributes.position.array),o.geometry.index?Array.from(o.geometry.index.array):null,o.matrixWorld.toArray(),o.isInstancedMesh?Array.from(o.instanceMatrix.array):null,materials]);});
   return digest(rows);
 }
-function boxes(b){return digest(b.collisionBoxes.map(box=>[box.min.toArray(),box.max.toArray(),box.userData]));}
+function boxes(b){return digest(b.collisionBoxes.filter(box=>!(b.metadata?.index===3&&box.userData?.part==='restoration-protective-arch-foot')).map(box=>[box.min.toArray(),box.max.toArray(),box.userData]));}
 const old=load(true),now=load(false),phases=[0,.25,.5,.75,1,.4,0,1];
 let unchanged=0,infrastructure=0,mechanisms=0;
 for(let i=0;i<29;i++){
@@ -37,21 +38,22 @@ for(const file of preservedFiles)assert.equal(digest(source(file,false)),digest(
 const html=source('index.html',false).toString(),before=source('index.html',true).toString();
 for(const pattern of [/const LINKS = (\[[\s\S]*?\n\]);/,/const TRACKS=(\[[\s\S]*?\n\]);/])assert.equal(html.match(pattern)[1],before.match(pattern)[1],'unchanged entry content');
 assert.equal(html,source('island.html',false).toString(),'entry files identical');
-const normalizeEntry=text=>text.replace(/<script src="assets\/ink-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/\?v=[a-f0-9]{16}/g,'?v=ASSET_VERSION');
+const normalizeEntry=text=>text.replace(/<script src="assets\/detail-lod\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/restoration-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/ink-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/\?v=[a-f0-9]{16}/g,'?v=ASSET_VERSION');
 assert.equal(normalizeEntry(html),normalizeEntry(before),'all entry source unchanged except exact detail loader and cache tokens');
 let restoredCare=source('assets/content-creation-care.js',false).toString();
+for(const line of ['    global.CourtyardRestorationDetail.attach(b);\n','    global.CourtyardRestorationDetail.attachLight(b,inspection);\n']){assert.equal(restoredCare.split(line).length,2,'one exact building3 restoration integration');restoredCare=restoredCare.replace(line,'');}
 for(const line of ['    global.CourtyardInkDetail.attach(b);\n','    global.CourtyardInkDetail.attachCarriage(b,layers);\n']){assert.equal(restoredCare.split(line).length,2,'one exact detail integration');restoredCare=restoredCare.replace(line,'');}
-assert.equal(restoredCare,source('assets/content-creation-care.js',true).toString(),'creation-care differs only by two additive detail hooks; no original source removed or modified');
+assert.equal(restoredCare,source('assets/content-creation-care.js',true).toString(),'creation-care differs only by two ink and two restoration additive detail hooks; no original source removed or modified');
 assert(html.indexOf('src="assets/ink-detail.js?')>=0&&html.indexOf('src="assets/ink-detail.js?')<html.indexOf('src="assets/content-creation-care.js?'),'detail loads before its builder');
 const manifest=JSON.parse(source('docs/deployment-verify.html',false).toString().match(/const expected=(\{.*?\});/)[1]);
 const oldManifest=JSON.parse(source('docs/deployment-verify.html',true).toString().match(/const expected=(\{.*?\});/)[1]);
-assert.deepEqual(Object.keys(manifest).sort(),[...Object.keys(oldManifest),'assets/ink-detail.js'].sort(),'preserve all release entries and add the new detail');
+assert.deepEqual(Object.keys(manifest).sort(),[...Object.keys(oldManifest),'assets/detail-lod.js','assets/restoration-detail.js','assets/ink-detail.js'].sort(),'preserve all release entries and add the new detail');
 for(const [file,hash]of Object.entries(manifest))assert.equal(digest(source(file,false)),hash,'release hash '+file);
 let versionedAssets=0;
 for(const match of html.matchAll(/(?:src|href)="([^"?]+)\?v=([a-f0-9]{16})"/g)){
   const file=match[1];if(!fs.existsSync(root+'/'+file))continue;
   assert.equal(digest(source(file,false)).slice(0,16),match[2],'entry cache token '+file);versionedAssets++;
 }
-assert.equal(versionedAssets,39);assert.equal(unchanged,24);assert.equal(infrastructure,3);assert.equal(Object.keys(oldManifest).length,59);assert.equal(Object.keys(manifest).length,60);
+assert.equal(versionedAssets,41);assert.equal(unchanged,24);assert.equal(infrastructure,3);assert.equal(Object.keys(oldManifest).length,59);assert.equal(Object.keys(manifest).length,62);
 const result={passed:true,baseline,unchangedBuildings:unchanged,unchangedInfrastructure:infrastructure,allMechanismsPreserved:true,mechanisms,checkedPhases:phases.length,preservedFiles,releaseEntries:Object.keys(manifest).length,versionedAssets};
 fs.mkdirSync(root+'/qa-results/ink',{recursive:true});fs.writeFileSync(root+'/qa-results/ink/regression.json',JSON.stringify(result,null,2));console.log(result);
