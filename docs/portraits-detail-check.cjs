@@ -5,7 +5,7 @@ const root=path.resolve(__dirname,'..'),T=require(root+'/vendor/three.min.js'),o
 const baseline='b958c3a6835974daf9dccc24d3110a28f7ae46cc';
 function load(old){
  const c={console,document:{createElement(){return{width:0,height:0,getContext(){return new Proxy({measureText:text=>({width:String(text).length*10}),createLinearGradient:()=>({addColorStop(){}})},{get:(o,k)=>o[k]||(()=>{})});}};}}};c.window=c;vm.createContext(c);
- for(const name of ['architecture','content-core','twinstars-detail','causal-detail','versions-detail','city-detail',...(!old?['portraits-detail']:[]),'content-narratives','reading-catalog','reading-panels']){const file='assets/'+name+'.js',source=old?cp.execFileSync('git',['-C',root,'show',baseline+':'+file],{encoding:'utf8',maxBuffer:32*1024*1024}):fs.readFileSync(root+'/'+file,'utf8');vm.runInContext(source,c,{filename:file});}return c;
+ for(const name of ['architecture','content-core','twinstars-detail','causal-detail','versions-detail','city-detail',...(!old?['portraits-detail']:[]),...(!old?['session-detail']:[]),'content-narratives','reading-catalog','reading-panels']){const file='assets/'+name+'.js',source=old?cp.execFileSync('git',['-C',root,'show',baseline+':'+file],{encoding:'utf8',maxBuffer:32*1024*1024}):fs.readFileSync(root+'/'+file,'utf8');vm.runInContext(source,c,{filename:file});}return c;
 }
 const c=load(false),old=load(true),make=context=>context.CourtyardArchitecture.build({THREE:T,index:14,title:'凝结核列传',zone:0});
 const b=make(c),before=make(old);b.root.updateMatrixWorld(true);

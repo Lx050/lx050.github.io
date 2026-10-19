@@ -5,7 +5,7 @@ const root=path.resolve(__dirname,'..'),T=require(root+'/vendor/three.min.js'),o
 const baseline='0b34816b05cfd24f20ead68d33735869f7cc5ecc';
 function load(old){
   const c={console,document:{createElement(){return{width:0,height:0,getContext(){return new Proxy({measureText(text){return{width:String(text).length*10};},createLinearGradient(){return{addColorStop(){}};}},{get:(o,k)=>o[k]||(()=>{})});}};}}};c.window=c;vm.createContext(c);
-  for(const name of ['architecture','content-core',...(!old?['versions-detail']:[]),...(!old?['city-detail','portraits-detail']:[]),'content-narratives','reading-catalog','reading-panels']){
+  for(const name of ['architecture','content-core',...(!old?['versions-detail']:[]),...(!old?['city-detail','portraits-detail']:[]),...(!old?['session-detail']:[]),'content-narratives','reading-catalog','reading-panels']){
     const file='assets/'+name+'.js',source=old?cp.execFileSync('git',['-C',root,'show',baseline+':'+file],{encoding:'utf8',maxBuffer:32*1024*1024}):fs.readFileSync(root+'/'+file,'utf8');vm.runInContext(source,c,{filename:file});
   }return c;
 }
