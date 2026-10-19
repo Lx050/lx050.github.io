@@ -217,6 +217,7 @@
 
   B[21] = function ({b, options}) {
     const w = 20, d = 19.4;
+    global.CourtyardProofDetail.attach(b);
     b.deck(w, d);
     // Eight structural ribs retain the whole editorial sequence, including its first offset.
     const ribs = [-8.35, -6.42, -4.48, -2.54, -.6, 1.34, 3.28, 5.22];

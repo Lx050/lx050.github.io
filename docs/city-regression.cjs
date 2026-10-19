@@ -9,9 +9,14 @@ assert.equal(gatewayServices.split(gatewayHook).length,2,'one exact building10 g
 const restoredGatewayServices=gatewayServices.replace(gatewayHook,'');
 assert.equal(restoredGatewayServices,cp.execFileSync('git',['-C',root,'show','02a7f4077e18f35483457b55d303bc409dfcf808:assets/content-services.js'],{encoding:'utf8'}),'services differs only by the exact gateway hook from preceding release');
 function gatewayAddition(b,o){if(b.metadata?.index!==10)return false;for(let p=o;p;p=p.parent)if(p.name==='gateway-blender-static')return true;return false;}
+const proofHook='    global.CourtyardProofDetail.attach(b);\n',proofLiterary=fs.readFileSync(root+'/assets/content-literary.js','utf8');
+assert.equal(proofLiterary.split(proofHook).length,2,'one exact building21 proof integration');
+const restoredProofLiterary=proofLiterary.replace(proofHook,'');
+assert.equal(restoredProofLiterary,cp.execFileSync('git',['-C',root,'show','ab4aedbbe3380eb9e4bdc82bfaec7a7e1aa89e05:assets/content-literary.js'],{encoding:'utf8'}),'literary differs only by the exact proof hook from preceding release');
+function proofAddition(b,o){if(b.metadata?.index!==21)return false;for(let p=o;p;p=p.parent)if(p.name==='proof-blender-static')return true;return false;}
 function load(old){
   const c={console};c.window=c;vm.createContext(c);
-  for(const name of ['architecture','content-core','nuanling-detail','nuanling-app-detail','editor-detail','rubbing-detail','ink-detail','restoration-detail',...(!old?['huayun-detail']:[]),'content-creation-care',...(!old?['shield-detail']:[]),...(!old?['gateway-detail']:[]),'content-services','twinstars-detail','causal-detail','versions-detail',...(!old?['city-detail','portraits-detail']:[]),'content-narratives','content-literary','moon-snow-garden','infrastructure'])
+  for(const name of ['architecture','content-core','nuanling-detail','nuanling-app-detail','editor-detail','rubbing-detail','ink-detail','restoration-detail',...(!old?['huayun-detail']:[]),'content-creation-care',...(!old?['shield-detail']:[]),...(!old?['gateway-detail']:[]),'content-services','twinstars-detail','causal-detail','versions-detail',...(!old?['city-detail','portraits-detail']:[]),'content-narratives',...(!old?['proof-detail']:[]),'content-literary','moon-snow-garden','infrastructure'])
     vm.runInContext(source('assets/'+name+'.js',old).toString(),c,{filename:name+'.js'});
   return c;
 }
@@ -22,7 +27,7 @@ function cityAddition(b,o){if(b.metadata?.index!==16)return false;for(let p=o;p;
 function huayunAddition(b,o){if(b.metadata?.index!==1)return false;for(let p=o;p;p=p.parent)if(p.name==='huayun-blender-static')return true;return false;}
 function shape(b){
   b.root.updateMatrixWorld(true);const rows=[];
-  b.root.traverse(o=>{if(gatewayAddition(b,o)||huayunAddition(b,o)||shieldAddition(b,o)||portraitsAddition(b,o)||cityAddition(b,o)||!o.isMesh)return;const materials=(Array.isArray(o.material)?o.material:[o.material]).map(m=>[m.color?.toArray(),m.opacity,m.metalness,m.roughness,m.side,m.transparent]);
+  b.root.traverse(o=>{if(proofAddition(b,o)||gatewayAddition(b,o)||huayunAddition(b,o)||shieldAddition(b,o)||portraitsAddition(b,o)||cityAddition(b,o)||!o.isMesh)return;const materials=(Array.isArray(o.material)?o.material:[o.material]).map(m=>[m.color?.toArray(),m.opacity,m.metalness,m.roughness,m.side,m.transparent]);
     rows.push([o.name,Array.from(o.geometry.attributes.position.array),o.geometry.index?Array.from(o.geometry.index.array):null,o.matrixWorld.toArray(),o.isInstancedMesh?Array.from(o.instanceMatrix.array):null,materials]);});
   return digest(rows);
 }
@@ -51,24 +56,24 @@ const preservedFiles=['assets/butterfly-crown.js','assets/butterfly-flight.js','
 for(const name of fs.readdirSync(root+'/assets/readings').filter(name=>name.endsWith('.json')))if(!preservedFiles.includes('assets/readings/'+name))preservedFiles.push('assets/readings/'+name);
 const cityHook='    global.CourtyardCityDetail.attach(b);\n', narrative=source('assets/content-narratives.js',false).toString();
 assert.equal(narrative.split(cityHook).length,2,'one exact building16 city integration');
-for(const file of preservedFiles)assert.equal(digest(file==='assets/content-narratives.js'?narrative.replace(cityHook,'').replace('    global.CourtyardPortraitsDetail.attach(b);\n',''):(file==='assets/content-creation-care.js'?restoredHuayunCare:(file==='assets/content-services.js'?restoredServices:source(file,false)))),digest(source(file,true)),'unchanged source '+file);
+for(const file of preservedFiles)assert.equal(digest(file==='assets/content-literary.js'?restoredProofLiterary:file==='assets/content-narratives.js'?narrative.replace(cityHook,'').replace('    global.CourtyardPortraitsDetail.attach(b);\n',''):(file==='assets/content-creation-care.js'?restoredHuayunCare:(file==='assets/content-services.js'?restoredServices:source(file,false)))),digest(source(file,true)),'unchanged source '+file);
 const html=source('index.html',false).toString(),before=source('index.html',true).toString();
 for(const pattern of [/const LINKS = (\[[\s\S]*?\n\]);/,/const TRACKS=(\[[\s\S]*?\n\]);/])assert.equal(html.match(pattern)[1],before.match(pattern)[1],'unchanged entry content');
 assert.equal(html,source('island.html',false).toString(),'entry files identical');
 assert(html.indexOf('src="assets/shield-detail.js?')>=0&&html.indexOf('src="assets/shield-detail.js?')<html.indexOf('src="assets/content-services.js?'),'shield detail loads before its builder');
-const normalizeEntry=text=>text.replace(/<script src="assets\/gateway-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/huayun-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/shield-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/portraits-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/city-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/\?v=[a-f0-9]{16}/g,'?v=ASSET_VERSION');
+const normalizeEntry=text=>text.replace(/<script src="assets\/proof-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/gateway-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/huayun-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/shield-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/portraits-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/city-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/\?v=[a-f0-9]{16}/g,'?v=ASSET_VERSION');
 assert.equal(normalizeEntry(html),normalizeEntry(before),'entry unchanged except city loader and cache tokens');
 let narratives=source('assets/content-narratives.js',false).toString();const hook='    global.CourtyardCityDetail.attach(b);\n';assert.equal(narratives.split(hook).length,2,'one exact static integration hook');narratives=narratives.replace(hook,'');const portraitsHook='    global.CourtyardPortraitsDetail.attach(b);\n';assert.equal(narratives.split(portraitsHook).length,2,'one exact building14 portraits integration');narratives=narratives.replace(portraitsHook,'');assert.equal(narratives,source('assets/content-narratives.js',true).toString(),'no original narrative source removed or modified');
 assert(html.indexOf('src="assets/city-detail.js?')>=0&&html.indexOf('src="assets/city-detail.js?')<html.indexOf('src="assets/content-narratives.js?'),'detail loads before builder');
 const manifest=JSON.parse(source('docs/deployment-verify.html',false).toString().match(/const expected=(\{.*?\});/)[1]);
 const oldManifest=JSON.parse(source('docs/deployment-verify.html',true).toString().match(/const expected=(\{.*?\});/)[1]);
-assert.deepEqual(Object.keys(manifest).sort(),[...Object.keys(oldManifest),'assets/gateway-detail.js','assets/huayun-detail.js','assets/shield-detail.js','assets/portraits-detail.js','assets/city-detail.js'].sort(),'preserve all release entries and add the new detail');
+assert.deepEqual(Object.keys(manifest).sort(),[...Object.keys(oldManifest),'assets/proof-detail.js','assets/gateway-detail.js','assets/huayun-detail.js','assets/shield-detail.js','assets/portraits-detail.js','assets/city-detail.js'].sort(),'preserve all release entries and add the new detail');
 for(const [file,hash]of Object.entries(manifest))assert.equal(digest(source(file,false)),hash,'release hash '+file);
 let versionedAssets=0;
 for(const match of html.matchAll(/(?:src|href)="([^"?]+)\?v=([a-f0-9]{16})"/g)){
   const file=match[1];if(!fs.existsSync(root+'/'+file))continue;
   assert.equal(digest(source(file,false)).slice(0,16),match[2],'entry cache token '+file);versionedAssets++;
 }
-assert.equal(versionedAssets,46);assert.equal(unchanged,24);assert.equal(infrastructure,3);assert.equal(Object.keys(oldManifest).length,62);assert.equal(Object.keys(manifest).length,67);
+assert.equal(versionedAssets,47);assert.equal(unchanged,24);assert.equal(infrastructure,3);assert.equal(Object.keys(oldManifest).length,62);assert.equal(Object.keys(manifest).length,68);
 const result={passed:true,baseline,unchangedBuildings:unchanged,unchangedInfrastructure:infrastructure,allMechanismsPreserved:true,mechanisms,checkedPhases:phases.length,preservedFiles,releaseEntries:Object.keys(manifest).length,versionedAssets};
 fs.mkdirSync(root+'/qa-results/city',{recursive:true});fs.writeFileSync(root+'/qa-results/city/regression.json',JSON.stringify(result,null,2));console.log(result);
