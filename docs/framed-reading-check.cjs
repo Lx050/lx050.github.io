@@ -9,7 +9,7 @@ const context={THREE,console,document:{createElement(){
     createLinearGradient(){return {addColorStop(){}};}
   },{get:(o,k)=>k in o?o[k]:(()=>{})});canvas.getContext=()=>c;return canvas;
 }}};context.window=context;vm.createContext(context);
-for(const file of ['architecture','content-core','ink-detail','restoration-detail','huayun-detail','content-creation-care','shield-detail','gateway-detail','reme-detail','content-services','twinstars-detail','causal-detail','versions-detail','city-detail','portraits-detail','content-narratives','rubbing-detail','proof-detail','workshop-detail','content-literary','moon-snow-garden','reading-catalog','reading-panels','courtyard-runtime'])
+for(const file of ['architecture','content-core','ink-detail','restoration-detail','huayun-detail','content-creation-care','shield-detail','gateway-detail','reme-detail','content-services','twinstars-detail','causal-detail','versions-detail','city-detail','portraits-detail','session-detail','content-narratives','rubbing-detail','proof-detail','workshop-detail','content-literary','moon-snow-garden','reading-catalog','reading-panels','courtyard-runtime'])
   new vm.Script(fs.readFileSync(path.join(root,'assets',file+'.js'),'utf8'),{filename:file}).runInContext(context);
 const api=context.CourtyardReadingPanels,rows=[];
 for(const index of [14,21]){

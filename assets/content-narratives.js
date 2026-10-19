@@ -111,6 +111,7 @@
     C.motion(b,'Read the changing tool layer without surrendering the human spine',movable,v=>{
       panels.forEach(({p,mat,n})=>{p.rotation.y=(n%2?1:-1)*v*.26;mat.opacity=.14+n*.03+v*.18;});
     },'tool-layer-comparison');
+    global.CourtyardSessionDetail.attach(b);
     return finish(b,options,w,d,13,{
       phaseLabels:['人的连续线','分工与工具层','保留本心的协作'],
       mechanism:'Ten overhead translucent tool panels turn and become more legible; the continuous human wall and ethical rail never disappear.',
