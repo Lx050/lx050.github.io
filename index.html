@@ -186,7 +186,7 @@ const TRACKS=[
     <a id="enter-link" target="_blank" rel="noopener noreferrer">原站 ↗</a>
   </section>
   </div>
-  <section id="mechanical-controls" hidden aria-label="蝶阙机械翼"><p id="mechanical-status">展开 · 已锁止</p><button data-roof="open">展开</button><button data-roof="half">半收</button><button data-roof="closed">收拢</button><button id="roof-skeleton" aria-pressed="false">显示骨架</button></section>
+  <section id="mechanical-controls" hidden aria-label="蝶阙机械翼"><p id="mechanical-status">自动飞行</p><button id="roof-flight" aria-pressed="true">自动飞行 · 暂停</button><button data-roof="open">展开</button><button data-roof="half">半收</button><button data-roof="closed">收拢</button><button id="roof-skeleton" aria-pressed="false">显示骨架</button></section>
   <button id="jump" type="button" aria-label="跳跃">跳跃</button>
   <button id="sprint" type="button" aria-label="按住疾行" aria-pressed="false">疾行</button>
   <div class="mapbox" role="button" tabindex="0" aria-label="打开全岛地图" aria-haspopup="dialog" aria-controls="atlas" aria-expanded="false"><canvas id="map" width="288" height="288" aria-label="航向朝上小地图：中央箭头为当前位置，N 指向北方"></canvas><div id="location">庭心</div></div>
@@ -226,6 +226,7 @@ const TRACKS=[
 <script src="assets/content-narratives.js?v=dd1fe20dcb7e5278"></script>
 <script src="assets/content-literary.js?v=97cf9ab376243ab5"></script>
 <script src="assets/moon-snow-garden.js?v=df72bab89067f3b9"></script>
+<script src="assets/butterfly-flight.js?v=7fd62f4ce79528aa"></script>
 <script src="assets/content-butterfly.js?v=3238b2fe25de31db"></script>
 <script src="assets/infrastructure.js?v=95b42f7ffde585c2"></script>
 <script src="assets/garden-weather.js?v=2e99a4c571a9fb5e"></script>
@@ -1243,7 +1244,7 @@ function prepareButterflySea(lm){
         beam(brackets,[v.x,.72,v.z],[w.x,.72,w.z],.11,.14);
       }
     }
-    if(!upper){for(let j=4;j<30;j+=6){const p=curve.getPoint(j/32);block(screen,p.x,1.0,p.z,.12,1.5,.16);}batch(structure,G.box,bronze,screen,'cloister-open-screen');}
+    if(!upper){for(let j=4;j<30;j+=6){const p=curve.getPoint(j/32);block(screen,p.x,1.0,p.z,.12,1.5,.16);}batch(root,G.box,bronze,screen,'cloister-open-screen');}
   }
   const walkGeometry=new THREE.BufferGeometry();walkGeometry.setAttribute('position',new THREE.Float32BufferAttribute(walkwayVertices,3));walkGeometry.computeVertexNormals();
   const cloister=mesh(walkGeometry,walkStone,root,0,0,0);cloister.name='four-dark-stone-cloister-walks';cloister.castShadow=false;
@@ -1254,7 +1255,7 @@ function prepareButterflySea(lm){
     block(brackets,side*6,11.18,25,4.5,.16,1.25);
     block(lamps,side*6,9.95,25,.18,.7,.18);
   }
-  const gateLight=new THREE.PointLight(0xffd6a2,.85,22,2);gateLight.position.set(0,5,25);gateLight.castShadow=false;structure.add(gateLight);
+  const gateLight=new THREE.PointLight(0xffd6a2,.85,22,2);gateLight.position.set(0,5,25);gateLight.castShadow=false;root.add(gateLight);
   // Butterfly-body sutra pillar: unequal storeys, octagonal facets, gathered veins.
   // All repetitive ornaments join existing batches; three canopies share ONE geometry.
   const axis=structure,oct=new THREE.CylinderGeometry(.82,1,1,8),drums=[],shafts=[],veinRelief=[],canopies=[],petals=[],bells=[];
@@ -1337,7 +1338,7 @@ function prepareButterflySea(lm){
   for(const z of [-4,4])for(const side of [-1,1])lantern(side*6.3,z);
   for(let i=0;i<12;i++){const a=(i+.5)*Math.PI*2/12;lantern(Math.sin(a)*53.2,Math.cos(a)*53.2);}
   for(let z=34;z<51;z+=14)for(const side of [-1,1])lantern(side*4,z);
-  batch(root,G.box,altarStone,paving,'axis-and-court-paving');batch(structure,G.box,stone,shoes,'column-shoes-and-lamp-bases');batch(structure,G.box,timber,pillars,'colonnade-columns');batch(structure,G.box,bronze,brackets,'dougong-brackets');batch(structure,G.box,lamp,lamps,'architectural-lights');batch(structure,G.box,bronze,caps,'stone-lamp-caps');
+  batch(root,G.box,altarStone,paving,'axis-and-court-paving');batch(root,G.box,stone,shoes,'column-shoes-and-lamp-bases');batch(root,G.box,timber,pillars,'colonnade-columns');batch(root,G.box,bronze,brackets,'dougong-brackets');batch(root,G.box,lamp,lamps,'architectural-lights');batch(root,G.box,bronze,caps,'stone-lamp-caps');
   // Visual enclosure stays outside the existing analytical half-width of 2.55m.
   const bridge=new THREE.Group();bridge.name='butterfly-sea-causeway';scene.add(bridge);b.causeway=bridge;
   const deck=[],posts=[],lights=[],pier=[],stonework=[],crowns=[];
@@ -1408,6 +1409,7 @@ function clipRoofGeometry(geometry,matrix,side,cut,outer){
   const result=new THREE.BufferGeometry();for(const k of names)result.setAttribute(k,new THREE.Float32BufferAttribute(out[k],geometry.attributes[k].itemSize));result.computeBoundingBox();return result;
 }
 function installRoofMechanism(b){
+  b.flight=CourtyardButterflyFlight.create();b.creature.position.y=b.flight.height;
   const rig=b.mechanical={target:0,progress:0,velocity:0,state:'展开',skeleton:false,locked:true,mainAngle:0,outerAngle:0,joints:[],links:[],skins:[],structureMeshes:[]};
   const gold=material(0xb39a63,{metalness:.65,roughness:.42}),steel=material(0x59666a,{metalness:.72,roughness:.38}),rodMaterial=material(0xc7c0a7,{metalness:.82,roughness:.25});
   const fixed=new THREE.Group();fixed.name='mechanical-fixed-bearings';b.creature.add(fixed);
@@ -1471,7 +1473,7 @@ function installRoofMechanism(b){
   for(const side of [-1,1])for(const z of [-2,4])b.sea.collisions.push({x:side*3.5,z,r:.36,h:24.5});
   updateRoofMechanism(b,0);
 }
-function setRoofState(state){const rig=landmarks[23].butterfly.mechanical;if(!rig)return;rig.target={open:0,half:.65,closed:1}[state]??rig.target;rig.state={open:'展开',half:'半收',closed:'收拢'}[state]||rig.state;document.querySelectorAll('[data-roof]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.roof===state)));}
+function setRoofState(state){const b=landmarks[23].butterfly,rig=b.mechanical;if(!rig)return;if(!['open','half','closed'].includes(state))return;b.flight.enabled=false;rig.target={open:0,half:.65,closed:1}[state]??rig.target;rig.state={open:'展开',half:'半收',closed:'收拢'}[state]||rig.state;document.querySelectorAll('[data-roof]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.roof===state)));}
 function updateRoofMechanism(b,dt){
   const rig=b.mechanical;if(!rig)return;const h=Math.min(.12,Math.max(0,dt)),omega=1.05,offset=rig.progress-rig.target,c=rig.velocity+omega*offset,e=Math.exp(-omega*h);
   rig.progress=THREE.MathUtils.clamp(rig.target+(offset+c*h)*e,0,1);rig.velocity=(rig.velocity-omega*c*h)*e;
@@ -1486,7 +1488,8 @@ function updateRoofMechanism(b,dt){
     l.rod.position.copy(a).addScaledVector(direction,barrelLength+rodLength/2);l.rod.scale.y=rodLength;l.rod.quaternion.copy(l.barrel.quaternion);l.length=length;
   }
   for(const skin of rig.skins)skin.visible=!rig.skeleton;
-  const controls=$('mechanical-controls');if(controls){controls.hidden=!started||worldActive()||!$('craft-controls').hidden||player.position.distanceTo(b.root.getWorldPosition(new THREE.Vector3()))>95;$('mechanical-status').textContent=rig.state+(rig.locked?' · 已锁止':' · 机构运行中');}
+  const flightButton=$('roof-flight');if(flightButton){flightButton.setAttribute('aria-pressed',String(b.flight.enabled));flightButton.textContent=b.flight.enabled?'自动飞行 · 暂停':'继续自动飞行';}
+  const controls=$('mechanical-controls');if(controls){controls.hidden=!started||worldActive()||!$('craft-controls').hidden||player.position.distanceTo(b.root.getWorldPosition(new THREE.Vector3()))>95;$('mechanical-status').textContent=b.flight.enabled?(reduced?'自动飞行 · 减少动态已静止':'自动飞行 · 悬浮振翅'):rig.state+(rig.locked?' · 已锁止':' · 机构运行中');}
 }
 
 function butterflySeaDeck(r){const s=butterflySea,t=THREE.MathUtils.clamp((r-s.start)/((s.end-s.start)*.72),0,1);return THREE.MathUtils.lerp(s.startY,s.y+.20,smooth01(t));}
@@ -1499,14 +1502,23 @@ function butterflySeaSurface(x,z){
   if(along>=s.start-.3&&along<=s.end+.5&&Math.abs(side)<=2.55)return butterflySeaDeck(along);
   return null;
 }
+function butterflyFlightBounds(b){
+  // Conservative framing envelope for every manual/automatic joint pose and hover height.
+  const r=b.mechanical,saved={progress:r.progress,target:r.target,velocity:r.velocity,height:b.creature.position.y},box=new THREE.Box3();
+  b.creature.position.y=CourtyardButterflyFlight.maxHeight;
+  for(let i=0;i<=20;i++){r.progress=r.target=i/20;r.velocity=0;updateRoofMechanism(b,0);box.union(butterflySeaBounds(b.creature));}
+  Object.assign(r,{progress:saved.progress,target:saved.target,velocity:saved.velocity});b.creature.position.y=saved.height;updateRoofMechanism(b,0);
+  box.min.y-=CourtyardButterflyFlight.maxHeight-CourtyardButterflyFlight.minHeight;
+  return box.expandByScalar(.75);
+}
 function finishButterflySea(lm){
   const b=lm.butterfly;CourtyardButterflyContent.build(THREE,b,material);const reading=window.CourtyardReadingPanels?.attachButterfly({THREE,butterfly:b,index:23,entry:lm.entry,preview:window.CourtyardReadingCatalog?.[23]});if(reading)for(const face of reading.faces){face.userData.landmark=lm;pickables.push(face);}installRoofMechanism(b);lm.model.updateWorldMatrix(true,true);
-  lm.bounds=butterflySeaBounds(b.creature).expandByScalar(.4);lm.model.userData.bounds=lm.bounds;lm.bboxHeight=lm.bounds.max.y-lm.site.groundY;lm.groundY=lm.site.groundY;
+  lm.bounds=butterflyFlightBounds(b);lm.model.userData.bounds=lm.bounds;lm.bboxHeight=lm.bounds.max.y-lm.site.groundY;lm.groundY=lm.site.groundY;
   b.wingBounds=new THREE.Box3();b.wings.forEach(w=>b.wingBounds.union(new THREE.Box3().setFromObject(w)));b.wingBounds.expandByScalar(.4);
   b.observationTargets=b.wings.map(w=>w.localToWorld(w.geometry.boundingBox.getCenter(new THREE.Vector3())));
   const g=b.root.localToWorld(b.gateLocal.clone());lm.gatePoint={x:g.x,y:lm.site.groundY+.20,z:g.z};
   lm.lod=new THREE.Group();lm.lod.visible=false;lm.group.add(lm.lod);
-  for(const c of b.sea.collisions){const p=b.root.localToWorld(new THREE.Vector3(c.x,0,c.z));colliders.push({x:p.x,z:p.z,r:c.r});b.sea.cameraBoxes.push(new THREE.Box3(new THREE.Vector3(p.x-c.r,p.y,p.z-c.r),new THREE.Vector3(p.x+c.r,p.y+c.h,p.z+c.r)));}
+  for(const c of b.sea.collisions){const p=b.root.localToWorld(new THREE.Vector3(c.x,0,c.z));colliders.push({x:p.x,z:p.z,r:c.r});b.sea.cameraBoxes.push(new THREE.Box3(new THREE.Vector3(p.x-c.r,p.y,p.z-c.r),new THREE.Vector3(p.x+c.r,p.y+c.h+CourtyardButterflyFlight.maxHeight,p.z+c.r)));}
   // A planar mirror on BOTH quality tiers. Separate render scene contains no deck,
   // below-water geometry or duplicate coplanar surfaces; projective UVs keep it whole.
   b.reflectionScene=new THREE.Scene();b.reflectionClone=b.creature.clone(true);b.reflectionScene.add(b.reflectionClone);
@@ -1529,8 +1541,11 @@ function updateButterflySea(dt,lm){
   const arrival=THREE.MathUtils.lerp(1,.86,smooth01((local.z-2)/23));
   const active=started?(1-smooth01((d-8)/28))*arrival:0;
   advanceReveal(b,dt,active,false,1-Math.min(1,(skyState.sunI||0)/1.3));
-  // User-commanded, sequential rigid joints; no continuous flapping.
-  updateRoofMechanism(b,dt);
+  const flight=CourtyardButterflyFlight.step(b.flight,dt,reduced);
+  b.creature.position.y=flight.height;
+  if(flight.enabled&&!reduced){b.mechanical.target=flight.target;b.mechanical.state='自动飞行';}
+  // Rigid original hinges and actuator endpoints follow the floating body.
+  updateRoofMechanism(b,flight.enabled&&reduced?0:dt);
   CourtyardButterflyContent.update(b,dt,player.position,reduced,elapsed);
   for(const w of b.wings){const u=w.material.userData.revealUniforms;u.uReveal.value=b.reveal;u.uTime.value=reduced?0:elapsed;u.uVisited.value=0;u.uNight.value=b.night;}
   b.lampMaterial.emissiveIntensity=.6+b.reveal*.6;b.finialMaterial.emissiveIntensity=.65+b.reveal*.48;b.seal.material.opacity=.18+b.reveal*.55;
@@ -1539,7 +1554,7 @@ function updateButterflySeaReflection(dt){
   const b=landmarks[23].butterfly;if(!b?.reflectionTarget)return;
   const activeCamera=camera;
   b.reflectionClock+=dt;if(b.reflectionClock<1/15)return;b.reflectionClock=0;
-  b.root.updateWorldMatrix(true,true);b.reflectionClone.matrixAutoUpdate=false;b.reflectionClone.matrix.copy(b.root.matrixWorld);
+  b.root.updateWorldMatrix(true,true);b.reflectionClone.matrixAutoUpdate=false;b.reflectionClone.matrix.copy(b.creature.matrixWorld);
   b.reflectionClone.getObjectByName('roof-hinge-left').quaternion.copy(b.left.quaternion);b.reflectionClone.getObjectByName('roof-hinge-right').quaternion.copy(b.right.quaternion);
   if(b.mechanical)for(const source of [...b.mechanical.joints.map(j=>j.object),...b.mechanical.links.flatMap(l=>[l.barrel,l.rod]),...b.mechanical.skins]){const copy=b.reflectionClone.getObjectByName(source.name);if(copy){copy.position.copy(source.position);copy.quaternion.copy(source.quaternion);copy.scale.copy(source.scale);copy.visible=source.visible;}}
   b.reflectionHemi.intensity=hemi.intensity;b.reflectionKey.intensity=moon.intensity;b.reflectionKey.position.copy(moon.position);
@@ -3269,6 +3284,7 @@ function frame(now){
 }
 // Read-mostly handle for automated smoke tests (batch 5 seven-bridge verification).
 document.querySelectorAll('[data-roof]').forEach(button=>button.onclick=()=>{setRoofState(button.dataset.roof);gardenWeather?.invalidateShelter();});
+$('roof-flight').onclick=()=>{const b=landmarks[23].butterfly;b.flight.enabled=!b.flight.enabled;if(!b.flight.enabled){b.mechanical.target=b.mechanical.progress;b.mechanical.velocity=0;b.mechanical.state='悬浮暂停';}document.querySelectorAll('[data-roof]').forEach(button=>button.setAttribute('aria-pressed','false'));updateRoofMechanism(b,0);};
 $('roof-skeleton').onclick=()=>{const r=landmarks[23].butterfly.mechanical;r.skeleton=!r.skeleton;$('roof-skeleton').setAttribute('aria-pressed',String(r.skeleton));updateRoofMechanism(landmarks[23].butterfly,0);};
 window.__garden={get weather(){return gardenWeather;},get buildingActions(){return buildingActions;},get reader(){return readingRoom;},get readingPanels(){return architecturalRecords.map(b=>({index:b.index,panels:b.readingPanels}));},mechanicalStep(dt){updateButterflySea(dt,landmarks[23]);},setRoofState,get worldHost(){return WorldHost;},get transitionDirector(){return TransitionDirector;},get renderPass(){return mainRenderPass;},__w2bTest:w2bTest,get skyT(){return skyT;},get atlas(){return {...atlasState,scales:[...atlasState.scales]};},get motor(){return {...motor,speed:velocity.length(),currentSpeed,sprinting};},get navigation(){return navigationBuildings;},requestJump,stepWalker,WORLD,scene,renderer,camera,composer,cameraLook,subjectBounds,monumentFaces,walkable,surfaceHeight,terrainHeight,teleport,start,player,cameraState,modelLoads,
   get butterfly(){return landmarks[23].butterfly;},get sharedIvory(){return M.ivory;},BUTTERFLY,

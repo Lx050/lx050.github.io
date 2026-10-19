@@ -90,7 +90,9 @@ new Promise((resolve,reject)=>new THREE.GLTFLoader().parse(bytes.buffer.slice(by
   assert(html.includes('#viewpad,#interaction,#craft-controls,.mapbox,#sprint,button,a,input,summary,#directory,#atlas,#intro'));
   // The new geometry-only asset is permitted; keep the existing UI snapshot unchanged.
   originalHeader=originalHeader.replace(/<script src="assets\/nuanling-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'');
-  assert.equal(digest(originalHeader.replace(/\?v=[a-f0-9]{16}/g,'?v=ASSET_VERSION')),'48db6a1d58c23e3fe3dd84103e4dd81a5d2ca470829e66dd92230439a2b25637');
+  // Explicit flight control/module allowance; every other header/input remains pinned.
+  originalHeader=originalHeader.replace(/<script src="assets\/butterfly-flight\.js\?v=[^"]+"><\/script>\n/,'').replace('<p id="mechanical-status">自动飞行</p><button id="roof-flight" aria-pressed="true">自动飞行 · 暂停</button>','<p id="mechanical-status">展开 · 已锁止</p>');
+  assert.equal(digest(originalHeader.replace(/\?v=[a-f0-9]{16}/g,'?v=ASSET_VERSION')),'33c6ac9112b35a2b552f6a0c9ab0350e13b42d785b15d9cd9f67438883beb7b7');
   assert.equal(digest(html.slice(html.indexOf('let joyPointer='),html.indexOf("window.addEventListener('resize',resize);resize();")).replace('#viewpad,#interaction,#craft-controls,.mapbox,#sprint,button,a,input,summary,#directory,#atlas,#intro','#viewpad,#interaction,.mapbox,#sprint,button,a,input,#directory,#atlas,#intro')),'7cc1e549a4b03cd62290ec78e84bc5d1c633fcf4d5e9f063e9474f2018f96f0b');
  });
  const report={passed:true,checks:count,checkNames:checks,actualBuildingSamples:rows.length,occlusionDetected:rows.filter(r=>r.blocked).length,rows,geometry500CallsMs:milliseconds,visualEvidence:'NOT RUN: Chromium process launch is blocked by local Unix socket permissions. These are GPU-free geometry/state tests, not screenshots or user-device touch tests.'};
