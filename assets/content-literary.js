@@ -450,6 +450,7 @@
     C.boxMesh(b, joint, 'bronze', 0, 0, 0, .82, .5, .075, 'shallow-exploded-joint-plate');
     for (const x of [-.24, .24]) for (const y of [-.12, .12]) C.boxMesh(b, joint, 'steel', x, y, -.052, .065, .065, .055, 'visible-fastener');
     C.motion(b, 'inspect-the-workshop-coupling', joint, v => { joint.position.z = 6.25 - .46 * v; }, 'shallow-exploded-joint');
+    global.CourtyardWorkshopDetail.attach(b);
     return finish(b, options, w, d, {
       role: 'Cultural and engineering maker workshop',
       description: 'A low modular timber-and-metal workshop connects paper craft, layout tools, a transparent test bay and a separately sleeve-connected study annex',
