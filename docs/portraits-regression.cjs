@@ -6,20 +6,24 @@ const baseline='b958c3a6835974daf9dccc24d3110a28f7ae46cc';
 function source(file,old){return old?cp.execFileSync('git',['-C',root,'show',baseline+':'+file],{maxBuffer:32*1024*1024}):fs.readFileSync(root+'/'+file);}
 function load(old){
   const c={console};c.window=c;vm.createContext(c);
-  for(const name of ['architecture','content-core','nuanling-detail','nuanling-app-detail','editor-detail','rubbing-detail','ink-detail','restoration-detail','content-creation-care',...(!old?['shield-detail']:[]),'content-services','twinstars-detail','causal-detail','versions-detail','city-detail',...(!old?['portraits-detail']:[]),'content-narratives','content-literary','moon-snow-garden','infrastructure'])
+  for(const name of ['architecture','content-core','nuanling-detail','nuanling-app-detail','editor-detail','rubbing-detail','ink-detail','restoration-detail',...(!old?['huayun-detail']:[]),'content-creation-care',...(!old?['shield-detail']:[]),'content-services','twinstars-detail','causal-detail','versions-detail','city-detail',...(!old?['portraits-detail']:[]),'content-narratives','content-literary','moon-snow-garden','infrastructure'])
     vm.runInContext(source('assets/'+name+'.js',old).toString(),c,{filename:name+'.js'});
   return c;
 }
 function digest(value){return crypto.createHash('sha256').update(typeof value==='string'||Buffer.isBuffer(value)?value:JSON.stringify(value)).digest('hex');}
 function shieldAddition(b,o){if(b.metadata?.index!==7)return false;for(let p=o;p;p=p.parent)if(p.name==='shield-blender-static')return true;return false;}
 function portraitsAddition(b,o){if(b.metadata?.index!==14)return false;for(let p=o;p;p=p.parent)if(p.name==='portraits-blender-static')return true;return false;}
+function huayunAddition(b,o){if(b.metadata?.index!==1)return false;for(let p=o;p;p=p.parent)if(p.name==='huayun-blender-static')return true;return false;}
 function shape(b){
   b.root.updateMatrixWorld(true);const rows=[];
-  b.root.traverse(o=>{if(shieldAddition(b,o)||portraitsAddition(b,o)||!o.isMesh)return;const materials=(Array.isArray(o.material)?o.material:[o.material]).map(m=>[m.color?.toArray(),m.opacity,m.metalness,m.roughness,m.side,m.transparent]);
+  b.root.traverse(o=>{if(huayunAddition(b,o)||shieldAddition(b,o)||portraitsAddition(b,o)||!o.isMesh)return;const materials=(Array.isArray(o.material)?o.material:[o.material]).map(m=>[m.color?.toArray(),m.opacity,m.metalness,m.roughness,m.side,m.transparent]);
     rows.push([o.name,Array.from(o.geometry.attributes.position.array),o.geometry.index?Array.from(o.geometry.index.array):null,o.matrixWorld.toArray(),o.isInstancedMesh?Array.from(o.instanceMatrix.array):null,materials]);});
   return digest(rows);
 }
 function boxes(b){return digest(b.collisionBoxes.map(box=>[box.min.toArray(),box.max.toArray(),box.userData]));}
+const huayunHook='    global.CourtyardHuayunDetail.attach(b);\n',huayunCare=fs.readFileSync(root+'/assets/content-creation-care.js','utf8');
+assert.equal(huayunCare.split(huayunHook).length,2,'one exact building1 huayun integration');
+const restoredHuayunCare=huayunCare.replace(huayunHook,'');assert.equal(restoredHuayunCare,cp.execFileSync('git',['-C',root,'show','19102dd19a4c1ab52d485df88f3962c0251ab665:assets/content-creation-care.js'],{encoding:'utf8'}),'creation-care differs only by the exact huayun hook from preceding release');
 const old=load(true),now=load(false),phases=[0,.25,.5,.75,1,.4,0,1];
 let unchanged=0,infrastructure=0,mechanisms=0;
 for(let i=0;i<29;i++){
@@ -41,24 +45,24 @@ const preservedFiles=['assets/butterfly-crown.js','assets/butterfly-flight.js','
 for(const name of fs.readdirSync(root+'/assets/readings').filter(name=>name.endsWith('.json')))if(!preservedFiles.includes('assets/readings/'+name))preservedFiles.push('assets/readings/'+name);
 const portraitsHook='    global.CourtyardPortraitsDetail.attach(b);\n', narrative=source('assets/content-narratives.js',false).toString();
 assert.equal(narrative.split(portraitsHook).length,2,'one exact building14 portraits integration');
-for(const file of preservedFiles)assert.equal(digest(file==='assets/content-narratives.js'?narrative.replace(portraitsHook,''):(file==='assets/content-services.js'?restoredServices:source(file,false))),digest(source(file,true)),'unchanged source '+file);
+for(const file of preservedFiles)assert.equal(digest(file==='assets/content-narratives.js'?narrative.replace(portraitsHook,''):(file==='assets/content-creation-care.js'?restoredHuayunCare:(file==='assets/content-services.js'?restoredServices:source(file,false)))),digest(source(file,true)),'unchanged source '+file);
 const html=source('index.html',false).toString(),before=source('index.html',true).toString();
 for(const pattern of [/const LINKS = (\[[\s\S]*?\n\]);/,/const TRACKS=(\[[\s\S]*?\n\]);/])assert.equal(html.match(pattern)[1],before.match(pattern)[1],'unchanged entry content');
 assert.equal(html,source('island.html',false).toString(),'entry files identical');
 assert(html.indexOf('src="assets/shield-detail.js?')>=0&&html.indexOf('src="assets/shield-detail.js?')<html.indexOf('src="assets/content-services.js?'),'shield detail loads before its builder');
-const normalizeEntry=text=>text.replace(/<script src="assets\/shield-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/portraits-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/\?v=[a-f0-9]{16}/g,'?v=ASSET_VERSION');
+const normalizeEntry=text=>text.replace(/<script src="assets\/huayun-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/shield-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/portraits-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/\?v=[a-f0-9]{16}/g,'?v=ASSET_VERSION');
 assert.equal(normalizeEntry(html),normalizeEntry(before),'entry unchanged except portraits loader and cache tokens');
 let narratives=source('assets/content-narratives.js',false).toString();const hook='    global.CourtyardPortraitsDetail.attach(b);\n';assert.equal(narratives.split(hook).length,2,'one exact static integration hook');narratives=narratives.replace(hook,'');assert.equal(narratives,source('assets/content-narratives.js',true).toString(),'no original narrative source removed or modified');
 assert(html.indexOf('src="assets/portraits-detail.js?')>=0&&html.indexOf('src="assets/portraits-detail.js?')<html.indexOf('src="assets/content-narratives.js?'),'detail loads before builder');
 const manifest=JSON.parse(source('docs/deployment-verify.html',false).toString().match(/const expected=(\{.*?\});/)[1]);
 const oldManifest=JSON.parse(source('docs/deployment-verify.html',true).toString().match(/const expected=(\{.*?\});/)[1]);
-assert.deepEqual(Object.keys(manifest).sort(),[...Object.keys(oldManifest),'assets/shield-detail.js','assets/portraits-detail.js'].sort(),'preserve all release entries and add the new detail');
+assert.deepEqual(Object.keys(manifest).sort(),[...Object.keys(oldManifest),'assets/huayun-detail.js','assets/shield-detail.js','assets/portraits-detail.js'].sort(),'preserve all release entries and add the new detail');
 for(const [file,hash]of Object.entries(manifest))assert.equal(digest(source(file,false)),hash,'release hash '+file);
 let versionedAssets=0;
 for(const match of html.matchAll(/(?:src|href)="([^"?]+)\?v=([a-f0-9]{16})"/g)){
   const file=match[1];if(!fs.existsSync(root+'/'+file))continue;
   assert.equal(digest(source(file,false)).slice(0,16),match[2],'entry cache token '+file);versionedAssets++;
 }
-assert.equal(versionedAssets,44);assert.equal(unchanged,24);assert.equal(infrastructure,3);assert.equal(Object.keys(oldManifest).length,63);assert.equal(Object.keys(manifest).length,65);
+assert.equal(versionedAssets,45);assert.equal(unchanged,24);assert.equal(infrastructure,3);assert.equal(Object.keys(oldManifest).length,63);assert.equal(Object.keys(manifest).length,66);
 const result={passed:true,baseline,unchangedBuildings:unchanged,unchangedInfrastructure:infrastructure,allMechanismsPreserved:true,mechanisms,checkedPhases:phases.length,preservedFiles,releaseEntries:Object.keys(manifest).length,versionedAssets};
 fs.mkdirSync(root+'/qa-results/portraits',{recursive:true});fs.writeFileSync(root+'/qa-results/portraits/regression.json',JSON.stringify(result,null,2));console.log(result);

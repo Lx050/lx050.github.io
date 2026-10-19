@@ -147,6 +147,7 @@
 
   B[1] = function ({ b, options, T }) {
     const w = 19.4, d = 18.8;
+    global.CourtyardHuayunDetail.attach(b);
     b.deck(w, d); b.frame(17.2, 16.6, 6.1, { bays: 5, material: 'oak', post: .29 });
     // A bright collection nave beside a quieter, opaque conservation range.
     b.barrel(-2.25, 0, 13.2, 19.6, 6.27, 3.05, 'glass');

@@ -1,7 +1,7 @@
 const fs=require('fs'),vm=require('vm'),path=require('path'),assert=require('assert/strict');
 const root=path.resolve(__dirname,'..'),T=require(root+'/vendor/three.min.js');
 fs.mkdirSync(root+'/qa-results/nuanling-app',{recursive:true});
-const c={console};c.window=c;vm.createContext(c);for(const n of ['architecture','content-core','nuanling-detail','nuanling-app-detail','ink-detail','restoration-detail','content-creation-care'])vm.runInContext(fs.readFileSync(root+'/assets/'+n+'.js','utf8'),c);
+const c={console};c.window=c;vm.createContext(c);for(const n of ['architecture','content-core','nuanling-detail','nuanling-app-detail','ink-detail','restoration-detail','huayun-detail','content-creation-care'])vm.runInContext(fs.readFileSync(root+'/assets/'+n+'.js','utf8'),c);
 const b=c.CourtyardArchitecture.build({THREE:T,index:5,title:'暖聆App馆',zone:0});b.root.updateMatrixWorld(true);
 let detail,roof;b.root.traverse(o=>{if(o.name==='nuanling-app-blender-detail')detail=o;if(o.geometry?.name==='enclosed-hip-roof-shell')roof=o});assert(detail);
 const detailedBox=new T.Box3().setFromObject(detail);assert(detailedBox.min.y>=0);let triangles=0;
