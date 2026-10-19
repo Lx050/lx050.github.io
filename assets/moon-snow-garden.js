@@ -12,6 +12,7 @@
 
   B[20] = function ({b, options}) {
     const T = b.T, width = 19.8, depth = 20.8;
+    global.CourtyardMoonsnowDetail.attach(b);
     const inscriptions = [], readingAnchors = [], routes = [];
     // These are surface finishes of the common palette, never a separate colour scheme.
     const plaster = b.M.chalk.clone(); plaster.roughness = .98;
@@ -30,10 +31,10 @@
       b.box(roofTile, x, height + .055, z, length + .12, .11, .4, [0, yaw || 0, 0]);
       b.box('ceramic', x, height + .13, z, length + .15, .055, .16, [0, yaw || 0, 0], true);
     }
-    function paving(x, z, w, d, material) {
-      b.box(material || 'limestone', x, .027, z, w, .035, d, null, true);
+    function paving(x, z, w, d, material, lift = 0) {
+      b.box(material || 'limestone', x, .027 + lift, z, w, .035, d, null, true);
       // Fine transverse joints make these walking surfaces, rather than route logos.
-      for (let zz = z - d / 2 + .65; zz < z + d / 2; zz += .73) b.box('masonry', x, .046, zz, w - .04, .006, .014, null, true);
+      for (let zz = z - d / 2 + .65; zz < z + d / 2; zz += .73) b.box('masonry', x, .046 + lift, zz, w - .04, .006, .014, null, true);
     }
     function path(name, points, sectionIds) {
       routes.push({name, points, bodyRadius: .38, sectionIds});
@@ -127,16 +128,16 @@
     // A flush stone field, with darker covered paving and matte dry gardens.
     b.box('masonry', 0, -.04, 0, width, .08, depth);
     b.box('limestone', 0, .006, 0, width -.04, .02, depth -.04, null, true);
-    paving(0, 0, 3.6, depth, 'chalk');
+    paving(0, 0, 3.6, depth, 'chalk', .001);
     for (const side of [-1, 1]) b.box('masonry', side * 1.81, .032, 0, .025, .025, depth, null, true);
-    paving(-3.25, -7.8, 1.8, 5.0);
+    paving(-3.25, -7.8, 1.8, 5.0, null, .001);
     paving(-5.45, -6.17, 6.2, 1.62);
-    paving(-7.7, -2.05, 2.35, 8.1, 'masonry');
+    paving(-7.7, -2.05, 2.35, 8.1, 'masonry', .001);
     paving(-5.48, 1.28, 6.4, 1.65);
-    paving(-3.25, 5.45, 1.75, 7.25);
+    paving(-3.25, 5.45, 1.75, 7.25, null, .001);
     paving(0, 3.45, 8.25, 1.55);
-    paving(3.42, 4.28, 1.34, 10.95);
-    paving(8.22, 4.28, 1.34, 10.95);
+    paving(3.42, 4.28, 1.34, 10.95, null, .001);
+    paving(8.22, 4.28, 1.34, 10.95, null, .001);
     paving(5.82, -.78, 6.1, 1.45);
     paving(5.82, 8.68, 6.1, 1.38);
     paving(5.82, 4.9, 6.1, 1.3);
