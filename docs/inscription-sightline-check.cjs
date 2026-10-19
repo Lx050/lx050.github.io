@@ -10,7 +10,7 @@ let count=0;const checks=[],check=(name,fn)=>{fn();checks.push(name);count++;};
 const ctx={console,THREE,TextDecoder,TextEncoder,URL,Blob,performance,document:{createElement(){
  const canvas={width:0,height:0},c=new Proxy({measureText:s=>({width:[...s].length*18}),createLinearGradient:()=>({addColorStop(){}})}, {get:(o,k)=>k in o?o[k]:(()=>{})});canvas.getContext=()=>c;return canvas;
 }}};ctx.window=ctx;ctx.self=ctx;vm.createContext(ctx);
-for(const file of ['vendor/three/GLTFLoader.js','assets/architecture.js','assets/content-core.js','assets/nuanling-detail.js','assets/nuanling-app-detail.js','assets/editor-detail.js','assets/ink-detail.js','assets/restoration-detail.js','assets/content-creation-care.js','assets/content-services.js','assets/twinstars-detail.js','assets/causal-detail.js','assets/versions-detail.js','assets/city-detail.js','assets/content-narratives.js','assets/rubbing-detail.js','assets/content-literary.js','assets/moon-snow-garden.js','assets/reading-catalog.js','assets/reading-panels.js','assets/courtyard-runtime.js'])new vm.Script(fs.readFileSync(path.join(root,file),'utf8'),{filename:file}).runInContext(ctx);
+for(const file of ['vendor/three/GLTFLoader.js','assets/architecture.js','assets/content-core.js','assets/nuanling-detail.js','assets/nuanling-app-detail.js','assets/editor-detail.js','assets/ink-detail.js','assets/restoration-detail.js','assets/content-creation-care.js','assets/content-services.js','assets/twinstars-detail.js','assets/causal-detail.js','assets/versions-detail.js','assets/city-detail.js','assets/portraits-detail.js','assets/content-narratives.js','assets/rubbing-detail.js','assets/content-literary.js','assets/moon-snow-garden.js','assets/reading-catalog.js','assets/reading-panels.js','assets/courtyard-runtime.js'])new vm.Script(fs.readFileSync(path.join(root,file),'utf8'),{filename:file}).runInContext(ctx);
 const bytes=fs.readFileSync(path.join(root,'assets/models/Visitor.glb'));
 new Promise((resolve,reject)=>new THREE.GLTFLoader().parse(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength),'',resolve,reject)).then(gltf=>{
  const scene=new THREE.Scene(),player=new THREE.Group(),body=new THREE.Group(),camera=new THREE.PerspectiveCamera(40,1280/900,.1,2400);scene.add(player);player.add(body);body.add(gltf.scene);
@@ -98,6 +98,7 @@ new Promise((resolve,reject)=>new THREE.GLTFLoader().parse(bytes.buffer.slice(by
   originalHeader=originalHeader.replace(/<script src="assets\/twinstars-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'');
   originalHeader=originalHeader.replace(/<script src="assets\/causal-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'');
   originalHeader=originalHeader.replace(/<script src="assets\/versions-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'');
+  originalHeader=originalHeader.replace(/<script src="assets\/portraits-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'');
   originalHeader=originalHeader.replace(/<script src="assets\/city-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'');
   originalHeader=originalHeader.replace(/<script src="assets\/ink-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'');
   originalHeader=originalHeader.replace(/<script src="assets\/restoration-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'');

@@ -121,6 +121,7 @@
 
   B[14]=function({b,options}) {
     const w=21.2,d=21; b.deck(w,d);
+    global.CourtyardPortraitsDetail.attach(b);
     // Twelve similarly sized places for relationship, with distinct approach distances.
     const shades=new b.T.Group();shades.name='relationship-distance-shades';b.root.add(shades);
     const leaves=[];
