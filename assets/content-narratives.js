@@ -195,11 +195,11 @@
         if(len<.1)continue;
         // Actual sky cuts at the knots; the structural edge ties retain continuity.
         const cut=.98, roofLen=Math.max(.3,len-cut*2);
-        b.box(roofs[n],cx,hs[n],z,n===3?1.9:2.13,.15,roofLen,[0,Math.atan2(dx,dz),0]);
+        // Closed waved roof bands are authored in Blender on this unchanged plan.
         for(const s of [-1,1]) b.beam('cedar',[x+a[1]+s*1.05,hs[n]-.18,a[0]],[x+c[1]+s*1.05,hs[n]-.18,c[0]],.13,.16);
         for(let t=.6;t<len-.4;t+=.65) {
           const f=t/len,px=x+a[1]+dx*f,pz=a[0]+dz*f;
-          if(Math.min(t,len-t)>.95) b.box('bronze',px,hs[n]+.1,pz,2.14,.03,.035,null,true);
+          // Surface seams now follow the Blender roof height.
         }
         C.pathLine(b,[[x+a[1],a[0]],[x+c[1],c[0]]],n%2?'bronze':'ceramic',.045+n*.006);
       }
@@ -214,6 +214,7 @@
         b.box('bronze',x,hs[n]+.01,6.18,2.3,.19,.19);
       }
     }
+    global.CourtyardCausalDetail.attach(b);
     const shutters=new b.T.Group();shutters.name='three-causal-court-roof-vents';b.root.add(shutters);
     const vents=[];
     knots.forEach((z,k)=>{
@@ -223,10 +224,16 @@
         const x=s*(k===1?5.2:5.9);
         b.bench(x,z+.63,3.25,false,k===1);
         workTable(b,s*8.65,z-.12,1.25,1.38,.82,'limestone');
-        b.box('copper',s*5.75,5.45+k*.28,z,6.95,.13,1.36);
+        // A true skylight aperture lets the original light catcher tilt without clipping a solid roof.
+        const canopyX=s*5.75, ventX=s*5.8, canopyY=5.45+k*.28, canopyZ=z-.95;
+        const left=canopyX-3.475, right=canopyX+3.475, holeLeft=ventX-1.3, holeRight=ventX+1.3;
+        b.box('copper',(left+holeLeft)/2,canopyY,canopyZ,holeLeft-left,.13,1.70);
+        b.box('copper',(right+holeRight)/2,canopyY,canopyZ,right-holeRight,.13,1.70);
+        for(const edge of [-1,1]) b.box('copper',ventX,canopyY,canopyZ+edge*.77,2.60,.13,.16);
         for(const xx of [s*2.72,s*9.15]) pier(b,xx,z,5.28+k*.28,.2);
         lintel(b,s*5.94,z,6.72,5.3+k*.28);
-        const p=abovePanel(b,shutters,s*5.8,5.72+k*.28,z,2.8,.075,1.24,'glassDark','knot-'+k+'-borrowed-light');
+        const p=abovePanel(b,shutters,s*5.8,5.84+k*.28,z-.95,2.2,.075,1.24,'glassDark','knot-'+k+'-borrowed-light');
+        global.CourtyardCausalDetail.attachVent(b,p);
         vents.push({p,s,k});
       }
       // The central band is supported from transverse overhead beams, never a center post.

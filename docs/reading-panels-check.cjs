@@ -13,7 +13,7 @@ const context = {THREE, console, document: {createElement() {
 }}};
 context.window = context; vm.createContext(context);
 for (const file of ['architecture', 'content-core', 'content-creation-care', 'content-services',
-  'twinstars-detail','content-narratives', 'rubbing-detail','content-literary', 'courtyard-runtime', 'reading-panels'])
+  'twinstars-detail','causal-detail','content-narratives', 'rubbing-detail','content-literary', 'courtyard-runtime', 'reading-panels'])
   new vm.Script(fs.readFileSync(path.join(root, 'assets', file + '.js'), 'utf8'), {filename: file}).runInContext(context);
 
 const api = context.CourtyardReadingPanels, rows = [], records = [];
