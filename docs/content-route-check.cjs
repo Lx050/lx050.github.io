@@ -8,7 +8,7 @@ const root = path.resolve(__dirname, '..');
 const THREE = require(path.join(root, 'vendor/three.min.js'));
 const sources = [
   'assets/architecture.js', 'assets/content-core.js',
-  'assets/content-services.js', 'assets/rubbing-detail.js','assets/content-literary.js'
+  'assets/shield-detail.js','assets/content-services.js', 'assets/rubbing-detail.js','assets/content-literary.js'
 ];
 const context = {
   THREE, console,

@@ -12,7 +12,7 @@ const context = {THREE, console, document: {createElement() {
   canvas.getContext = () => c; canvases.push(canvas); return canvas;
 }}};
 context.window = context; vm.createContext(context);
-for (const file of ['architecture', 'content-core', 'ink-detail','restoration-detail','content-creation-care', 'content-services',
+for (const file of ['architecture', 'content-core', 'ink-detail','restoration-detail','content-creation-care', 'shield-detail','content-services',
   'twinstars-detail','causal-detail','versions-detail','city-detail','portraits-detail','content-narratives', 'rubbing-detail','content-literary', 'courtyard-runtime', 'reading-panels'])
   new vm.Script(fs.readFileSync(path.join(root, 'assets', file + '.js'), 'utf8'), {filename: file}).runInContext(context);
 

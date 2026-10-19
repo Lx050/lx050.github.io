@@ -76,6 +76,7 @@
   builders[7] = function ({ b, options }) {
     const w = 20, d = 20;
     b.deck(w, d, 'wood');
+    global.CourtyardShieldDetail.attach(b);
     // Two album leaves flank the binding-like public passage. Four structural
     // frames give the four observed workbench phases a spatial rhythm.
     sideColumns(b, [-8.8, -2.8, 2.8, 8.8], [-8.1, -2.7, 2.7, 8.1], 6.05, 'walnut');
