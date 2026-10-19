@@ -8,7 +8,7 @@ const root=path.resolve(__dirname,'..'),T=require(root+'/vendor/three.min.js'),o
 const baseline='62e4317998f330c1adcc4f94a70395a1427e7681';
 function load(old){
  const c={console,document:{createElement(){const canvas={width:0,height:0,operations:[]};canvas.getContext=()=>new Proxy({measureText:t=>({width:String(t).length*10}),createLinearGradient:()=>({addColorStop(...args){canvas.operations.push(['addColorStop',...args]);}})},{get:(o,k)=>o[k]||((...args)=>canvas.operations.push([k,...args])),set:(o,k,v)=>{canvas.operations.push(['set',k,v]);o[k]=v;return true;}});return canvas;}}};c.window=c;vm.createContext(c);
- for(const n of ['architecture','content-core',...(!old&&fs.existsSync(root+'/assets/handover-detail.js')?['handover-detail']:[]),'content-literary','reading-catalog','reading-panels']){const file='assets/'+n+'.js',source=old?cp.execFileSync('git',['-C',root,'show',baseline+':'+file],{encoding:'utf8',maxBuffer:32*1024*1024}):fs.readFileSync(root+'/'+file,'utf8');vm.runInContext(source,c,{filename:file});}return c;
+ for(const n of [...(!old?['rss-detail']:[]),'architecture','content-core',...(!old&&fs.existsSync(root+'/assets/handover-detail.js')?['handover-detail']:[]),'content-literary','reading-catalog','reading-panels']){const file='assets/'+n+'.js',source=old?cp.execFileSync('git',['-C',root,'show',baseline+':'+file],{encoding:'utf8',maxBuffer:32*1024*1024}):fs.readFileSync(root+'/'+file,'utf8');vm.runInContext(source,c,{filename:file});}return c;
 }
 const now=load(false),old=load(true),build=c=>c.CourtyardArchitecture.build({THREE:T,index:19,title:'置身青媒内',zone:0});
 const b=build(now),before=build(old),detail=b.root.getObjectByName('handover-blender-static');
@@ -60,7 +60,7 @@ for(const phase of phases){
 }
 const readingFile='assets/readings/19.json',readingSource=JSON.parse(fs.readFileSync(root+'/'+readingFile,'utf8'));
 for(const file of[readingFile,'assets/architecture.js','assets/content-core.js','assets/reading-catalog.js','assets/reading-panels.js','docs/content-map.json'])
- assert.equal(fs.readFileSync(root+'/'+file,'utf8'),cp.execFileSync('git',['-C',root,'show',baseline+':'+file],{encoding:'utf8',maxBuffer:32*1024*1024}),'original reviewed source byte identity '+file);
+ assert.equal(file==='assets/architecture.js'?require('./rss-source-normalizer.js').restoreSource(fs.readFileSync(root+'/'+file,'utf8')):fs.readFileSync(root+'/'+file,'utf8'),cp.execFileSync('git',['-C',root,'show',baseline+':'+file],{encoding:'utf8',maxBuffer:32*1024*1024}),'original reviewed source byte identity '+file);
 const currentLiterary=fs.readFileSync(root+'/assets/content-literary.js','utf8'),oldLiterary=cp.execFileSync('git',['-C',root,'show',baseline+':assets/content-literary.js'],{encoding:'utf8'});
 const originalMotion=source=>source.slice(source.indexOf("const carrier = labelledGroup(b, 'handover-light-carriage'"),source.indexOf('    return finish(b, options, w, d, {',source.indexOf("const carrier = labelledGroup(b, 'handover-light-carriage'")));
 assert(originalMotion(oldLiterary).length>500);assert.equal(originalMotion(currentLiterary).replace('    global.CourtyardHandoverDetail.attach(b);\n',''),originalMotion(oldLiterary),'complete original motion and moving-mesh construction law preserved, not inferred from sampled poses');

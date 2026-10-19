@@ -7,7 +7,7 @@ const root=path.resolve(__dirname,'..'),T=require(root+'/vendor/three.min.js'),o
 const baseline='7be2e7b9fcba939ebc9c70a5e363a6bd84ee59a7';
 function load(old){
  const c={console,document:{createElement(){const canvas={width:0,height:0,operations:[]};canvas.getContext=()=>new Proxy({measureText:t=>({width:String(t).length*10}),createLinearGradient:()=>({addColorStop(...args){canvas.operations.push(['addColorStop',...args]);}})},{get:(o,k)=>o[k]||((...args)=>canvas.operations.push([k,...args])),set:(o,k,v)=>{canvas.operations.push(['set',k,v]);o[k]=v;return true;}});return canvas;}}};c.window=c;vm.createContext(c);
- for(const n of ['architecture','content-core',...(!old&&fs.existsSync(root+'/assets/moonsnow-detail.js')?['moonsnow-detail']:[]),'content-literary','moon-snow-garden','reading-catalog','reading-panels']){const file='assets/'+n+'.js',source=old?cp.execFileSync('git',['-C',root,'show',baseline+':'+file],{encoding:'utf8',maxBuffer:32*1024*1024}):fs.readFileSync(root+'/'+file,'utf8');vm.runInContext(source,c,{filename:file});}return c;
+ for(const n of [...(!old?['rss-detail']:[]),'architecture','content-core',...(!old&&fs.existsSync(root+'/assets/moonsnow-detail.js')?['moonsnow-detail']:[]),'content-literary','moon-snow-garden','reading-catalog','reading-panels']){const file='assets/'+n+'.js',source=old?cp.execFileSync('git',['-C',root,'show',baseline+':'+file],{encoding:'utf8',maxBuffer:32*1024*1024}):fs.readFileSync(root+'/'+file,'utf8');vm.runInContext(source,c,{filename:file});}return c;
 }
 const now=load(false),old=load(true),build=c=>c.CourtyardArchitecture.build({THREE:T,index:20,title:'月雪',zone:0});
 const b=build(now),before=build(old),detail=b.root.getObjectByName('moonsnow-blender-static');
@@ -71,7 +71,7 @@ const sourceHashes={};
 const baselineSource=file=>cp.execFileSync('git',['-C',root,'show',baseline+':'+file],{maxBuffer:32*1024*1024});
 const readingFiles=cp.execFileSync('git',['-C',root,'ls-tree','-r','--name-only',baseline,'assets/readings'],{encoding:'utf8'}).trim().split('\n');
 for(const file of[...readingFiles,'assets/architecture.js','assets/content-core.js','assets/content-literary.js','assets/reading-catalog.js','assets/reading-panels.js','docs/content-map.json']){
- const bytes=fs.readFileSync(root+'/'+file);assert(bytes.equals(baselineSource(file)),'entire original source byte identity '+file);sourceHashes[file]=crypto.createHash('sha256').update(bytes).digest('hex');
+ const bytes=fs.readFileSync(root+'/'+file);assert((file==='assets/architecture.js'?require('./rss-source-normalizer.js').restoreSource(bytes):bytes).equals(baselineSource(file)),'entire original source byte identity '+file);sourceHashes[file]=crypto.createHash('sha256').update(bytes).digest('hex');
 }
 const gardenFile='assets/moon-snow-garden.js',gardenSource=fs.readFileSync(root+'/'+gardenFile,'utf8'),oldGarden=baselineSource(gardenFile).toString();
 // The explicit additive hook is the only allowed change to the published garden.

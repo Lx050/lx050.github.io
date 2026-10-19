@@ -653,6 +653,7 @@
         table(s * 3.8, -3.7, 2.2, 1.5, .9); paper(s * 3.8, 1, -3.7, 1.3, .85, true); plant(s * 5.6, -4.7);
       }
       skylight(0, -.55, 9.9, 1.45, 1.2); description = 'Open octagonal reading room with radial rafters, an illuminated roof lantern and low bookshelves'; signY = 4.6;
+      global.CourtyardRSSDetail.attach(b);
     } else if (i === 9) {
       w = 17; d = 16; deck(w, d); frame(14, 14, 5.7, { bays: 4, material: 'steel', post: .42 });
       barrel(0, 0, 16.8, 17.4, 5.8, 4, 'copper');
