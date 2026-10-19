@@ -4,12 +4,17 @@ const fs=require('fs'),vm=require('vm'),cp=require('child_process'),crypto=requi
 const root=require('path').resolve(__dirname,'..'),T=require(root+'/vendor/three.min.js');
 const baseline='308d01f920cf05a68de7f93d29c3c45a4143fa29';
 function source(file,old){return old?cp.execFileSync('git',['-C',root,'show',baseline+':'+file],{maxBuffer:32*1024*1024}):fs.readFileSync(root+'/'+file);}
+const handoverHook='    global.CourtyardHandoverDetail.attach(b);\n',handoverLiterary=fs.readFileSync(root+'/assets/content-literary.js','utf8');
+assert.equal(handoverLiterary.split(handoverHook).length,2,'one exact building19 handover integration');
+const restoredHandoverLiterary=handoverLiterary.replace(handoverHook,'');
+assert.equal(restoredHandoverLiterary,cp.execFileSync('git',['-C',root,'show','62e4317998f330c1adcc4f94a70395a1427e7681:assets/content-literary.js'],{encoding:'utf8'}),'literary differs only by the exact handover hook from preceding release');
+function handoverAddition(b,o){if(b.metadata?.index!==19)return false;for(let p=o;p;p=p.parent)if(p.name==='handover-blender-static')return true;return false;}
 const sessionHook='    global.CourtyardSessionDetail.attach(b);\n',sessionNarrative=fs.readFileSync(root+'/assets/content-narratives.js','utf8');
 assert.equal(sessionNarrative.split(sessionHook).length,2,'one exact building13 session integration');
 const restoredSessionNarrative=sessionNarrative.replace(sessionHook,'');
 assert.equal(restoredSessionNarrative,cp.execFileSync('git',['-C',root,'show','84b26b5b79f14eb0f390ac3f9b38fc519ef72141:assets/content-narratives.js'],{encoding:'utf8'}),'narratives differs only by the exact session hook from preceding release');
 function sessionAddition(b,o){if(b.metadata?.index!==13)return false;for(let p=o;p;p=p.parent)if(p.name==='session-blender-static')return true;return false;}
-const workshopHook='    global.CourtyardWorkshopDetail.attach(b);\n',workshopLiterary=fs.readFileSync(root+'/assets/content-literary.js','utf8');
+const workshopHook='    global.CourtyardWorkshopDetail.attach(b);\n',workshopLiterary=restoredHandoverLiterary;
 assert.equal(workshopLiterary.split(workshopHook).length,2,'one exact building25 workshop integration');
 const restoredWorkshopLiterary=workshopLiterary.replace(workshopHook,'');
 assert.equal(restoredWorkshopLiterary,cp.execFileSync('git',['-C',root,'show','be0e5ad14a8a2c6c7600af9566a33e45ee4f12e4:assets/content-literary.js'],{encoding:'utf8'}),'literary differs only by the exact workshop hook from preceding release');
@@ -31,7 +36,7 @@ assert.equal(restoredProofLiterary,cp.execFileSync('git',['-C',root,'show','ab4a
 function proofAddition(b,o){if(b.metadata?.index!==21)return false;for(let p=o;p;p=p.parent)if(p.name==='proof-blender-static')return true;return false;}
 function load(old){
   const c={console};c.window=c;vm.createContext(c);
-  for(const name of ['architecture','content-core','nuanling-detail','nuanling-app-detail','editor-detail','rubbing-detail',...(!old?['ink-detail']:[]),...(!old?['restoration-detail']:[]),...(!old?['huayun-detail']:[]),'content-creation-care',...(!old?['shield-detail']:[]),...(!old?['gateway-detail']:[]),...(!old?['reme-detail']:[]),'content-services','twinstars-detail','causal-detail','versions-detail',...(!old?['city-detail','portraits-detail']:[]),...(!old?['session-detail']:[]),'content-narratives',...(!old?['proof-detail']:[]),...(!old?['workshop-detail']:[]),'content-literary','moon-snow-garden','infrastructure'])
+  for(const name of ['architecture','content-core','nuanling-detail','nuanling-app-detail','editor-detail','rubbing-detail',...(!old?['ink-detail']:[]),...(!old?['restoration-detail']:[]),...(!old?['huayun-detail']:[]),'content-creation-care',...(!old?['shield-detail']:[]),...(!old?['gateway-detail']:[]),...(!old?['reme-detail']:[]),'content-services','twinstars-detail','causal-detail','versions-detail',...(!old?['city-detail','portraits-detail']:[]),...(!old?['session-detail']:[]),'content-narratives',...(!old?['proof-detail']:[]),...(!old?['workshop-detail']:[]),...(!old?['handover-detail']:[]),'content-literary','moon-snow-garden','infrastructure'])
     vm.runInContext(source('assets/'+name+'.js',old).toString(),c,{filename:name+'.js'});
   return c;
 }
@@ -43,7 +48,7 @@ function cityAddition(b,o){if(b.metadata?.index!==16)return false;for(let p=o;p;
 function huayunAddition(b,o){if(b.metadata?.index!==1)return false;for(let p=o;p;p=p.parent)if(p.name==='huayun-blender-static')return true;return false;}
 function shape(b){
   b.root.updateMatrixWorld(true);const rows=[];
-  b.root.traverse(o=>{if(sessionAddition(b,o)||workshopAddition(b,o)||remeAddition(b,o)||proofAddition(b,o)||gatewayAddition(b,o)||huayunAddition(b,o)||shieldAddition(b,o)||portraitsAddition(b,o)||cityAddition(b,o)||!o.isMesh||restorationAddition(b,o))return;const materials=(Array.isArray(o.material)?o.material:[o.material]).map(m=>[m.color?.toArray(),m.opacity,m.metalness,m.roughness,m.side,m.transparent]);
+  b.root.traverse(o=>{if(handoverAddition(b,o)||sessionAddition(b,o)||workshopAddition(b,o)||remeAddition(b,o)||proofAddition(b,o)||gatewayAddition(b,o)||huayunAddition(b,o)||shieldAddition(b,o)||portraitsAddition(b,o)||cityAddition(b,o)||!o.isMesh||restorationAddition(b,o))return;const materials=(Array.isArray(o.material)?o.material:[o.material]).map(m=>[m.color?.toArray(),m.opacity,m.metalness,m.roughness,m.side,m.transparent]);
     rows.push([o.name,Array.from(o.geometry.attributes.position.array),o.geometry.index?Array.from(o.geometry.index.array):null,o.matrixWorld.toArray(),o.isInstancedMesh?Array.from(o.instanceMatrix.array):null,materials]);});
   return digest(rows);
 }
@@ -77,7 +82,7 @@ const html=source('index.html',false).toString(),before=source('index.html',true
 for(const pattern of [/const LINKS = (\[[\s\S]*?\n\]);/,/const TRACKS=(\[[\s\S]*?\n\]);/])assert.equal(html.match(pattern)[1],before.match(pattern)[1],'unchanged entry content');
 assert.equal(html,source('island.html',false).toString(),'entry files identical');
 assert(html.indexOf('src="assets/shield-detail.js?')>=0&&html.indexOf('src="assets/shield-detail.js?')<html.indexOf('src="assets/content-services.js?'),'shield detail loads before its builder');
-const normalizeEntry=text=>text.replace(/<script src="assets\/session-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/workshop-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/reme-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/proof-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/gateway-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/huayun-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/shield-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/portraits-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/city-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/detail-lod\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/restoration-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/ink-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/\?v=[a-f0-9]{16}/g,'?v=ASSET_VERSION');
+const normalizeEntry=text=>text.replace(/<script src="assets\/handover-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/session-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/workshop-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/reme-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/proof-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/gateway-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/huayun-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/shield-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/portraits-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/city-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/detail-lod\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/restoration-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/ink-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/\?v=[a-f0-9]{16}/g,'?v=ASSET_VERSION');
 assert.equal(normalizeEntry(html),normalizeEntry(before),'all entry source unchanged except exact detail loader and cache tokens');
 let restoredCare=restoredHuayunCare;
 for(const line of ['    global.CourtyardRestorationDetail.attach(b);\n','    global.CourtyardRestorationDetail.attachLight(b,inspection);\n']){assert.equal(restoredCare.split(line).length,2,'one exact building3 restoration integration');restoredCare=restoredCare.replace(line,'');}
@@ -86,13 +91,13 @@ assert.equal(restoredCare,source('assets/content-creation-care.js',true).toStrin
 assert(html.indexOf('src="assets/ink-detail.js?')>=0&&html.indexOf('src="assets/ink-detail.js?')<html.indexOf('src="assets/content-creation-care.js?'),'detail loads before its builder');
 const manifest=JSON.parse(source('docs/deployment-verify.html',false).toString().match(/const expected=(\{.*?\});/)[1]);
 const oldManifest=JSON.parse(source('docs/deployment-verify.html',true).toString().match(/const expected=(\{.*?\});/)[1]);
-assert.deepEqual(Object.keys(manifest).sort(),[...Object.keys(oldManifest),'assets/session-detail.js','assets/workshop-detail.js','assets/reme-detail.js','assets/proof-detail.js','assets/gateway-detail.js','assets/huayun-detail.js','assets/shield-detail.js','assets/portraits-detail.js','assets/city-detail.js','assets/detail-lod.js','assets/restoration-detail.js','assets/ink-detail.js'].sort(),'preserve all release entries and add the new detail');
+assert.deepEqual(Object.keys(manifest).sort(),[...Object.keys(oldManifest),'assets/handover-detail.js','assets/session-detail.js','assets/workshop-detail.js','assets/reme-detail.js','assets/proof-detail.js','assets/gateway-detail.js','assets/huayun-detail.js','assets/shield-detail.js','assets/portraits-detail.js','assets/city-detail.js','assets/detail-lod.js','assets/restoration-detail.js','assets/ink-detail.js'].sort(),'preserve all release entries and add the new detail');
 for(const [file,hash]of Object.entries(manifest))assert.equal(digest(source(file,false)),hash,'release hash '+file);
 let versionedAssets=0;
 for(const match of html.matchAll(/(?:src|href)="([^"?]+)\?v=([a-f0-9]{16})"/g)){
   const file=match[1];if(!fs.existsSync(root+'/'+file))continue;
   assert.equal(digest(source(file,false)).slice(0,16),match[2],'entry cache token '+file);versionedAssets++;
 }
-assert.equal(versionedAssets,50);assert.equal(unchanged,24);assert.equal(infrastructure,3);assert.equal(Object.keys(oldManifest).length,59);assert.equal(Object.keys(manifest).length,71);
+assert.equal(versionedAssets,51);assert.equal(unchanged,24);assert.equal(infrastructure,3);assert.equal(Object.keys(oldManifest).length,59);assert.equal(Object.keys(manifest).length,72);
 const result={passed:true,baseline,unchangedBuildings:unchanged,unchangedInfrastructure:infrastructure,allMechanismsPreserved:true,mechanisms,checkedPhases:phases.length,preservedFiles,releaseEntries:Object.keys(manifest).length,versionedAssets};
 fs.mkdirSync(root+'/qa-results/ink',{recursive:true});fs.writeFileSync(root+'/qa-results/ink/regression.json',JSON.stringify(result,null,2));console.log(result);
