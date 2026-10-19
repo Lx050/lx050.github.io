@@ -5,7 +5,7 @@
 const fs = require('fs'), path = require('path'), vm = require('vm'), crypto = require('crypto');
 const root = path.resolve(__dirname, '..'), THREE = require(path.join(root, 'vendor/three.min.js'));
 const source = JSON.parse(fs.readFileSync(path.join(root, 'assets/readings/20.json'), 'utf8'));
-const scripts = ['assets/architecture.js', 'assets/content-core.js', 'assets/content-literary.js', 'assets/moon-snow-garden.js'];
+const scripts = ['assets/architecture.js', 'assets/content-core.js', 'assets/rubbing-detail.js','assets/content-literary.js', 'assets/moon-snow-garden.js'];
 const canvases = [];
 const context = {THREE, console, document: {createElement() { const canvas = {width: 0, height: 0, getContext() {return new Proxy({measureText(t) {return {width: t.length * 10};}}, {get(o, k) {return o[k] || (() => {});}});}}; canvases.push(canvas); return canvas; }}};
 context.window = context; vm.createContext(context);
