@@ -253,6 +253,7 @@
 
   B[16]=function({b,options}) {
     const w=20.6,d=21; b.deck(w,d);
+    global.CourtyardCityDetail.attach(b);
     // The first encounter is an anonymous, rain-marked passage, still fully accessible.
     for(const s of [-1,1]) {
       solid(b,'masonry',s*2.62,1.65,-6.65,.22,3.3,6.4,'narrow-rain-arrival-wall');
