@@ -282,14 +282,18 @@
   B[22] = function ({b, options}) {
     const w = 20, d = 20;
     b.deck(w, d);
-    const stages = [{z: -7.3, h: 7.05}, {z: -2.6, h: 7.4}, {z: 2.15, h: 7.7}, {z: 6.85, h: 7.25}];
-    stages.forEach(({z, h}, n) => {
+    const stages = [{z: -7.3, h: 7.05}, {z: -2.6, h: 8.30}, {z: 2.15, h: 7.40}, {z: 6.85, h: 8.70}];
+    stages.forEach(({z, h}) => {
       frame(b, z - 1.62, -8.5, 8.5, h, 'cedar', .25);
       frame(b, z + 1.62, -8.5, 8.5, h, 'cedar', .25);
-      slopedCanopy(b, -4.75, z, 8.65, 3.6, h + .13, .45, n % 2 ? 'copper' : 'tile');
-      slopedCanopy(b, 4.75, z, 8.65, 3.6, h + .13, .45, n % 2 ? 'tile' : 'copper');
-      b.box('glass', 0, h + .35, z, 1.45, .09, 3.6);
+      b.box('glass', 0, h + 1.35, z, 1.45, .09, 3.6);
+      // Shoes widen the existing post footprint without touching the axial route.
+      for (const x of [-8.5, 8.5]) for (const zz of [z - 1.62, z + 1.62]) {
+        const shoe = new b.T.Box3(new b.T.Vector3(x - .24, 0, zz - .24), new b.T.Vector3(x + .24, .32, zz + .24));
+        shoe.userData = {architectural: true, part: 'rubbing-post-shoe', index: 22}; b.collisionBoxes.push(shoe);
+      }
     });
+    global.CourtyardRubbingDetail.attach(b);
     // Stage 1: one blank, immutable datum. No invented inscription is applied.
     b.box('masonry', -5.45, .25, -7.15, 4.55, .5, 1.6, null, false, true, 'immutable-datum-base');
     b.box('ink', -5.45, 2.24, -7.15, 3.45, 3.52, .45, null, false, true, 'immutable-original-datum');
@@ -320,6 +324,7 @@
     C.boxMesh(b, overlay, 'glass', 0, 0, 0, 3.2, 2.7, .055, 'derived-non-generative-glass-layer');
     for (const x of [-1.63, 1.63]) C.boxMesh(b, overlay, 'bronze', x, 0, 0, .055, 2.82, .07, 'overlay-carrier-edge');
     for (const y of [-1.39, 1.39]) C.boxMesh(b, overlay, 'steel', 0, y, 0, 3.32, .06, .09, 'reversible-overlay-runner');
+    global.CourtyardRubbingDetail.attachOverlay(b, overlay);
     // A conservative physical carrier envelope is entirely above its solid plinth.
     const sweep = new b.T.Box3(new b.T.Vector3(-7.37, .56, 1.71), new b.T.Vector3(-3.05, 3.49, 1.93));
     sweep.userData = {architectural: true, part: 'moving-overlay-carrier-envelope', index: 22}; b.collisionBoxes.push(sweep);
