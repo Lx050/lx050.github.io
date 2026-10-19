@@ -61,6 +61,7 @@
   B[0] = function ({ b, options, T }) {
     const w = 16.4, d = 18.4;
     b.deck(w, d, 'wood');
+    global.CourtyardInkDetail.attach(b);
     // Three distinct roof volumes mark generation, precise annotation, then dense archive.
     const stages = [{ z: -6, h: 5.2, rise: 2.25 }, { z: 0, h: 5.65, rise: 2.3 }, { z: 6, h: 6.1, rise: 2.35 }];
     stages.forEach((s, j) => {
@@ -117,6 +118,7 @@
       C.boxMesh(b, layers, 'clay', s * .9, .018, 0, .035, .035, 1.95);
       C.boxMesh(b, layers, 'clay', 0, .018, s * .96, 1.84, .035, .035);
     }
+    global.CourtyardInkDetail.attachCarriage(b,layers);
     const polygon = new T.Group(); layers.add(polygon); polygon.rotation.y = .18;
     const vertices = [[-.55, -.47], [.26, -.63], [.6, -.18], [.38, .52], [-.5, .44]];
     vertices.forEach((point, j) => {

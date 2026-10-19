@@ -1,6 +1,6 @@
 const fs=require('fs'),vm=require('vm'),path=require('path'),assert=require('assert/strict');
 const root=path.resolve(__dirname,'..'),T=require(root+'/vendor/three.min.js'),out=root+'/qa-results/editor';fs.mkdirSync(out,{recursive:true});
-const c={console};c.window=c;vm.createContext(c);for(const name of ['architecture','content-core','nuanling-detail','nuanling-app-detail','editor-detail','content-creation-care'])vm.runInContext(fs.readFileSync(root+'/assets/'+name+'.js','utf8'),c);
+const c={console};c.window=c;vm.createContext(c);for(const name of ['architecture','content-core','nuanling-detail','nuanling-app-detail','editor-detail','ink-detail','content-creation-care'])vm.runInContext(fs.readFileSync(root+'/assets/'+name+'.js','utf8'),c);
 const b=c.CourtyardArchitecture.build({THREE:T,index:6,title:'排版助手',zone:0});b.root.updateMatrixWorld(true);let detail,drawers;
 b.root.traverse(o=>{if(o.name==='editor-blender-static')detail=o;if(o.name==='four-publishing-template-drawers')drawers=o});assert(detail);assert.equal(drawers.children.length,4);
 const groups=[detail,...drawers.children.map(o=>o.children.find(g=>g.name==='editor-blender-drawer'))];assert(groups.every(Boolean));let triangles=0,calls=0;
