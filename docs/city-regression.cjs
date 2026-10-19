@@ -5,6 +5,11 @@ const root=require('path').resolve(__dirname,'..'),T=require(root+'/vendor/three
 const baseline='8f0019ef17669f3277a8b99c675b7cf4f2cfbf52';
 function source(file,old){return old?cp.execFileSync('git',['-C',root,'show',baseline+':'+file],{maxBuffer:32*1024*1024}):fs.readFileSync(root+'/'+file);}
 const moonsnowPaving=require('./moonsnow-paving-normalizer.js');
+const alternateHook='    global.CourtyardAlternateDetail.attach(b);\n',alternateCare=fs.readFileSync(root+'/assets/content-creation-care.js','utf8');
+assert.equal(alternateCare.split(alternateHook).length,2,'one exact building2 alternate integration');
+const restoredAlternateCare=alternateCare.replace(alternateHook,'');
+assert.equal(restoredAlternateCare,cp.execFileSync('git',['-C',root,'show','c253173019253961ea94f5b25b1bc7c8f6914266:assets/content-creation-care.js'],{encoding:'utf8'}),'creation-care differs only by the exact alternate hook from preceding release');
+function alternateAddition(b,o){if(b.metadata?.index!==2)return false;for(let p=o;p;p=p.parent)if(p.name==='alternate-blender-static')return true;return false;}
 const moonsnowHook='    global.CourtyardMoonsnowDetail.attach(b);\n',moonsnowGarden=fs.readFileSync(root+'/assets/moon-snow-garden.js','utf8');
 assert.equal(moonsnowGarden.split(moonsnowHook).length,2,'one exact building20 moonsnow integration');
 const restoredMoonsnowGarden=moonsnowPaving.restoreSource(moonsnowGarden.replace(moonsnowHook,''));
@@ -47,7 +52,7 @@ assert.equal(restoredProofLiterary,cp.execFileSync('git',['-C',root,'show','ab4a
 function proofAddition(b,o){if(b.metadata?.index!==21)return false;for(let p=o;p;p=p.parent)if(p.name==='proof-blender-static')return true;return false;}
 function load(old){
   const c={console};c.window=c;vm.createContext(c);
-  for(const name of ['architecture','content-core','nuanling-detail','nuanling-app-detail','editor-detail','rubbing-detail','ink-detail','restoration-detail',...(!old?['huayun-detail']:[]),'content-creation-care',...(!old?['shield-detail']:[]),...(!old?['gateway-detail']:[]),...(!old?['reme-detail']:[]),...(!old?['mindcare-detail']:[]),'content-services','twinstars-detail','causal-detail','versions-detail',...(!old?['city-detail','portraits-detail']:[]),...(!old?['session-detail']:[]),'content-narratives',...(!old?['proof-detail']:[]),...(!old?['workshop-detail']:[]),...(!old?['handover-detail']:[]),'content-literary',...(!old?['moonsnow-detail']:[]),'moon-snow-garden','infrastructure'])
+  for(const name of ['architecture','content-core','nuanling-detail','nuanling-app-detail','editor-detail','rubbing-detail','ink-detail','restoration-detail',...(!old?['huayun-detail']:[]),...(!old?['alternate-detail']:[]),'content-creation-care',...(!old?['shield-detail']:[]),...(!old?['gateway-detail']:[]),...(!old?['reme-detail']:[]),...(!old?['mindcare-detail']:[]),'content-services','twinstars-detail','causal-detail','versions-detail',...(!old?['city-detail','portraits-detail']:[]),...(!old?['session-detail']:[]),'content-narratives',...(!old?['proof-detail']:[]),...(!old?['workshop-detail']:[]),...(!old?['handover-detail']:[]),'content-literary',...(!old?['moonsnow-detail']:[]),'moon-snow-garden','infrastructure'])
     vm.runInContext(source('assets/'+name+'.js',old).toString(),c,{filename:name+'.js'});
   return c;
 }
@@ -58,12 +63,12 @@ function cityAddition(b,o){if(b.metadata?.index!==16)return false;for(let p=o;p;
 function huayunAddition(b,o){if(b.metadata?.index!==1)return false;for(let p=o;p;p=p.parent)if(p.name==='huayun-blender-static')return true;return false;}
 function shape(b){
   b.root.updateMatrixWorld(true);const rows=[];
-  b.root.traverse(o=>{if(moonsnowAddition(b,o)||mindcareAddition(b,o)||handoverAddition(b,o)||sessionAddition(b,o)||workshopAddition(b,o)||remeAddition(b,o)||proofAddition(b,o)||gatewayAddition(b,o)||huayunAddition(b,o)||shieldAddition(b,o)||portraitsAddition(b,o)||cityAddition(b,o)||!o.isMesh)return;const materials=(Array.isArray(o.material)?o.material:[o.material]).map(m=>[m.color?.toArray(),m.opacity,m.metalness,m.roughness,m.side,m.transparent]);
+  b.root.traverse(o=>{if(alternateAddition(b,o)||moonsnowAddition(b,o)||mindcareAddition(b,o)||handoverAddition(b,o)||sessionAddition(b,o)||workshopAddition(b,o)||remeAddition(b,o)||proofAddition(b,o)||gatewayAddition(b,o)||huayunAddition(b,o)||shieldAddition(b,o)||portraitsAddition(b,o)||cityAddition(b,o)||!o.isMesh)return;const materials=(Array.isArray(o.material)?o.material:[o.material]).map(m=>[m.color?.toArray(),m.opacity,m.metalness,m.roughness,m.side,m.transparent]);
     rows.push([o.name,Array.from(o.geometry.attributes.position.array),o.geometry.index?Array.from(o.geometry.index.array):null,o.matrixWorld.toArray(),o.isInstancedMesh?moonsnowPaving.instances(b,o):null,materials]);});
   return digest(rows);
 }
 function boxes(b){return digest(b.collisionBoxes.map(box=>[box.min.toArray(),box.max.toArray(),box.userData]));}
-const huayunHook='    global.CourtyardHuayunDetail.attach(b);\n',huayunCare=fs.readFileSync(root+'/assets/content-creation-care.js','utf8');
+const huayunHook='    global.CourtyardHuayunDetail.attach(b);\n',huayunCare=restoredAlternateCare;
 assert.equal(huayunCare.split(huayunHook).length,2,'one exact building1 huayun integration');
 const restoredHuayunCare=huayunCare.replace(huayunHook,'');assert.equal(restoredHuayunCare,cp.execFileSync('git',['-C',root,'show','19102dd19a4c1ab52d485df88f3962c0251ab665:assets/content-creation-care.js'],{encoding:'utf8'}),'creation-care differs only by the exact huayun hook from preceding release');
 const old=load(true),now=load(false),phases=[0,.25,.5,.75,1,.4,0,1];
@@ -92,19 +97,19 @@ const html=source('index.html',false).toString(),before=source('index.html',true
 for(const pattern of [/const LINKS = (\[[\s\S]*?\n\]);/,/const TRACKS=(\[[\s\S]*?\n\]);/])assert.equal(html.match(pattern)[1],before.match(pattern)[1],'unchanged entry content');
 assert.equal(html,source('island.html',false).toString(),'entry files identical');
 assert(html.indexOf('src="assets/shield-detail.js?')>=0&&html.indexOf('src="assets/shield-detail.js?')<html.indexOf('src="assets/content-services.js?'),'shield detail loads before its builder');
-const normalizeEntry=text=>text.replace(/<script src="assets\/moonsnow-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/mindcare-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/handover-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/session-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/workshop-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/reme-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/proof-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/gateway-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/huayun-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/shield-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/portraits-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/city-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/\?v=[a-f0-9]{16}/g,'?v=ASSET_VERSION');
+const normalizeEntry=text=>text.replace(/<script src="assets\/alternate-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/moonsnow-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/mindcare-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/handover-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/session-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/workshop-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/reme-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/proof-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/gateway-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/huayun-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/shield-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/portraits-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/<script src="assets\/city-detail\.js\?v=[a-f0-9]{16}"><\/script>\n/,'').replace(/\?v=[a-f0-9]{16}/g,'?v=ASSET_VERSION');
 assert.equal(normalizeEntry(html),normalizeEntry(before),'entry unchanged except city loader and cache tokens');
 let narratives=restoredSessionNarrative;const hook='    global.CourtyardCityDetail.attach(b);\n';assert.equal(narratives.split(hook).length,2,'one exact static integration hook');narratives=narratives.replace(hook,'');const portraitsHook='    global.CourtyardPortraitsDetail.attach(b);\n';assert.equal(narratives.split(portraitsHook).length,2,'one exact building14 portraits integration');narratives=narratives.replace(portraitsHook,'');assert.equal(narratives,source('assets/content-narratives.js',true).toString(),'no original narrative source removed or modified');
 assert(html.indexOf('src="assets/city-detail.js?')>=0&&html.indexOf('src="assets/city-detail.js?')<html.indexOf('src="assets/content-narratives.js?'),'detail loads before builder');
 const manifest=JSON.parse(source('docs/deployment-verify.html',false).toString().match(/const expected=(\{.*?\});/)[1]);
 const oldManifest=JSON.parse(source('docs/deployment-verify.html',true).toString().match(/const expected=(\{.*?\});/)[1]);
-assert.deepEqual(Object.keys(manifest).sort(),[...Object.keys(oldManifest),'assets/moonsnow-detail.js','assets/mindcare-detail.js','assets/handover-detail.js','assets/session-detail.js','assets/workshop-detail.js','assets/reme-detail.js','assets/proof-detail.js','assets/gateway-detail.js','assets/huayun-detail.js','assets/shield-detail.js','assets/portraits-detail.js','assets/city-detail.js'].sort(),'preserve all release entries and add the new detail');
+assert.deepEqual(Object.keys(manifest).sort(),[...Object.keys(oldManifest),'assets/alternate-detail.js','assets/moonsnow-detail.js','assets/mindcare-detail.js','assets/handover-detail.js','assets/session-detail.js','assets/workshop-detail.js','assets/reme-detail.js','assets/proof-detail.js','assets/gateway-detail.js','assets/huayun-detail.js','assets/shield-detail.js','assets/portraits-detail.js','assets/city-detail.js'].sort(),'preserve all release entries and add the new detail');
 for(const [file,hash]of Object.entries(manifest))assert.equal(digest(source(file,false)),hash,'release hash '+file);
 let versionedAssets=0;
 for(const match of html.matchAll(/(?:src|href)="([^"?]+)\?v=([a-f0-9]{16})"/g)){
   const file=match[1];if(!fs.existsSync(root+'/'+file))continue;
   assert.equal(digest(source(file,false)).slice(0,16),match[2],'entry cache token '+file);versionedAssets++;
 }
-assert.equal(versionedAssets,53);assert.equal(unchanged,24);assert.equal(infrastructure,3);assert.equal(Object.keys(oldManifest).length,62);assert.equal(Object.keys(manifest).length,74);
+assert.equal(versionedAssets,54);assert.equal(unchanged,24);assert.equal(infrastructure,3);assert.equal(Object.keys(oldManifest).length,62);assert.equal(Object.keys(manifest).length,75);
 const result={passed:true,baseline,unchangedBuildings:unchanged,unchangedInfrastructure:infrastructure,allMechanismsPreserved:true,mechanisms,checkedPhases:phases.length,preservedFiles,releaseEntries:Object.keys(manifest).length,versionedAssets};
 fs.mkdirSync(root+'/qa-results/city',{recursive:true});fs.writeFileSync(root+'/qa-results/city/regression.json',JSON.stringify(result,null,2));console.log(result);

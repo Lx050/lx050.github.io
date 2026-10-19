@@ -203,6 +203,7 @@
 
   B[2] = function ({ b, options, T }) {
     const w = 12.8, d = 12.6;
+    global.CourtyardAlternateDetail.attach(b);
     b.deck(w, d); b.frame(10.8, 10.8, 5.0, { bays: 3, material: 'oak', post: .28 });
     b.gable(0, 0, 13.7, 13.4, 5.16, 2.28, 'copper');
     // An inhabited secondary threshold into the same program, not a fictitious ruin/archive.
