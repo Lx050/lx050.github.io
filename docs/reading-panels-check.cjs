@@ -229,6 +229,7 @@ for (const index of [13, 14, 15]) {
 
 // The authored Moon Snow garden is adapted in place. It keeps its initial four
 // quotations and texture objects until an explicit interaction changes one.
+new vm.Script(fs.readFileSync(path.join(root, 'assets/moonsnow-detail.js'), 'utf8')).runInContext(context);
 new vm.Script(fs.readFileSync(path.join(root, 'assets/moon-snow-garden.js'), 'utf8')).runInContext(context);
 const moon = context.CourtyardArchitecture.build({THREE, index: 20, title: 'Moon Snow', zone: 2});
 const moonMeshes = [];
