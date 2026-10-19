@@ -1,6 +1,6 @@
 # Cumulative courtyard detail budget
 
-Audit: 2026-10-19. Existing eight buildings measured at commit `685a2a603b94986c48927cfc832d66d57fe39c3e`; restoration building 3 and secondary-detail LOD measured in this change. Reproduce current numbers with `node docs/detail-lod-check.cjs`.
+Audit: 2026-10-19. Existing eight buildings measured at commit `685a2a603b94986c48927cfc832d66d57fe39c3e`; restoration building 3 and secondary-detail LOD are retained from that release. Building16 city detail is measured against published commit `8f0019ef17669f3277a8b99c675b7cf4f2cfbf52`. Reproduce current numbers with `node docs/detail-lod-check.cjs`.
 
 ## Measurement and limits
 
@@ -22,11 +22,13 @@ All eight legacy Blender assemblies were outside `b.detail`. Existing `Courtyard
 | 22 Rubbing | 1 overlay | 14,668 / 9 | 26,010 / 36 | 308 / 2 |
 | Existing eight | 25 | 118,848 / 106 | 220,534 / 483 | 7,392 / 58 |
 | 3 Restoration | 1 light | 4,912 / 4 | 12,326 / 37 | 176 / 2 |
-| All nine | 26 | 123,760 / 110 | 232,860 / 520 | 7,568 / 60 |
+| Previous nine | 26 | 123,760 / 110 | 232,860 / 520 | 7,568 / 60 |
+| 16 City | 0 | 2,136 / 3 | 16,886 / 50 | 0 / 0 |
+| All ten | 26 | 125,896 / 113 | 249,746 / 570 | 7,568 / 60 |
 
-When every listed building is beyond its applicable cutoff, the new module reduces the detail subtotal from 123,760 triangles / 110 batches to 116,192 / 50. The complete-builder arithmetic becomes 225,292 / 460 before accounting for existing fine-detail and frustum culling. This is an aggregate potential saving; do not present it as a measured view or frame-rate increase. Near the buildings, all additions return and the original totals apply. All targeted detail meshes cast shadows, so hiding them also avoids their eligible shadow draws; no permanent shadow property is changed.
+When every listed building is beyond its applicable cutoff, the new module reduces the detail subtotal from 125,896 triangles / 113 batches to 118,328 / 53. The complete-builder arithmetic becomes 242,178 / 510 before accounting for existing fine-detail and frustum culling. This is an aggregate potential saving; do not present it as a measured view or frame-rate increase. Near the buildings, all additions return and the original totals apply. All targeted detail meshes cast shadows, so hiding them also avoids their eligible shadow draws; no permanent shadow property is changed.
 
-For cumulative history, the same original eight builders at pre-detail-series commit `ed2cab4` total 107,806 triangles / 373 batches. Their current net change is +112,728 triangles / +110 batches, rather than the gross Blender additions above. Other edits and replaced roof geometry produce a net -6,120 triangles / +4 batches in the non-Blender remainder. Restoration adds 4,912 triangles / 4 batches to its own prior 7,414 / 33 builder.
+For cumulative history, the same original eight builders at pre-detail-series commit `ed2cab4` total 107,806 triangles / 373 batches. Their current net change is +112,728 triangles / +110 batches, rather than the gross Blender additions above. Other edits and replaced roof geometry produce a net -6,120 triangles / +4 batches in the non-Blender remainder. Restoration adds 4,912 triangles / 4 batches to its own prior 7,414 / 33 builder. City adds 2,136 triangles / 3 batches to its own prior 14,750 / 47 builder. City introduces no moving secondary detail and no new LOD target; its essential stone entrance and sunny open fan remain visible.
 
 ## Transfer budget
 
@@ -42,17 +44,19 @@ For cumulative history, the same original eight builders at pre-detail-series co
 | rubbing-detail.js | 910,204 | 90,344 |
 | Existing eight | 7,208,706 | 761,656 |
 | restoration-detail.js | 292,967 | 29,299 |
-| All nine | 7,501,673 | 790,955 |
+| Previous nine | 7,501,673 | 790,955 |
+| city-detail.js | 126,128 | 14,425 |
+| All ten | 7,627,801 | 805,380 |
 
 All detail scripts remain eagerly loaded. Visibility LOD saves rendering work, not downloaded bytes, JavaScript parse cost or resident geometry memory.
 
-## Bounded mitigation in this change
+## Retained bounded mitigation
 
 `assets/detail-lod.js` loads after `courtyard-runtime.js`, wraps `register` and `update` once, and caches explicit known secondary moving groups in a WeakMap per building. It uses the identical strict distance comparison and quality cutoffs as existing fine-detail LOD. It also supports records registered before module loading through lazy collection.
 
 Only these exact groups are affected: `editor-blender-drawer`, `twinstars-blender-screen`, `causal-blender-vent`, `versions-blender-screen`, `rubbing-blender-overlay`, `ink-blender-carriage`, and `restoration-blender-light`. Original moving pivots, original mechanism meshes, transforms, articulation and all static Blender geometry are untouched. In particular, replacement roof shells stay visible. No broad suffix matching is used.
 
-The new check exercises all nine actual builders with and without a camera, both quality tiers, exact cutoff boundaries, near/far/near transitions and repeated mechanism target states. Full original node transforms, non-target visibility and shadow flags are compared against a separate unwrapped-runtime control. It also checks duplicate loading, lazy collection, untouched unrelated groups and exact expected savings.
+The current check exercises all ten actual builders with and without a camera, both quality tiers, exact cutoff boundaries, near/far/near transitions and repeated mechanism target states. Full original node transforms, non-target visibility and shadow flags are compared against a separate unwrapped-runtime control. It also checks duplicate loading, lazy collection, untouched unrelated groups and exact expected savings.
 
 ## Mechanical butterfly, separate budget
 
