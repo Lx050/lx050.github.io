@@ -274,7 +274,17 @@
     const w = 16.4, d = 14.8;
     b.deck(w, d, 'wood'); b.frame(14.4, 12.8, 5.35, { bays: 3, material: 'oak', post: .27 });
     b.hip(0, 0, 17.3, 15.8, 5.52, 2.22, 'tile', { shellThickness: .16 });
-    b.endPanels(14.4, 13.5, 3.65, 'chalk');
+    // Garden-facing framed windows replace the opaque end walls, at the same boundary.
+    // The central 4.2m opening and flush floor remain untouched.
+    for (const z of [-6.75, 6.75]) for (const side of [-1, 1]) {
+      const x = side * 4.65;
+      b.box('chalk', x, .45, z, 5.1, .9, .19, null, false, true, 'nuanling-window-dado');
+      b.box('glass', x, 2.19, z, 4.92, 2.46, .045, null, false, true, 'nuanling-garden-window');
+      b.box('chalk', x, 3.59, z, 5.1, .18, .19, null, false, true, 'nuanling-window-head');
+      b.box('cedar', side * 2.12, 1.825, z, .18, 3.65, .25, null, false, true, 'door-jamb');
+    }
+    for (const z of [-6.75, 6.75]) b.box('cedar', 0, 3.75, z, 14.4, .23, .3);
+    if (global.CourtyardNuanlingDetail) global.CourtyardNuanlingDetail.attach(b);
     // Domestic acoustic rooms within the taller weather roof: low, sheltered, inward-looking.
     for (const side of [-1, 1]) {
       acoustic(b, side * 7.05, 0, 10.8, 2.95, -side);
