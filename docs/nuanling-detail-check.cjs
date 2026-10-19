@@ -1,5 +1,6 @@
 const fs=require('fs'),vm=require('vm'),path=require('path'),assert=require('assert/strict');
 const root=path.resolve(__dirname,'..'),T=require(root+'/vendor/three.min.js');
+fs.mkdirSync(root+'/qa-results/nuanling',{recursive:true});
 const c={console};c.window=c;vm.createContext(c);for(const n of ['architecture','content-core','nuanling-detail','content-creation-care'])vm.runInContext(fs.readFileSync(root+'/assets/'+n+'.js','utf8'),c);
 const b=c.CourtyardArchitecture.build({THREE:T,index:4,title:'暖聆馆',zone:0});b.root.updateMatrixWorld(true);
 let detail,roof;b.root.traverse(o=>{if(o.name==='nuanling-blender-joinery')detail=o;if(o.geometry?.name==='enclosed-hip-roof-shell')roof=o});assert(detail);assert.equal(roof.geometry.userData.verticalThickness,.16);
