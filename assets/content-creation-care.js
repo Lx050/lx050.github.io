@@ -401,6 +401,7 @@
   B[6] = function ({ b, options, T }) {
     const w = 18.4, d = 18.8;
     b.deck(w, d); b.frame(16.4, 16.8, 5.85, { bays: 3, material: 'steel', post: .24 });
+    if (global.CourtyardEditorDetail) global.CourtyardEditorDetail.attach(b);
     // Three true northlight roof sections follow the input → edit → preview sequence.
     const rise = 2.15, run = 6.2, angle = Math.atan2(rise, run);
     for (const z of [-6.2, 0, 6.2]) {
@@ -436,19 +437,31 @@
       b.paper(-5.85 + col * 1.82, 1.035, -.95 + row * 1.12, 1.52, .91, true);
       b.box('steel', -5.85 + col * 1.82, 1.05, -.42 + row * 1.12, 1.6, .018, .018, null, true);
     }
-    sheet(b, -4.85, 2.35, 6.4, 3.4, 2.85, 0, 'paper', 'type');
+    // Retain the same complete sample sheet, now carried by a slightly tilted proof stand.
+    const proof = new T.Group(); proof.name = 'complete-editorial-proof-sheet';
+    proof.position.set(-4.85, 2.35, 6.4); proof.rotation.x = -.10; b.root.add(proof);
+    C.boxMesh(b, proof, 'walnut', 0, 0, 0, 3.54, 2.99, .13);
+    C.boxMesh(b, proof, 'paper', 0, 0, -.077, 3.4, 2.85, .018);
+    for (let k = 0; k < 9; k++) C.boxMesh(b, proof, 'ink', -.238, .9975 - k * .21375, -.094, 3.4 * (.59 + (k % 3) * .07), .023, .009);
     b.box('steel', -4.85, 1.07, 6.48, 3.6, .08, .18, null, true);
     label(b, '01 输入', -4.9, -7.5, 2.35, 3.0); label(b, '02 编辑', -4.9, 1.95, 2.35, 3.0); label(b, '03 预览', -4.9, 8.35, 2.35, 3.85);
     // Four real publishing modes live in distinct accessible pull-out template cases.
     const modes = ['日常模式', '三下乡', '寒假实践', '转载模式'];
     const drawers = new T.Group(); drawers.name = 'four-publishing-template-drawers'; b.root.add(drawers); const trays = [];
     [-6.35, -2.1, 2.1, 6.35].forEach((z, j) => {
-      b.box('walnut', 6.5, 1.0, z, 3.25, 2.0, 3.15, null, false, true, 'publishing-template-case');
-      b.box('masonry', 5.78, .12, z, 4.8, .24, 3.15, null, false, true, 'template-drawer-guard-plinth');
-      protectWorkBay(b, 5.78, z, 4.8, 3.15, 2.1, 'protected-template-drawer-sweep');
+      // Open cabinet carcass lets the real tray move through its front, not through a solid block.
+      b.box('walnut', 6.5, .10, z, 3.25, .20, 3.15);
+      b.box('walnut', 6.5, 1.95, z, 3.25, .10, 3.15);
+      for (const side of [-1, 1]) b.box('walnut', 6.5, 1.0, z + side * 1.525, 3.25, 1.80, .10);
+      b.box('walnut', 8.075, 1.0, z, .10, 1.80, 3.15);
+      const caseBox = new T.Box3(new T.Vector3(4.875, 0, z - 1.575), new T.Vector3(8.125, 2, z + 1.575));
+      caseBox.userData = { architectural: true, part: 'publishing-template-case' }; b.collisionBoxes.push(caseBox);
+      b.box('masonry', 5.735, .12, z, 4.89, .24, 3.15, null, false, true, 'template-drawer-guard-plinth');
+      protectWorkBay(b, 5.735, z, 4.89, 3.15, 2.1, 'protected-template-drawer-sweep');
       b.box('paper', 4.86, 1.26, z, .06, .37, 2.7, null, true);
       const tray = new T.Group(); tray.position.set(5.8, 1.38, z); drawers.add(tray); trays.push(tray);
       C.boxMesh(b, tray, 'oak', 0, 0, 0, 2.75, .085, 2.7);
+      if (global.CourtyardEditorDetail) global.CourtyardEditorDetail.attachDrawer(b, tray);
       C.boxMesh(b, tray, 'paper', 0, .066, 0, 2.4, .025, 2.37);
       C.boxMesh(b, tray, 'bronze', -1.4, .03, 0, .085, .1, .75);
       for (let line = 0; line < 7; line++) C.boxMesh(b, tray, line === 0 ? 'clay' : 'ink', -.1, .084, -.85 + line * .26, 1.5 + (line % 2) * .25, .016, .023);
