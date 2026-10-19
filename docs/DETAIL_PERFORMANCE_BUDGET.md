@@ -1,6 +1,6 @@
 # Cumulative courtyard detail budget
 
-Audit: 2026-10-19. Existing eight buildings measured at commit `685a2a603b94986c48927cfc832d66d57fe39c3e`; restoration building 3 and secondary-detail LOD are retained from that release. Building16 city detail is measured against published commit `8f0019ef17669f3277a8b99c675b7cf4f2cfbf52`. Building14 twelve-portrait detail is measured against published commit `b958c3a6835974daf9dccc24d3110a28f7ae46cc`. Building7 IPShield album-binding detail is measured against published commit `603d27c49075c6139da63d8c114e1120e4bcfc91`. Building 1 Huayun long-scroll canopy is measured against published commit `19102dd19a4c1ab52d485df88f3962c0251ab665`. Reproduce current numbers with `node docs/detail-lod-check.cjs`.
+Audit: 2026-10-19. Existing eight buildings measured at commit `685a2a603b94986c48927cfc832d66d57fe39c3e`; restoration building 3 and secondary-detail LOD are retained from that release. Building16 city detail is measured against published commit `8f0019ef17669f3277a8b99c675b7cf4f2cfbf52`. Building14 twelve-portrait detail is measured against published commit `b958c3a6835974daf9dccc24d3110a28f7ae46cc`. Building7 IPShield album-binding detail is measured against published commit `603d27c49075c6139da63d8c114e1120e4bcfc91`. Building 1 Huayun long-scroll canopy is measured against published commit `19102dd19a4c1ab52d485df88f3962c0251ab665`. Building 10 API gateway paired route wings are measured against published commit `02a7f4077e18f35483457b55d303bc409dfcf808`. Reproduce current numbers with `node docs/detail-lod-check.cjs`.
 
 ## Measurement and limits
 
@@ -30,13 +30,17 @@ All eight legacy Blender assemblies were outside `b.detail`. Existing `Courtyard
 | 7 IPShield | 0 | 2,384 / 2 | 27,730 / 51 | 0 / 0 |
 | Previous twelve | 26 | 133,032 / 118 | 304,598 / 683 | 7,568 / 60 |
 | 1 Huayun | 0 | 3,304 / 2 | 15,428 / 57 | 0 / 0 |
-| All thirteen | 26 | 136,336 / 120 | 320,026 / 740 | 7,568 / 60 |
+| Previous thirteen | 26 | 136,336 / 120 | 320,026 / 740 | 7,568 / 60 |
+| 10 API Gateway | 0 | 2,048 / 2 | 16,906 / 36 | 0 / 0 |
+| All fourteen | 26 | 138,384 / 122 | 336,932 / 776 | 7,568 / 60 |
 
-When every listed building is beyond its applicable cutoff, the new module reduces the detail subtotal from 136,336 triangles / 120 batches to 128,768 / 60. The complete-builder arithmetic becomes 312,458 / 680 before accounting for existing fine-detail and frustum culling. This is an aggregate potential saving; do not present it as a measured view or frame-rate increase. Near the buildings, all additions return and the original totals apply. All targeted detail meshes cast shadows, so hiding them also avoids their eligible shadow draws; no permanent shadow property is changed.
+When every listed building is beyond its applicable cutoff, the new module reduces the detail subtotal from 138,384 triangles / 122 batches to 130,816 / 62. The complete-builder arithmetic becomes 329,364 / 716 before accounting for existing fine-detail and frustum culling. This is an aggregate potential saving; do not present it as a measured view or frame-rate increase. Near the buildings, all additions return and the original totals apply. All targeted detail meshes cast shadows, so hiding them also avoids their eligible shadow draws; no permanent shadow property is changed.
 
 For cumulative history, the same original eight builders at pre-detail-series commit `ed2cab4` total 107,806 triangles / 373 batches. Their current net change is +112,728 triangles / +110 batches, rather than the gross Blender additions above. Other edits and replaced roof geometry produce a net -6,120 triangles / +4 batches in the non-Blender remainder. Restoration adds 4,912 triangles / 4 batches to its own prior 7,414 / 33 builder. City adds 2,136 triangles / 3 batches to its own prior 14,750 / 47 builder. Portraits adds 4,752 triangles / 3 batches to its own previous 22,370 / 59 builder; all twelve original threshold shades remain unchanged. Portraits introduces no moving secondary detail or LOD target; all twelve equal open crowns remain visible. IPShield adds 2,384 triangles / 2 batches to its previous 25,346 / 49 builder. Four continuous oak ribs, their bronze collars and clips, and archive edge protection remain static; all eight original album leaves and their mechanism are exact. IPShield adds no moving detail or LOD target. City introduces no moving secondary detail and no new LOD target; its essential stone entrance and sunny open fan remain visible.
 
-The twelve previously reported builder rows are independently rebuilt from the exact published shield baseline inside the current audit; their detail, whole-building and far-LOD counts remain identical. Building 1 adds 3,304 triangles / 2 batches to its own prior 12,124 / 55 production builder. Its one continuous oak canopy, two bronze rims, twelve supports, six cross bearers, twelve brackets, six roof collars, thirteen medium-specific niche pieces and four table clips stay static. The original nineteen moving layer meshes remain exact; Huayun adds no moving detail or LOD target. Ground-layout width and depth are preserved for unchanged reading-rest placement, while actual high-level culling bounds and height include the new canopy. This adds a thirteenth row, without changing the prior twelve.
+The thirteen previously reported builder rows are independently rebuilt from the exact published Huayun baseline inside the current audit; their detail, whole-building and far-LOD counts remain identical. Building 1 adds 3,304 triangles / 2 batches to its own prior 12,124 / 55 production builder. Its one continuous oak canopy, two bronze rims, twelve supports, six cross bearers, twelve brackets, six roof collars, thirteen medium-specific niche pieces and four table clips stay static. The original nineteen moving layer meshes remain exact; Huayun adds no moving detail or LOD target. Ground-layout width and depth are preserved for unchanged reading-rest placement, while actual high-level culling bounds and height include the new canopy. This added a thirteenth row, without changing the prior twelve.
+
+Building 10 API Gateway now adds 2,048 triangles / 2 batches to its own prior 14,858 / 34 production builder. Four closed U-shaped raised route girders, eight supporting stems, eight bridges, eight roof sleeves, eight neutral joint badges, eight observation-bench corner shoes and four archive stiles form 48 static solids. The paired model-bay silhouette is symmetric, with exactly two neutral route girders per side. Both original routing louvres and all other original elements remain exact; no additional moving prototype or LOD target is introduced. The original width/depth and actual reading-rest placement are retained, while culling bounds/height include the new raised structure. This adds a fourteenth row without changing the prior thirteen.
 
 ## Transfer budget
 
@@ -60,7 +64,9 @@ The twelve previously reported builder rows are independently rebuilt from the e
 | shield-detail.js | 134,079 | 14,647 |
 | Previous twelve | 8,034,733 | 850,018 |
 | huayun-detail.js | 189,965 | 22,217 |
-| All thirteen | 8,224,698 | 872,235 |
+| Previous thirteen | 8,224,698 | 872,235 |
+| gateway-detail.js | 119,681 | 13,252 |
+| All fourteen | 8,344,379 | 885,487 |
 
 All detail scripts remain eagerly loaded. Visibility LOD saves rendering work, not downloaded bytes, JavaScript parse cost or resident geometry memory.
 
@@ -70,7 +76,7 @@ All detail scripts remain eagerly loaded. Visibility LOD saves rendering work, n
 
 Only these exact groups are affected: `editor-blender-drawer`, `twinstars-blender-screen`, `causal-blender-vent`, `versions-blender-screen`, `rubbing-blender-overlay`, `ink-blender-carriage`, and `restoration-blender-light`. Original moving pivots, original mechanism meshes, transforms, articulation and all static Blender geometry are untouched. In particular, replacement roof shells stay visible. No broad suffix matching is used.
 
-The current check exercises all thirteen actual builders with and without a camera, both quality tiers, exact cutoff boundaries, near/far/near transitions and repeated mechanism target states. Full original node transforms, non-target visibility and shadow flags are compared against a separate unwrapped-runtime control. It also checks duplicate loading, lazy collection, untouched unrelated groups and exact expected savings. Cumulative assertions cap this version at its measured 136,336 added-detail triangles / 120 batches and 320,026 complete-builder triangles / 740 batches; an additional increase requires an explicit budget update.
+The current check exercises all fourteen actual builders with and without a camera, both quality tiers, exact cutoff boundaries, near/far/near transitions and repeated mechanism target states. Full original node transforms, non-target visibility and shadow flags are compared against a separate unwrapped-runtime control. It also checks duplicate loading, lazy collection, untouched unrelated groups and exact expected savings. Cumulative assertions cap this version at its measured 138,384 added-detail triangles / 122 batches and 336,932 complete-builder triangles / 776 batches; an additional increase requires an explicit budget update.
 
 ## Mechanical butterfly, separate budget
 

@@ -171,6 +171,7 @@
 
   builders[10] = function ({ b, options }) {
     const w = 20, d = 18.8;
+    global.CourtyardGatewayDetail.attach(b);
     b.deck(w, d);
     // A continuous entrance/monitoring spine, with exactly two equal model bays.
     sideColumns(b, [-8.8, -2.65, 2.65, 8.8], [-7.6, 0, 7.6], 5.55, 'steel');
