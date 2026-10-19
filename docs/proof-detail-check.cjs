@@ -7,7 +7,7 @@ const root=path.resolve(__dirname,'..'),T=require(root+'/vendor/three.min.js'),o
 const baseline='ab4aedbbe3380eb9e4bdc82bfaec7a7e1aa89e05';
 function load(old){
  const c={console,document:{createElement(){const canvas={width:0,height:0,operations:[]};canvas.getContext=()=>new Proxy({measureText:t=>({width:String(t).length*10}),createLinearGradient:()=>({addColorStop(...args){canvas.operations.push(['addColorStop',...args]);}})},{get:(o,k)=>o[k]||((...args)=>canvas.operations.push([k,...args])),set:(o,k,v)=>{canvas.operations.push(['set',k,v]);o[k]=v;return true;}});return canvas;}}};c.window=c;vm.createContext(c);
- for(const n of ['architecture','content-core',...(!old?['proof-detail']:[]),...(!old?['workshop-detail']:[]),'content-literary','reading-catalog','reading-panels']){const file='assets/'+n+'.js',source=old?cp.execFileSync('git',['-C',root,'show',baseline+':'+file],{encoding:'utf8',maxBuffer:32*1024*1024}):fs.readFileSync(root+'/'+file,'utf8');vm.runInContext(source,c,{filename:file});}return c;
+ for(const n of ['architecture','content-core',...(!old?['proof-detail']:[]),...(!old?['workshop-detail']:[]),...(!old?['handover-detail']:[]),'content-literary','reading-catalog','reading-panels']){const file='assets/'+n+'.js',source=old?cp.execFileSync('git',['-C',root,'show',baseline+':'+file],{encoding:'utf8',maxBuffer:32*1024*1024}):fs.readFileSync(root+'/'+file,'utf8');vm.runInContext(source,c,{filename:file});}return c;
 }
 const now=load(false),old=load(true),build=c=>c.CourtyardArchitecture.build({THREE:T,index:21,title:'清样之前',zone:0});
 const b=build(now),before=build(old),detail=b.root.getObjectByName('proof-blender-static');assert(detail&&detail.parent===b.root);

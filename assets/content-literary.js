@@ -125,6 +125,7 @@
       carrier.position.z = -7.7 + 15.4 * v;
       relay.material.emissiveIntensity = .42 + .22 * Math.sin(Math.PI * v);
     }, 'service-light-transfer');
+    global.CourtyardHandoverDetail.attach(b);
     return finish(b, options, w, d, {
       role: 'Handover workshop',
       description: 'Unequal receiving bays stitched by an exposed continuous service spine, shared work court and empty successor station',
