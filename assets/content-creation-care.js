@@ -236,6 +236,7 @@
   B[3] = function ({ b, options, T }) {
     const w = 14.8, d = 19.6;
     b.deck(w, d, 'wood'); b.frame(12.9, 17.6, 5.1, { bays: 4, material: 'oak', post: .26 });
+    global.CourtyardRestorationDetail.attach(b);
     b.barrel(0, 0, 15.6, 20.4, 5.25, 2.45, 'ceramic');
     b.screenSide(-6.45, 0, 17.1, 4.05, 'paper'); b.screenSide(6.45, 0, 17.1, 4.05, 'paper');
     b.endPanels(12.9, 18.5, 4.0, 'chalk');
@@ -261,6 +262,7 @@
     const inspection = new T.Group(); inspection.name = 'four-stage-full-composition-inspection-light'; inspection.position.set(-5.55, 4.26, -6.5); b.root.add(inspection);
     C.boxMesh(b, inspection, 'bronze', 0, 0, 0, .45, .15, .36);
     C.boxMesh(b, inspection, 'lamp', -.1, -.09, 0, .18, .04, .85);
+    global.CourtyardRestorationDetail.attachLight(b,inspection);
     C.motion(b, '四次呼吸的整幅观察光', inspection, v => { inspection.position.z = -6.5 + v * 13; }, 'conservation-process-revisit');
     return C.finish(b, options, w, d, {
       role: '可停留、回看的整幅古画修复观察室', signY: 4.45,
