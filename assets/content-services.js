@@ -320,6 +320,7 @@
   builders[24] = function ({ b, options }) {
     const w = 21, d = 20.4;
     b.deck(w, d);
+    global.CourtyardMindcareDetail.attach(b);
     // Unequal contemplative walks grow from the public timed-practice cards:
     // a longer shaded garden loop on the left and a shorter pause on the right.
     sideColumns(b, [-9.25, -2.9], [-8.3, -4.15, 0, 4.15, 8.3], 5.2, 'oak');

@@ -4,6 +4,11 @@ const fs=require('fs'),vm=require('vm'),cp=require('child_process'),crypto=requi
 const root=require('path').resolve(__dirname,'..'),T=require(root+'/vendor/three.min.js');
 const baseline='7910ab80772cbe494be7d2b5dd3e055aa91056ee';
 function source(file,old){return old?cp.execFileSync('git',['-C',root,'show',baseline+':'+file],{maxBuffer:32*1024*1024}):fs.readFileSync(root+'/'+file);}
+const mindcareHook='    global.CourtyardMindcareDetail.attach(b);\n',mindcareServices=fs.readFileSync(root+'/assets/content-services.js','utf8');
+assert.equal(mindcareServices.split(mindcareHook).length,2,'one exact building24 mindcare integration');
+const restoredMindcareServices=mindcareServices.replace(mindcareHook,'');
+assert.equal(restoredMindcareServices,cp.execFileSync('git',['-C',root,'show','212c7e4fce41e22c88ce694fff49c53b7c95d2df:assets/content-services.js'],{encoding:'utf8'}),'services differs only by the exact mindcare hook from preceding release');
+function mindcareAddition(b,o){if(b.metadata?.index!==24)return false;for(let p=o;p;p=p.parent)if(p.name==='mindcare-blender-static')return true;return false;}
 const handoverHook='    global.CourtyardHandoverDetail.attach(b);\n',handoverLiterary=fs.readFileSync(root+'/assets/content-literary.js','utf8');
 assert.equal(handoverLiterary.split(handoverHook).length,2,'one exact building19 handover integration');
 const restoredHandoverLiterary=handoverLiterary.replace(handoverHook,'');
@@ -19,7 +24,7 @@ assert.equal(workshopLiterary.split(workshopHook).length,2,'one exact building25
 const restoredWorkshopLiterary=workshopLiterary.replace(workshopHook,'');
 assert.equal(restoredWorkshopLiterary,cp.execFileSync('git',['-C',root,'show','be0e5ad14a8a2c6c7600af9566a33e45ee4f12e4:assets/content-literary.js'],{encoding:'utf8'}),'literary differs only by the exact workshop hook from preceding release');
 function workshopAddition(b,o){if(b.metadata?.index!==25)return false;for(let p=o;p;p=p.parent)if(p.name==='workshop-blender-static')return true;return false;}
-const remeHook='    global.CourtyardRemeDetail.attach(b);\n',remeServices=fs.readFileSync(root+'/assets/content-services.js','utf8');
+const remeHook='    global.CourtyardRemeDetail.attach(b);\n',remeServices=restoredMindcareServices;
 assert.equal(remeServices.split(remeHook).length,2,'one exact building12 reme integration');
 const restoredRemeServices=remeServices.replace(remeHook,'');
 assert.equal(restoredRemeServices,cp.execFileSync('git',['-C',root,'show','c07a41583f23e0c37f02f04f50b27132b91a7a80:assets/content-services.js'],{encoding:'utf8'}),'services differs only by the exact reme hook from preceding release');
@@ -36,7 +41,7 @@ assert.equal(restoredProofLiterary,cp.execFileSync('git',['-C',root,'show','ab4a
 function proofAddition(b,o){if(b.metadata?.index!==21)return false;for(let p=o;p;p=p.parent)if(p.name==='proof-blender-static')return true;return false;}
 function load(old){
   const c={console};c.window=c;vm.createContext(c);
-  for(const name of ['architecture','content-core','nuanling-detail','nuanling-app-detail','editor-detail',...(!old?['rubbing-detail']:[]),...(!old?['ink-detail']:[]),...(!old?['restoration-detail']:[]),...(!old?['huayun-detail']:[]),'content-creation-care',...(!old?['shield-detail']:[]),...(!old?['gateway-detail']:[]),...(!old?['reme-detail']:[]),'content-services',...(!old?['twinstars-detail','causal-detail']:[]),...(!old?['versions-detail']:[]),...(!old?['city-detail','portraits-detail']:[]),...(!old?['session-detail']:[]),'content-narratives',...(!old?['proof-detail']:[]),...(!old?['workshop-detail']:[]),...(!old?['handover-detail']:[]),'content-literary','moon-snow-garden','infrastructure'])
+  for(const name of ['architecture','content-core','nuanling-detail','nuanling-app-detail','editor-detail',...(!old?['rubbing-detail']:[]),...(!old?['ink-detail']:[]),...(!old?['restoration-detail']:[]),...(!old?['huayun-detail']:[]),'content-creation-care',...(!old?['shield-detail']:[]),...(!old?['gateway-detail']:[]),...(!old?['reme-detail']:[]),...(!old?['mindcare-detail']:[]),'content-services',...(!old?['twinstars-detail','causal-detail']:[]),...(!old?['versions-detail']:[]),...(!old?['city-detail','portraits-detail']:[]),...(!old?['session-detail']:[]),'content-narratives',...(!old?['proof-detail']:[]),...(!old?['workshop-detail']:[]),...(!old?['handover-detail']:[]),'content-literary','moon-snow-garden','infrastructure'])
     vm.runInContext(source('assets/'+name+'.js',old).toString(),c,{filename:name+'.js'});
   return c;
 }
@@ -49,7 +54,7 @@ function cityAddition(b,o){if(b.metadata?.index!==16)return false;for(let p=o;p;
 function huayunAddition(b,o){if(b.metadata?.index!==1)return false;for(let p=o;p;p=p.parent)if(p.name==='huayun-blender-static')return true;return false;}
 function shape(b){
   b.root.updateMatrixWorld(true);const rows=[];
-  b.root.traverse(o=>{if(handoverAddition(b,o)||sessionAddition(b,o)||workshopAddition(b,o)||remeAddition(b,o)||proofAddition(b,o)||gatewayAddition(b,o)||huayunAddition(b,o)||shieldAddition(b,o)||portraitsAddition(b,o)||cityAddition(b,o)||!o.isMesh||inkAddition(b,o)||restorationAddition(b,o))return;const materials=(Array.isArray(o.material)?o.material:[o.material]).map(m=>[m.color?.toArray(),m.opacity,m.metalness,m.roughness,m.side,m.transparent]);
+  b.root.traverse(o=>{if(mindcareAddition(b,o)||handoverAddition(b,o)||sessionAddition(b,o)||workshopAddition(b,o)||remeAddition(b,o)||proofAddition(b,o)||gatewayAddition(b,o)||huayunAddition(b,o)||shieldAddition(b,o)||portraitsAddition(b,o)||cityAddition(b,o)||!o.isMesh||inkAddition(b,o)||restorationAddition(b,o))return;const materials=(Array.isArray(o.material)?o.material:[o.material]).map(m=>[m.color?.toArray(),m.opacity,m.metalness,m.roughness,m.side,m.transparent]);
     rows.push([o.name,Array.from(o.geometry.attributes.position.array),o.geometry.index?Array.from(o.geometry.index.array):null,o.matrixWorld.toArray(),o.isInstancedMesh?Array.from(o.instanceMatrix.array):null,materials]);});
   return digest(rows);
 }
@@ -83,7 +88,7 @@ assert(html.indexOf('src="assets/shield-detail.js?')>=0&&html.indexOf('src="asse
 assert(html.indexOf('src="assets/rubbing-detail.js?')<html.indexOf('src="assets/content-literary.js?'),'detail loads before its builder');
 const manifest=JSON.parse(source('docs/deployment-verify.html',false).toString().match(/const expected=(\{.*?\});/)[1]);
 const oldManifest=JSON.parse(source('docs/deployment-verify.html',true).toString().match(/const expected=(\{.*?\});/)[1]);
-assert.deepEqual(Object.keys(manifest).sort(),[...Object.keys(oldManifest),'assets/handover-detail.js','assets/session-detail.js','assets/workshop-detail.js','assets/reme-detail.js','assets/proof-detail.js','assets/gateway-detail.js','assets/huayun-detail.js','assets/shield-detail.js','assets/portraits-detail.js','assets/city-detail.js','assets/detail-lod.js','assets/restoration-detail.js','assets/ink-detail.js','assets/rubbing-detail.js','assets/twinstars-detail.js','assets/causal-detail.js','assets/versions-detail.js'].sort(),'preserve all release entries and add the new detail');
+assert.deepEqual(Object.keys(manifest).sort(),[...Object.keys(oldManifest),'assets/mindcare-detail.js','assets/handover-detail.js','assets/session-detail.js','assets/workshop-detail.js','assets/reme-detail.js','assets/proof-detail.js','assets/gateway-detail.js','assets/huayun-detail.js','assets/shield-detail.js','assets/portraits-detail.js','assets/city-detail.js','assets/detail-lod.js','assets/restoration-detail.js','assets/ink-detail.js','assets/rubbing-detail.js','assets/twinstars-detail.js','assets/causal-detail.js','assets/versions-detail.js'].sort(),'preserve all release entries and add the new detail');
 for(const [file,hash]of Object.entries(manifest))assert.equal(digest(source(file,false)),hash,'release hash '+file);
 let versionedAssets=0;
 for(const match of html.matchAll(/(?:src|href)="([^"?]+)\?v=([a-f0-9]{16})"/g)){
