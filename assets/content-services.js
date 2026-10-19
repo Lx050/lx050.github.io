@@ -241,6 +241,7 @@
   builders[12] = function ({ b, options }) {
     const w = 20, d = 18.6;
     b.deck(w, d);
+    global.CourtyardRemeDetail.attach(b);
     // Home and family are deliberately low domestic rooms, each with its own
     // roof, floor, entrance and furniture, separated by an open screened court.
     for (const s of [-1, 1]) {
