@@ -6,7 +6,7 @@ const baseline='7910ab80772cbe494be7d2b5dd3e055aa91056ee';
 function source(file,old){return old?cp.execFileSync('git',['-C',root,'show',baseline+':'+file],{maxBuffer:32*1024*1024}):fs.readFileSync(root+'/'+file);}
 function load(old){
   const c={console};c.window=c;vm.createContext(c);
-  for(const name of ['architecture','content-core','nuanling-detail','nuanling-app-detail','editor-detail',...(!old?['rubbing-detail']:[]),'content-creation-care','content-services','content-narratives','content-literary','moon-snow-garden','infrastructure'])
+  for(const name of ['architecture','content-core','nuanling-detail','nuanling-app-detail','editor-detail',...(!old?['rubbing-detail']:[]),'content-creation-care','content-services',...(!old?['twinstars-detail']:[]),'content-narratives','content-literary','moon-snow-garden','infrastructure'])
     vm.runInContext(source('assets/'+name+'.js',old).toString(),c,{filename:name+'.js'});
   return c;
 }
@@ -27,9 +27,9 @@ for(let i=0;i<29;i++){
   assert.equal(JSON.stringify((a.mechanisms||[]).map(m=>m.name)),JSON.stringify((b.mechanisms||[]).map(m=>m.name)),'mechanism names '+i);mechanisms+=(a.mechanisms||[]).length;
   for(const phase of phases){
     for(const building of [a,b])for(const m of building.mechanisms||[]){if(m.articulate)m.articulate(phase);else m.update?.(phase,1);}
-    if(i!==22){assert.equal(shape(a),shape(b),'unchanged geometry/materials at building '+i+', phase '+phase);assert.equal(boxes(a),boxes(b),'unchanged collisions at '+i);}
+    if(i!==17&&i!==22){assert.equal(shape(a),shape(b),'unchanged geometry/materials at building '+i+', phase '+phase);assert.equal(boxes(a),boxes(b),'unchanged collisions at '+i);}
   }
-  if(i!==22){if(i<26)unchanged++;else infrastructure++;}
+  if(i!==17&&i!==22){if(i<26)unchanged++;else infrastructure++;}
 }
 const preservedFiles=['assets/butterfly-crown.js','assets/butterfly-flight.js','assets/content-butterfly.js','assets/models/LM24_Butterfly.glb','assets/readings/22.json','assets/reading-catalog.js','assets/reading-panels.js','assets/building-actions.js','assets/courtyard-runtime.js','garden.html'];
 for(const file of preservedFiles)assert.equal(digest(source(file,false)),digest(source(file,true)),'unchanged source '+file);
@@ -39,7 +39,7 @@ assert.equal(html,source('island.html',false).toString(),'entry files identical'
 assert(html.indexOf('src="assets/rubbing-detail.js?')<html.indexOf('src="assets/content-literary.js?'),'detail loads before its builder');
 const manifest=JSON.parse(source('docs/deployment-verify.html',false).toString().match(/const expected=(\{.*?\});/)[1]);
 const oldManifest=JSON.parse(source('docs/deployment-verify.html',true).toString().match(/const expected=(\{.*?\});/)[1]);
-assert.deepEqual(Object.keys(manifest).sort(),[...Object.keys(oldManifest),'assets/rubbing-detail.js'].sort(),'preserve all release entries and add the new detail');
+assert.deepEqual(Object.keys(manifest).sort(),[...Object.keys(oldManifest),'assets/rubbing-detail.js','assets/twinstars-detail.js'].sort(),'preserve all release entries and add the new detail');
 for(const [file,hash]of Object.entries(manifest))assert.equal(digest(source(file,false)),hash,'release hash '+file);
 let versionedAssets=0;
 for(const match of html.matchAll(/(?:src|href)="([^"?]+)\?v=([a-f0-9]{16})"/g)){
