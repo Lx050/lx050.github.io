@@ -228,7 +228,8 @@ const TRACKS=[
 <script src="assets/content-narratives.js?v=dd1fe20dcb7e5278"></script>
 <script src="assets/content-literary.js?v=97cf9ab376243ab5"></script>
 <script src="assets/moon-snow-garden.js?v=df72bab89067f3b9"></script>
-<script src="assets/butterfly-flight.js?v=7fd62f4ce79528aa"></script>
+<script src="assets/butterfly-crown.js?v=6a9815449887a076"></script>
+<script src="assets/butterfly-flight.js?v=d6be16561054f294"></script>
 <script src="assets/content-butterfly.js?v=3238b2fe25de31db"></script>
 <script src="assets/infrastructure.js?v=95b42f7ffde585c2"></script>
 <script src="assets/garden-weather.js?v=2e99a4c571a9fb5e"></script>
@@ -1155,7 +1156,7 @@ function prepareButterflySea(lm){
     shader.fragmentShader=shader.fragmentShader.replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\n totalEmissiveRadiance+=ribEmission;');
   };ribGlaze.customProgramCacheKey=()=> 'sea-raised-vein-enamel-ivory-d5';
   for(const side of [-1,1])for(const upper of [true,false]){
-    const shape=butterflyWingShape(upper),sx=upper?69:58,sz=upper?70:65;
+    const shape=butterflyWingShape(upper),sx=upper?76:66,sz=upper?74:68;
     const parent=side<0?b.left:b.right,rafters=[],eaves=[],verts=[],wingUV=[];
     const roofY=(x,z)=>upper?9+x*.42-z*.23+2.4*Math.sin(x/48*Math.PI):7+x*.10-z*.045+1.2*Math.sin(x/32*Math.PI);
     const point=(p,dy=0)=>{const x=3.5+p.x*sx,z=1-p.y*sz;return new THREE.Vector3(x*side,roofY(x,z)+dy,z);};
@@ -1206,14 +1207,14 @@ function prepareButterflySea(lm){
       vec3 wire=mix(vec3(.18,.15,.09),mix(pigment,uOchre,.28)*1.65,veinGrowth);
       diffuseColor.rgb=mix(glaze,wire,vein*.64);
       // A soft silk backlight is bilateral: the upper roof cannot lose all its colour.
-      float flow=.5+.5*sin(arrival*24.0-uTime*.85);
+      float flow=.5+.5*sin(arrival*15.0-uTime*.65);
       vec3 wingEmission=vec3(.035,.031,.023)*(1.0+grazing*.6)
         +pigment*(growth*(.12+.38*uNight)+rootGrowth*.16)
-        +mix(pigment,uOchre,.22)*vein*veinGrowth*(.18+.12*flow)*uNight;
+        +vec3(1.0,.61,.20)*vein*(.55+.45*veinGrowth)*(.55+.35*flow);
       `+shader.fragmentShader.slice(end);
       shader.fragmentShader=shader.fragmentShader.replace('#include <roughnessmap_fragment>',
         '#include <roughnessmap_fragment>\n roughnessFactor=clamp(.86-stain*.20-vein*.12,.48,.88);');
-    };mat.customProgramCacheKey=()=> 'sea-silk-enamel-ivory-d5';
+    };mat.customProgramCacheKey=()=> 'sea-silk-enamel-grand-gold-v1';
     const skin=mesh(geometry,mat,parent,0,0,0);skin.name='silk-enamel-'+(upper?'upper':'lower')+(side<0?'-left':'-right');skin.castShadow=false;skin.receiveShadow=false;b.wings.push(skin);
     // A continuous deep fascia and fine rolled copper lip retain architectural thickness.
     poly.forEach((p,i)=>{if(i===poly.length-1)return;const q=poly[i+1];beam(eaves,point(p,-.24).toArray(),point(q,-.24).toArray(),.48,.64);beam(rafters,point(p,.10).toArray(),point(q,.10).toArray(),.12,.16);});
@@ -1411,9 +1412,10 @@ function clipRoofGeometry(geometry,matrix,side,cut,outer){
   const result=new THREE.BufferGeometry();for(const k of names)result.setAttribute(k,new THREE.Float32BufferAttribute(out[k],geometry.attributes[k].itemSize));result.computeBoundingBox();return result;
 }
 function installRoofMechanism(b){
+  CourtyardButterflyCrown.build(THREE,b,material);
   b.flight=CourtyardButterflyFlight.create();b.creature.position.y=b.flight.height;
   const rig=b.mechanical={target:0,progress:0,velocity:0,state:'展开',skeleton:false,locked:true,mainAngle:0,outerAngle:0,joints:[],links:[],skins:[],structureMeshes:[]};
-  const gold=material(0xb39a63,{metalness:.65,roughness:.42}),steel=material(0x59666a,{metalness:.72,roughness:.38}),rodMaterial=material(0xc7c0a7,{metalness:.82,roughness:.25});
+  const gold=material(0xc4a36b,{metalness:.60,roughness:.42,emissive:0xb4863a,emissiveIntensity:.22}),steel=material(0x59666a,{metalness:.72,roughness:.38}),rodMaterial=material(0xc7c0a7,{metalness:.82,roughness:.25});
   const fixed=new THREE.Group();fixed.name='mechanical-fixed-bearings';b.creature.add(fixed);
   function cylinder(parent,name,radius,length,position,axis,mat){const o=new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,1,12),mat);o.name=name;o.scale.y=length;o.position.copy(position);o.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),axis.clone().normalize());parent.add(o);return o;}
   function link(name,aParent,a,bParent,c){
@@ -1545,6 +1547,7 @@ function updateButterflySea(dt,lm){
   advanceReveal(b,dt,active,false,1-Math.min(1,(skyState.sunI||0)/1.3));
   const flight=CourtyardButterflyFlight.step(b.flight,dt,reduced);
   b.creature.position.y=flight.height;
+  CourtyardButterflyCrown.update(b);
   if(flight.enabled&&!reduced){b.mechanical.target=flight.target;b.mechanical.state='自动飞行';}
   // Rigid original hinges and actuator endpoints follow the floating body.
   updateRoofMechanism(b,flight.enabled&&reduced?0:dt);
@@ -1559,6 +1562,7 @@ function updateButterflySeaReflection(dt){
   b.root.updateWorldMatrix(true,true);b.reflectionClone.matrixAutoUpdate=false;b.reflectionClone.matrix.copy(b.creature.matrixWorld);
   b.reflectionClone.getObjectByName('roof-hinge-left').quaternion.copy(b.left.quaternion);b.reflectionClone.getObjectByName('roof-hinge-right').quaternion.copy(b.right.quaternion);
   if(b.mechanical)for(const source of [...b.mechanical.joints.map(j=>j.object),...b.mechanical.links.flatMap(l=>[l.barrel,l.rod]),...b.mechanical.skins]){const copy=b.reflectionClone.getObjectByName(source.name);if(copy){copy.position.copy(source.position);copy.quaternion.copy(source.quaternion);copy.scale.copy(source.scale);copy.visible=source.visible;}}
+  const reflectedCrown=b.reflectionClone.getObjectByName('suspended-butterfly-crown');if(reflectedCrown&&b.crown)reflectedCrown.quaternion.copy(b.crown.root.quaternion);
   b.reflectionHemi.intensity=hemi.intensity;b.reflectionKey.intensity=moon.intensity;b.reflectionKey.position.copy(moon.position);
   // Keep the reflected celestial direction identical to the visible moon.
   b.reflectionMoon.position.copy(moonOrb.position).sub(camera.position).add(activeCamera.position);b.reflectionMoon.visible=moonOrb.visible;
