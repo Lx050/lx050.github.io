@@ -1,7 +1,11 @@
 /* Source-backed, reversible in-world exhibit actions. No network, storage, account,
  * camera/microphone, DOM UI, navigation, or private/unpublished text is used here.
- * create({THREE,records,catalog,onSection,onPhase,onButterflyPhase,reducedMotion})
- * -> apply(buildingOrIndex,0|1|2), update(dt), describe(index), inspect(index), dispose().
+ * create({THREE,records,catalog,onSection,onPhase,onFeedback,onButterflyPhase,reducedMotion})
+ * -> apply(buildingOrIndex,0|1|2), pause(input), resume(input), reset(input),
+ *    update(dt), feedback(index), describe(index), inspect(index), dispose().
+ * Feedback is a read-only host UI snapshot; onFeedback fires on meaningful changes,
+ * not every frame. Reset affects local exhibit effects, never the reading position
+ * or section cycle. The privacy window cannot be paused or extended by pausing.
  * Call update each frame. Reading surfaces are supplied by the host through onSection
  * or building.readingPanels.setSection; the host owns physical text rendering.
  */
@@ -10,6 +14,7 @@
   const SPECS = [{"index":0,"labels":["试写","框选","入格"],"sectionGroups":[["generation"],["annotation","workflow"],["archive"]],"kind":"ink","mechanism":"annotation-registration"},{"index":1,"labels":["馆藏","轮廓","遮罩"],"sectionGroups":[["collection"],["restoration"],["mask","parameters"]],"kind":"conservation","mechanism":"same-frame-conservation-layers"},{"index":2,"labels":["入口","透见","同馆"],"sectionGroups":[["same-platform"],["shared-content"],["boundary"]],"kind":"secondary-entry","mechanism":"secondary-entrance-light-filter"},{"index":3,"labels":["全幅","暂停·续播","重放"],"sectionGroups":[["whole-picture"],["four-stages"],["boundary"]],"kind":"process","mechanism":"conservation-process-revisit"},{"index":4,"labels":["守护","留言","回应"],"sectionGroups":[["family-desk"],["messages"],["two-sides"]],"kind":"care-relay","mechanism":"domestic-acoustic-enclosure"},{"index":5,"labels":["连接","四项","往返"],"sectionGroups":[["connected"],["four-actions"],["roles"]],"kind":"elder-controls","mechanism":"reachable-elder-controls"},{"index":6,"labels":["取样","编排","校看"],"sectionGroups":[["input"],["editing","modes"],["boundary"]],"kind":"layout","mechanism":"publishing-mode-selection"},{"index":7,"labels":["入册","比照","归档"],"sectionGroups":[["patent"],["classification","trademark"],["archive","example"]],"kind":"album","mechanism":"album-page-comparison"},{"index":8,"labels":["入口","未读","边界"],"sectionGroups":[["entry"],["unknown"],["boundary"]],"kind":"public-entry","mechanism":null},{"index":9,"labels":["入口","身份","边界"],"sectionGroups":[["entry"],["identity"],["boundary"]],"kind":"public-entry","mechanism":null},{"index":10,"labels":["路由","往返","观察"],"sectionGroups":[["three-steps"],["example"],["metrics"]],"kind":"api-route","mechanism":"content-articulation"},{"index":11,"labels":["定位","未读","边界"],"sectionGroups":[["identity"],["unknown"],["boundary"]],"kind":"public-entry","mechanism":null},{"index":12,"labels":["匿名","短显","归隐"],"sectionGroups":[["privacy"],["events","local-demo"],["boundary"]],"kind":"privacy-window","mechanism":"time-limited-privacy-shutter"},{"index":13,"labels":["人的线","逐节","自持"],"sectionGroups":[["opening"],["s1","s2","s3","s4","s5","s6","s7","s8","s9","s10"],["s10","source-note"]],"kind":"narrative","mechanism":"tool-layer-comparison"},{"index":14,"labels":["总览","十二传","留痕"],"sectionGroups":[["opening"],["biography-01","biography-02","biography-03","biography-04","biography-05","biography-06","biography-07","biography-08","biography-09","biography-10","biography-11","biography-12"],["biography-11","source-note"]],"kind":"narrative","mechanism":"relationship-sightlines"},{"index":15,"labels":["来路","三结","延续"],"sectionGroups":[["causal-diagram"],["chapter-01","chapter-02","chapter-03"],["chapter-03","source-note"]],"kind":"narrative","mechanism":"cross-court-light"},{"index":16,"labels":["雨巷","共建","晴庭"],"sectionGroups":[["route-map","c1","c2","c3"],["c4","c5","c6","c7","c8"],["c9","c10","c11"]],"kind":"narrative","mechanism":"rain-to-sun-sightline"},{"index":17,"labels":["各自","四语","并肩"],"sectionGroups":[["o1","o2"],["o3","o4","o5","o6"],["o7","o8"]],"kind":"narrative","mechanism":"reciprocal-registers"},{"index":18,"labels":["母题","五稿","未完"],"sectionGroups":[["version-tree","c1"],["c2","c3","c4","c5","c6"],["c7","c8"]],"kind":"narrative","mechanism":"retained-revision-comparison"},{"index":19,"labels":["接件","共作","交接"],"sectionGroups":[["s01-一-我离开的时候-最先想起的不是荣誉-而是一条消","s02-二-青媒不是一个-写稿组织-它是一个小型生产系统","s03-三-我第一次真正意识到-负责人-不是一个称呼"],["s04-四-我在青媒学会的-不是怎么写漂亮话-而是怎么让","s05-五-我见过青媒最好的样子-是大家在混乱里仍然愿意","s06-六-青媒让我明白-所谓-能力-很多时候是对麻烦的","s07-七-关于-AI-和工具-我不想把它们当成炫技-而"],["s09-九-如果要说我留下了什么","s10-十-写给下一届-不要只继承任务-也要继承判断","s12-十二-离开不是把自己摘出去-而是把路标留下来","s13-十三-我愿意留下的几条具体原则","s15-十五-最后的交接清单"]],"kind":"handover","mechanism":"service-light-transfer"},{"index":20,"labels":["收窗","借景","通明"],"sectionGroups":[["preface","c1","c2","c3","c4"],["c5","c6"],["c7","c8","c9","c10"]],"kind":"integrated-garden","mechanism":"sliding-garden-lattice"},{"index":21,"labels":["毛稿","共修","页边"],"sectionGroups":[["draft","first-proof"],["red-pencil","revision","columns"],["margin","final-proof","outside-page"]],"kind":"narrative","mechanism":"retained-layer-reveal"},{"index":22,"labels":["原件","比照","未决"],"sectionGroups":[["case-intro","case-workflow"],["case-repair","report-process-repair"],["report-limits","report-next"]],"kind":"evidence-overlay","mechanism":"reversible-overlay-translation"},{"index":23,"labels":["展翼","半展","收翼"],"sectionGroups":[["chapter-4"],["chapter-6"],["afterword"]],"kind":"butterfly","mechanism":null},{"index":24,"labels":["开始","暂停·续行","结束"],"sectionGroups":[["daily"],["time"],["local"]],"kind":"quiet-timer","mechanism":"content-articulation"},{"index":25,"labels":["试墨","活字","接续"],"sectionGroups":[["brush"],["tools"],["research","forks","rights"]],"kind":"maker","mechanism":"shallow-exploded-joint"}];
   const clamp = (value, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, value));
   const clockText = seconds => {const whole=Math.ceil(Math.max(0,seconds));return Math.floor(whole/60)+':'+String(whole%60).padStart(2,'0');};
+  const PAUSABLE = new Set(['process','care-relay','elder-controls','api-route','handover','quiet-timer']);
   function create(options) {
     const T = options.THREE;
     if (!T) throw new Error('CourtyardBuildingActions requires THREE');
@@ -26,9 +31,11 @@
       if (states.has(index)) return states.get(index);
       const b = resolve(input), groups = sourceGroups(spec);
       const s = {index, spec, building: b, groups, phase: -1, counts: [0,0,0], sectionId: null,
-        elapsed: 0, remaining: 180, playing: false, progress: 0, seed: 0, template: 0,
+        elapsed: 0, remaining: 180, playing: false, progress: 0, seed: 0, template: 0, timerDeadline: null,
         archived: [], owned: [], restores: [], materialRestores: [], visibilityOwned: new Set(), sheet: null, signal: null, lastTick: now(),
-        mechanism: null, mechanismValue: 0, mechanismBound: false, revision: 0, availability: []};
+        mechanism: null, mechanismValue: 0, mechanismBound: false, revision: 0, availability: [],
+        paused: false, completed: false, reset: false, feedbackKey: '', readableSection: false,
+        originalActionState: b ? Object.getOwnPropertyDescriptor(b,'userActionState') : undefined};
       if (b && spec.mechanism) {
         s.mechanism = (b.mechanisms || []).find(m => m.kind === spec.mechanism);
         // Select by exact authored kind and expected object, never by arbitrary first vent.
@@ -40,6 +47,48 @@
         }
       }
       states.set(index, s); return s;
+    }
+    function feedbackFor(s) {
+      const kind=s.spec.kind,label=s.spec.labels[s.phase]||'',section=(catalog[s.index]?.sections||[]).find(x=>x.id===s.sectionId);
+      const status=s.reset?'reset':s.phase<0?'idle':s.playing?'running':s.paused?'paused':s.completed?'complete':'selected';
+      const resettable=kind!=='public-entry'&&kind!=='butterfly';
+      const group=s.groups[s.phase]||[],sectionOrdinal=group.indexOf(s.sectionId)+1;
+      let text=status==='idle'?'选择一项建筑体验':status==='reset'?'已复位 · 保留当前阅读':
+        status==='paused'?'已暂停 · '+label:status==='complete'?'已完成 · '+label:
+        status==='running'?label+' · 本地示意运行中':'已切换 · '+label;
+      if(kind==='public-entry'&&s.phase>=0)text='公开入口说明 · '+label;
+      if(kind==='process'&&s.playing)text='过程回看 · '+Math.min(4,Math.floor(s.progress*4)+1)+'/4';
+      if(kind==='privacy-window'&&s.phase>=0&&!s.reset)text=s.playing?'短显 · '+Math.ceil(s.remaining)+' 秒后归隐':'已归隐 · 未接入影像';
+      if(kind==='quiet-timer'&&s.phase>=0&&!s.reset)text=(s.playing?'安静停留':s.paused?'已暂停':s.completed?'停留结束':'待开始')+' · '+clockText(s.remaining);
+      if(status==='selected'&&group.length>1)text+=' · '+sectionOrdinal+'/'+group.length;
+      else if(status==='selected'&&s.counts[s.phase]>1)text+=' · 第 '+s.counts[s.phase]+' 次';
+      return {index:s.index,status,text,label,phase:s.phase,kind,sectionId:s.sectionId,sectionTitle:section?.title||'',
+        sectionOrdinal,sectionCount:group.length,actionCount:s.counts[s.phase]||0,playing:s.playing,paused:s.paused,completed:s.completed,
+        progress:s.progress,remaining:s.remaining,localOnly:true,
+        canPause:PAUSABLE.has(kind)&&s.playing,canResume:PAUSABLE.has(kind)&&s.paused,
+        canReset:resettable&&s.phase>=0&&!s.reset,resetLabel:'复位展陈'};
+    }
+    function feedback(input) {
+      if(disposed.value)return null;
+      const index=indexOf(input),s=states.get(index);
+      if(s)return feedbackFor(s);
+      const spec=SPECS[index];if(!spec)return null;
+      return {index,status:'idle',text:'选择一项建筑体验',label:'',phase:-1,kind:spec.kind,
+        sectionId:null,sectionTitle:'',sectionOrdinal:0,sectionCount:0,actionCount:0,playing:false,paused:false,completed:false,
+        progress:0,remaining:spec.kind==='quiet-timer'?180:0,localOnly:true,canPause:false,canResume:false,canReset:false,resetLabel:'复位展陈'};
+    }
+    function publishFeedback(s,force=false) {
+      const value=feedbackFor(s);
+      // Text changes at a stage/whole-second boundary; do not allocate host work at 60 Hz.
+      const key=[value.status,value.text,value.phase,value.sectionId,value.canPause,value.canResume,value.canReset].join('|');
+      if(force||key!==s.feedbackKey){
+        s.feedbackKey=key;
+        if(s.building?.userActionState)s.building.userActionState={...s.building.userActionState,
+          phase:s.phase,label:value.label,sectionId:s.sectionId,playing:s.playing,
+          physicalSheet:!!s.sheet,readableSection:s.readableSection,revision:s.revision,feedback:value};
+        if(typeof options.onFeedback==='function')options.onFeedback(s.index,value);
+      }
+      return value;
     }
     function bindMechanism(s) {
       if (!s.mechanism || s.mechanismBound) return;
@@ -172,7 +221,7 @@
         if(s.index===7){c.fillText('portable blender',60,132);c.fillText(['关键词 → 技术分类','专利 / 商标 → 来源比照','项目背景 + 待检索来源'][s.phase],60,211);c.fillStyle='#8b644e';c.fillText('待实际检索 · 没有鉴定结论',60,313);}
         if(s.index===10){c.fillText((s.counts[0]%2?'openai':'anthropic')+' → 兼容端点 → 模型路由',43,140);c.font='22px serif';c.fillText(s.phase===2?'成功率 —   延迟 —   吞吐 —':'应用 → 路由 → 响应形状',43,223);c.fillStyle='#846546';c.fillText('未发送请求 · 不产生模型输出',43,337);}
         if(s.index===12){c.fillText(s.phase===1&&s.playing?'示意事件剩余 '+Math.ceil(s.remaining)+' 秒':'匿名几何姿态',66,133);c.strokeStyle='#53675d';c.lineWidth=7;c.beginPath();c.arc(375,198,20,0,Math.PI*2);c.moveTo(375,222);c.lineTo(375,312);c.moveTo(313,270);c.lineTo(375,245);c.lineTo(437,270);c.moveTo(338,379);c.lineTo(375,312);c.lineTo(412,379);c.stroke();c.font='19px serif';c.fillText('未接入影像 · 未启用摄像头',60,424);}
-        if(s.index===24){c.font='80px serif';c.fillText(clockText(s.remaining),210,232);c.font='24px serif';c.fillText(s.playing?'计时中，可随时暂停':'静止，按开始重新计时',130,324);c.font='18px serif';c.fillText('自选安静停留，不提供医疗评估',120,405);}
+        if(s.index===24){c.font='80px serif';c.fillText(clockText(s.remaining),210,232);c.font='24px serif';c.fillText(s.playing?'计时中，可随时暂停':s.paused?'已暂停，可继续计时':s.completed?'本次停留已结束':'静止，按开始重新计时',130,324);c.font='18px serif';c.fillText('自选安静停留，不提供医疗评估',120,405);}
       });
     }
     function narrativeFocus(s) {
@@ -192,7 +241,7 @@
     }
     function runAction(s) {
       const p=s.phase, b=s.building, obj=s.mechanism?.object;
-      s.elapsed=0;s.progress=0;s.playing=false;s.lastTick=now();
+      s.elapsed=0;s.progress=0;s.playing=false;s.paused=false;s.completed=false;s.reset=false;s.lastTick=now();
       switch(s.spec.kind){
         case 'ink':
           sheet(s,[-4.8,1.105,-5.95],[2.75,1.53]);
@@ -205,7 +254,7 @@
           setMechanism(s,p/2);if(obj)focus(s,p===1?obj.children.filter((_,i)=>i%3===0):p===2?obj.children:[]);break;
         case 'process':
           sheet(s,[4.55,1.125,-6.6],[2.20,1.85]);
-          if(p===1){s.playing=!s.wasPlaying;s.progress=s.previousProgress;}else if(p===2)s.playing=true;
+          if(p===1){s.progress=s.previousProgress;s.playing=!s.wasPlaying&&s.progress<1;s.paused=s.wasPlaying;s.completed=s.progress===1;}else if(p===2)s.playing=true;
           setMechanism(s,s.progress);drawSmall(s);break;
         case 'care-relay':case 'elder-controls':
           if(s.index===4){const page=sheet(s,[-4.75,1.55,-5.68],[3.12,1.13]);if(page)page.mesh.rotation.set(0,Math.PI,0);}
@@ -250,7 +299,8 @@
           if(typeof options.onButterflyPhase==='function')options.onButterflyPhase(p,['open','half','closed'][p]);break;
         case 'quiet-timer':
           sheet(s,[4.8,.848,-6.0],[1.92,.95]);
-          if(p===0){s.remaining=180;s.playing=true;}else if(p===1){s.playing=!s.wasPlaying;s.remaining=s.previousRemaining;}else{s.remaining=180;s.playing=false;}
+          if(p===0){s.remaining=180;s.playing=true;}else if(p===1){s.remaining=s.previousRemaining;s.playing=!s.wasPlaying&&s.remaining>0;s.paused=s.wasPlaying;s.completed=s.remaining===0;}else{s.remaining=180;s.playing=false;}
+          s.timerDeadline=s.playing?now()+s.remaining:null;
           setMechanism(s,s.playing?.5:0);drawSmall(s);break;
         case 'maker':
           sheet(s,[5.35,1.155,.85],[3.34,2.52]);setMechanism(s,p===2?1:0);
@@ -264,6 +314,9 @@
       if(disposed.value)return {ok:false,reason:'disposed'};
       if(!Number.isInteger(phase)||phase<0||phase>2)return {ok:false,reason:'phase must be 0, 1, or 2'};
       const s=stateFor(input);if(!s)return {ok:false,reason:'unknown building'};
+      // The authored phase-1 control is also a pause/resume toggle. Settle a
+      // background interval before capturing it, just like the direct pause API.
+      if(s.spec.kind==='quiet-timer'&&phase===1)settleTimer(s);
       s.wasPlaying=s.playing;s.previousProgress=s.progress;s.previousRemaining=s.remaining;
       s.phase=phase;s.counts[phase]++;const ids=s.groups[phase];
       s.sectionId=ids.length?ids[(s.counts[phase]-1)%ids.length]:null;
@@ -274,59 +327,117 @@
         else if(s.building?.readingPanels?.setSection){read=s.building.readingPanels.setSection(s.sectionId)!==false;}
       }
       if(typeof options.onPhase==='function')options.onPhase(s.index,phase);
+      s.readableSection=read;
       const result={ok:!!s.building||s.spec.kind==='butterfly',index:s.index,phase,sectionId:s.sectionId,
         label:s.spec.labels[phase],kind:s.spec.kind,readableSection:read,localOnly:true,
         mechanism:!!s.mechanism,physicalSheet:!!s.sheet,playing:s.playing,revision:s.revision,
         effectAvailable:!!s.mechanism||!!s.sheet||read||(s.spec.kind==='butterfly'&&typeof options.onButterflyPhase==='function')};
-      if(s.building)s.building.userActionState=result;return result;
+      result.feedback=feedbackFor(s);
+      if(s.building)s.building.userActionState=result;publishFeedback(s,true);return result;
+    }
+    function settleTimer(s) {
+      if(!s.playing||s.spec.kind!=='quiet-timer')return;
+      // An explicit deadline catches up suspended frames without subtracting
+      // time twice when update(dt) already advanced the local countdown.
+      const remaining=Number.isFinite(s.timerDeadline)?s.timerDeadline-now():s.remaining-Math.max(0,now()-s.lastTick);
+      s.remaining=Math.min(s.remaining,Math.max(0,remaining));
+      if(!s.remaining){s.playing=false;s.paused=false;s.completed=true;s.timerDeadline=null;setMechanism(s,0);}
+    }
+    function pause(input) {
+      if(disposed.value)return {ok:false,reason:'disposed'};
+      const s=states.get(indexOf(input));if(!s)return {ok:false,reason:'no active action'};
+      if(!PAUSABLE.has(s.spec.kind))return {ok:false,reason:'action cannot be paused',feedback:feedbackFor(s)};
+      if(!s.playing)return {ok:s.paused,reason:s.paused?'already paused':'action is not running',feedback:feedbackFor(s)};
+      // Settle a real timer before stopping it, including a background-tab interval.
+      if(s.spec.kind==='quiet-timer'){
+        settleTimer(s);
+        if(!s.playing){drawSmall(s);return {ok:false,reason:'action completed',feedback:publishFeedback(s)};}
+      }
+      s.playing=false;s.paused=true;s.lastTick=now();s.timerDeadline=null;
+      if(s.spec.kind==='quiet-timer'||s.spec.kind==='process')drawSmall(s);
+      return {ok:true,feedback:publishFeedback(s)};
+    }
+    function resume(input) {
+      if(disposed.value)return {ok:false,reason:'disposed'};
+      const s=states.get(indexOf(input));if(!s)return {ok:false,reason:'no active action'};
+      if(!PAUSABLE.has(s.spec.kind))return {ok:false,reason:'action cannot be resumed',feedback:feedbackFor(s)};
+      if(!s.paused)return {ok:s.playing,reason:s.playing?'already running':'action is not paused',feedback:feedbackFor(s)};
+      s.playing=true;s.paused=false;s.lastTick=now();
+      if(s.spec.kind==='quiet-timer')s.timerDeadline=s.lastTick+s.remaining;
+      if(s.spec.kind==='quiet-timer'||s.spec.kind==='process')drawSmall(s);
+      return {ok:true,feedback:publishFeedback(s)};
+    }
+    function releaseEffects(s) {
+      restoreFocus(s);s.restores.splice(0).reverse().forEach(fn=>fn());
+      const materials=new Set(),geometries=new Set();
+      for(const object of s.owned){object.parent?.remove(object);object.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)for(const m of(Array.isArray(o.material)?o.material:[o.material]))materials.add(m);});}
+      s.sheet?.texture.dispose();materials.forEach(m=>m.dispose());geometries.forEach(g=>g.dispose());
+      s.owned=[];s.sheet=null;s.signal=null;s.visibilityOwned.clear();s.mechanismBound=false;
+    }
+    function reset(input) {
+      if(disposed.value)return {ok:false,reason:'disposed'};
+      const s=states.get(indexOf(input));if(!s)return {ok:false,reason:'no active action'};
+      if(s.spec.kind==='public-entry'||s.spec.kind==='butterfly')return {ok:false,reason:'no local resettable effect',feedback:feedbackFor(s)};
+      if(s.reset)return {ok:true,feedback:feedbackFor(s)};
+      releaseEffects(s);s.phase=-1;s.playing=false;s.paused=false;s.completed=false;s.reset=true;
+      s.elapsed=0;s.progress=0;s.remaining=s.spec.kind==='quiet-timer'?180:0;s.timerDeadline=null;s.seed=0;s.template=0;s.archived=[];
+      s.mechanismValue=s.spec.kind==='privacy-window'?0:Number.isFinite(s.mechanism?.openness)?s.mechanism.openness:0;s.lastTick=now();
+      // Hold the restored state against the host's global roof animation. Privacy
+      // reset always closes its local shutter, even if the original global phase moved.
+      if(s.mechanism)setMechanism(s,s.mechanismValue);
+      // Keep counts and sectionId: a visual reset never rewinds or advances reading.
+      return {ok:true,feedback:publishFeedback(s)};
     }
     function update(dt) {
       if(disposed.value)return;dt=clamp(Number(dt)||0,0,1);
       for(const s of states.values()){
         if(!s.playing)continue;const wallStep=Math.max(dt,Math.max(0,now()-s.lastTick));s.lastTick=now();s.elapsed+=dt;
+        const feedbackSecond=Math.ceil(s.remaining),feedbackStage=Math.floor(s.progress*4);
         if(s.spec.kind==='process'){
           const old=Math.min(3,Math.floor(s.progress*4));s.progress=clamp(s.progress+dt/16);
           setMechanism(s,isReduced()?Math.min(3,Math.floor(s.progress*4))/3:s.progress);
           if(old!==Math.min(3,Math.floor(s.progress*4))||s.progress===1)drawSmall(s);
-          if(s.progress===1)s.playing=false;
+          if(s.progress===1){s.playing=false;s.completed=true;}
         }else if(s.spec.kind==='privacy-window'){
           const old=Math.ceil(s.remaining);s.remaining=Math.max(0,s.remaining-wallStep);
-          if(!s.remaining){s.playing=false;setMechanism(s,0);}
+          if(!s.remaining){s.playing=false;s.completed=true;setMechanism(s,0);}
           if(old!==Math.ceil(s.remaining))drawSmall(s);
         }else if(s.spec.kind==='quiet-timer'){
-          const old=Math.ceil(s.remaining);s.remaining=Math.max(0,s.remaining-wallStep);
+          const old=Math.ceil(s.remaining);s.remaining=Math.max(0,s.remaining-dt);settleTimer(s);
           setMechanism(s,isReduced()?.5:(.5-.5*Math.cos(s.elapsed*Math.PI/4)));
-          if(!s.remaining){s.playing=false;setMechanism(s,0);}
+          if(!s.remaining){s.playing=false;s.completed=true;s.timerDeadline=null;setMechanism(s,0);}
           if(old!==Math.ceil(s.remaining))drawSmall(s);
         }else if(s.spec.kind==='handover'){
           const distance=.75-s.progress;
           s.progress=isReduced()?.75:s.progress+Math.sign(distance)*Math.min(Math.abs(distance),dt/24);
-          setMechanism(s,s.progress);if(Math.abs(s.progress-.75)<1e-9)s.playing=false;
+          setMechanism(s,s.progress);if(Math.abs(s.progress-.75)<1e-9){s.playing=false;s.completed=true;}
         }else if(s.signal){
           const duration=s.spec.kind==='api-route'?4:3,t=clamp(s.elapsed/duration);
           const bounce=s.spec.kind==='api-route'?(t<.5?t*2:2-t*2):t;
           s.signal.token.position.x=isReduced()?(t<.5?-.7:.7):((s.direction===-1?1-bounce:bounce)*1.4-.7);
-          if(t===1)s.playing=false;
+          if(t===1){s.playing=false;s.completed=true;}
         }
+        // Most frames only move existing geometry. Build host feedback only at
+        // a meaningful stage/deadline boundary or when playback actually ends.
+        if(!s.playing||((s.spec.kind==='quiet-timer'||s.spec.kind==='privacy-window')&&feedbackSecond!==Math.ceil(s.remaining))||
+          (s.spec.kind==='process'&&feedbackStage!==Math.floor(s.progress*4)))publishFeedback(s);
       }
     }
     function inspect(index) {
       const s=states.get(Number(index));if(!s)return null;
       return {index:s.index,phase:s.phase,counts:s.counts.slice(),sectionId:s.sectionId,kind:s.spec.kind,
-        playing:s.playing,elapsed:s.elapsed,remaining:s.remaining,progress:s.progress,seed:s.seed,template:s.template,
+        playing:s.playing,paused:s.paused,completed:s.completed,feedback:feedbackFor(s),elapsed:s.elapsed,remaining:s.remaining,progress:s.progress,seed:s.seed,template:s.template,
         archived:s.archived.slice(),mechanismValue:s.mechanismValue,sheetRevision:s.sheet?.revision||0,
         ownedObjects:s.owned.map(o=>o.name),sourceGroups:s.groups.map(g=>g.slice())};
     }
     function dispose(){
       if(disposed.value)return;disposed.value=true;
       for(const s of states.values()){
-        restoreFocus(s);s.restores.reverse().forEach(fn=>fn());
-        const materials=new Set(), geometries=new Set();
-        for(const object of s.owned){object.parent?.remove(object);object.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.material)materials.add(o.material);});}
-        s.sheet?.texture.dispose();materials.forEach(m=>m.dispose());geometries.forEach(g=>g.dispose());
+        releaseEffects(s);
+        if(s.building){if(s.originalActionState)Object.defineProperty(s.building,'userActionState',s.originalActionState);else delete s.building.userActionState;}
       }states.clear();
     }
-    return {apply,update,inspect,dispose,describe(index){const spec=SPECS[Number(index)];return spec?{index:spec.index,labels:spec.labels.slice(),actions:spec.labels.map((label,phase)=>({label,description:label+' · '+(sourceGroups(spec)[phase].map(id=>(catalog[spec.index]?.sections||[]).find(x=>x.id===id)?.title).filter(Boolean).join(' / '))})),kind:spec.kind,sectionGroups:sourceGroups(spec)}:null;}};
+    return {apply,update,inspect,feedback,pause,resume,reset,dispose,describe(index){const spec=SPECS[Number(index)];return spec?{index:spec.index,labels:spec.labels.slice(),actions:spec.labels.map((label,phase)=>({label,description:label+' · '+(sourceGroups(spec)[phase].map(id=>(catalog[spec.index]?.sections||[]).find(x=>x.id===id)?.title).filter(Boolean).join(' / '))})),kind:spec.kind,sectionGroups:sourceGroups(spec)}:null;}};
   }
-  global.CourtyardBuildingActions = Object.freeze({create,version:'1.0.0',count:26});
+  global.CourtyardBuildingActions = Object.freeze({create,version:'1.1.0',count:26});
 })(typeof window!=='undefined'?window:globalThis);
