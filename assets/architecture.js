@@ -703,6 +703,7 @@
       }
       hingeLeaf('document-hall-shutter', -6.8, 4, -6.9, 1.4, 1.6, 'shutter');
       description = 'Butterfly-roof document hall with a bronze rain spine and long bid-review tables'; signY = 5.2;
+      global.CourtyardDossierDetail.attach(b);
     } else if (i === 12) {
       w = 18; d = 15; deck(w, d);
       // Lighthouse occupies the west edge, leaving a full ground-floor arcade.

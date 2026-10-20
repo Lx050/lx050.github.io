@@ -5,7 +5,7 @@ const root=path.resolve(__dirname,'..'),T=require(root+'/vendor/three.min.js'),o
 const baseline='f284106f4c7cba7e4bd7d8fa7befa641865c80ec';
 function load(old,withoutOldRoofs=false){
   const c={console};c.window=c;vm.createContext(c);
-  for(const name of [...(!old?['vault-detail','rss-detail']:[]),'architecture','content-core',...(!old?['twinstars-detail','causal-detail']:[]),...(!old?['versions-detail']:[]),...(!old?['city-detail','portraits-detail']:[]),...(!old?['session-detail']:[]),'content-narratives']){
+  for(const name of [...(!old?['dossier-detail','vault-detail','rss-detail']:[]),'architecture','content-core',...(!old?['twinstars-detail','causal-detail']:[]),...(!old?['versions-detail']:[]),...(!old?['city-detail','portraits-detail']:[]),...(!old?['session-detail']:[]),'content-narratives']){
     const file='assets/'+name+'.js';let source=old?cp.execFileSync('git',['-C',root,'show',baseline+':'+file],{encoding:'utf8',maxBuffer:32*1024*1024}):fs.readFileSync(root+'/'+file,'utf8');
     if(withoutOldRoofs&&name==='content-narratives')for(const line of ["      b.barrel(x,0,6.55,16.6,6.27,2.72,'copper');", "      b.box('cedar',x,5.97,0,6.55,.18,15.7);"]){assert.equal(source.split(line).length,2,'one exact approved roof replacement');source=source.replace(line,'');}
     vm.runInContext(source,c,{filename:file});
