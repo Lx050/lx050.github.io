@@ -19,6 +19,70 @@
     let shelterRays = 0, rayBudget = 0, shelterVersion = 0, lastShelterCheck = -100;
     let lastBuildingCount = -1, nearby = [], shelterCache = new Map(), modelCache = new WeakMap();
     let dynamicShelters = [], dynamicCache = new WeakMap(), dynamicRebuilds = 0, dynamicTriangleTests = 0;
+    // Explicit material ownership, never a world traversal. Each material must
+    // represent one exposure (e.g. exposed paving, roof top, or sheltered soffit).
+    // Register separate materials for dry shelter interiors; geometry shelters
+    // below remain the authority for particles, not this visual weather tint.
+    const MAX_SURFACES = 96, surfaces = new Map();
+    const surfaceProfiles = {
+      ground: {darken: .18, smooth: .13, snow: .22},
+      paving: {darken: .24, smooth: .28, snow: .32},
+      roof: {darken: .16, smooth: .18, snow: .30},
+      vegetation: {darken: .12, smooth: .10, snow: .15},
+      wood: {darken: .18, smooth: .12, snow: .12}
+    };
+    const snowTint = new T.Color(0xe1e9e3).convertSRGBToLinear();
+    let weatherEnabled = true, surfaceState = 'dry', surfaceWrites = 0;
+    function restoreSurface(record) {
+      record.material.color.copy(record.color);
+      if (record.roughness !== null) record.material.roughness = record.roughness;
+    }
+    function applySurface(record) {
+      // Always derive from the authored base, never from the last weather mode.
+      // Color/roughness uniform changes do not trigger shader recompilation,
+      // allocate textures, add draws, or introduce motion in reduced-motion mode.
+      restoreSurface(record);
+      const {material, profile, exposure} = record;
+      if (surfaceState === 'wet') {
+        material.color.multiplyScalar(1 - profile.darken * exposure);
+        if (record.roughness !== null) material.roughness = Math.max(Math.min(record.roughness, .45), record.roughness - profile.smooth * exposure);
+      } else if (surfaceState === 'snow') {
+        material.color.lerp(snowTint, profile.snow * exposure);
+        if (record.roughness !== null) material.roughness += (1 - material.roughness) * profile.snow * exposure;
+      }
+      surfaceWrites++;
+    }
+    function syncSurfaces() {
+      const next = !weatherEnabled ? 'dry' : mode === 'rain' || mode === 'storm' ? 'wet' : mode === 'snow' ? 'snow' : 'dry';
+      if (next === surfaceState) return;
+      surfaceState = next;
+      for (const record of surfaces.values()) applySurface(record);
+    }
+    // Opt in with [{material, kind:'paving', exposure:1}, ...]. Exposure is a
+    // clamped authored value, not a per-frame ray query. Use 0 under shelter and
+    // an intermediate value at the eaves. Do not bind a material also controlled
+    // by another color animation. Repeated/shared materials are first-owner-wins.
+    // The returned unbind restores exactly what this call originally registered.
+    function bindSurfaces(entries) {
+      const owned = [];
+      if (!disposed && Array.isArray(entries)) {
+        for (const entry of entries) {
+          if (surfaces.size >= MAX_SURFACES) break;
+          const material = entry && entry.material;
+          if (!material?.isMaterial || !material.color?.isColor || surfaces.has(material)) continue;
+          const exposure = Number.isFinite(entry.exposure) ? Math.max(0, Math.min(1, entry.exposure)) : 1;
+          const record = {material, color: material.color.clone(), roughness: Number.isFinite(material.roughness) ? material.roughness : null,
+            profile: Object.prototype.hasOwnProperty.call(surfaceProfiles, entry.kind) ? surfaceProfiles[entry.kind] : surfaceProfiles.ground, exposure};
+          surfaces.set(material, record); owned.push(record); applySurface(record);
+        }
+      }
+      return function unbindSurfaces() {
+        for (const record of owned) if (surfaces.get(record.material) === record) {
+          restoreSurface(record); surfaces.delete(record.material);
+        }
+        owned.length = 0;
+      };
+    }
     const center = new T.Vector3(), previousCenter = new T.Vector3(Infinity, Infinity, Infinity);
     const down = new T.Vector3(0, -1, 0), origin = new T.Vector3(), forward = new T.Vector3();
     const ray = new T.Raycaster(), instanceMatrix = new T.Matrix4(), worldMatrix = new T.Matrix4();
@@ -258,15 +322,16 @@
       p.phase = random() * Math.PI * 2; p.speed = .65 + random() * .7; p.born = true;
     }
     function setMode(value) {
-      if (!MODES.includes(value)) return false;
+      if (disposed || !MODES.includes(value)) return false;
       if (mode === value) return true;
       mode = value; bolt.visible = false; boltAge = -1; nextBolt = elapsed + 12;
       for (const p of states) p.born = false;
-      root.visible = mode !== 'clear'; snow.visible = mode === 'snow' || mode === 'wind'; rain.visible = mode === 'rain' || mode === 'storm';
+      root.visible = mode !== 'clear' && weatherEnabled; snow.visible = mode === 'snow' || mode === 'wind'; rain.visible = mode === 'rain' || mode === 'storm';
       snow.name = mode === 'wind' ? 'weather-wind-seeds' : 'weather-snowflakes';
       snowMaterial.color.setHex(mode === 'wind' ? 0xc7c4a7 : 0xedf3f3);
       snowMaterial.size = mode === 'wind' ? .085 : .11;
       snowMaterial.opacity = mode === 'wind' ? .62 : .86;
+      syncSurfaces();
       return true;
     }
     function invalidateShelter() { shelterVersion++; shelterCache.clear(); lastShelterCheck = -100; }
@@ -275,7 +340,8 @@
       state = state || {}; dt = Number.isFinite(dt) ? Math.min(.06, Math.max(0, dt)) : 0;
       reduced = state.reduced === undefined ? reduced : !!state.reduced;
       lightQuality = state.lightQuality === undefined ? lightQuality : !!state.lightQuality;
-      root.visible = mode !== 'clear' && state.enabled !== false;
+      weatherEnabled = state.enabled !== false; syncSurfaces();
+      root.visible = mode !== 'clear' && weatherEnabled;
       if (!root.visible) { visibleCount = count = 0; bolt.visible = false; return; }
       elapsed += dt; shelterRays = 0; dynamicTriangleTests = 0; rayBudget = lightQuality ? 12 : 24;
       // Center in the viewed space, between the visitor and the camera's look
@@ -330,15 +396,19 @@
       dynamicShelters: dynamicShelters.length, dynamicTriangles: dynamicShelters.reduce((n,r)=>n+r.triangleCount,0),
       dynamicRebuilds, dynamicTriangleTests, shelterQueries: shelterRays, shelterCacheCells: shelterCache.size,
       groundY: lastGround, depthTest: snowMaterial.depthTest && rainMaterial.depthTest, lightningVisible: bolt.visible,
-      lightningOpacity: boltMaterial.opacity, lightningMinInterval: 35, screenFlash: false}; }
+      lightningOpacity: boltMaterial.opacity, lightningMinInterval: 35, screenFlash: false,
+      surfaceState, surfaceBindings: surfaces.size, maxSurfaceBindings: MAX_SURFACES, surfaceWrites}; }
     function dispose() {
       if (disposed) return; disposed = true; scene.remove(root);
+      for (const record of surfaces.values()) restoreSurface(record);
+      surfaces.clear(); surfaceState = 'dry';
       for (const resource of [snowGeometry, rainGeometry, boltGeometry, snowMaterial, rainMaterial, boltMaterial, map, probe.material, probeGeometry]) resource.dispose();
       shelterCache.clear(); nearby = []; modelCache = new WeakMap(); dynamicShelters = []; dynamicCache = new WeakMap();
     }
     root.visible = false; snow.visible = rain.visible = false;
+    bindSurfaces(options.surfaces);
     return Object.freeze({setMode, setWind(value) { wind = Math.max(0, Math.min(2, Number(value) || 0)); return wind; },
-      update, inspect, sampleShelter, invalidateShelter, dispose, get root() { return root; }, get mode() { return mode; }});
+      update, inspect, sampleShelter, invalidateShelter, bindSurfaces, dispose, get root() { return root; }, get mode() { return mode; }});
   }
   global.CourtyardWeather = Object.freeze({create, modes: MODES.slice()});
 })(window);
