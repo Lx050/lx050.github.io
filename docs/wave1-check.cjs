@@ -1,14 +1,13 @@
-/* Run against a local static server. Test tooling is external to the shipped single file.
+/* Historical Wave 2A-r1 browser acceptance, NOT current crafted-building acceptance.
+   Source-only compatibility: node docs/wave1-check.cjs --source-only
+   Historical browser run against a local static server:
    PLAYWRIGHT_PATH=/path/to/playwright node docs/wave1-check.cjs http://127.0.0.1:8874
    WAVE1_ARTIFACTS=/tmp/wave2r1-qa controls screenshots and JSON report. */
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict'),crypto=require('node:crypto');
-const {chromium}=require(process.env.PLAYWRIGHT_PATH||'playwright');
-const url=process.argv[2]||'http://127.0.0.1:8874';
+const {verifySourceContract}=require('./wave1-source-contract.cjs');
+const url=process.argv.slice(2).find(arg=>!arg.startsWith('--'))||'http://127.0.0.1:8874';
 const out=process.env.WAVE1_ARTIFACTS||'/tmp/wave2r1-qa';fs.mkdirSync(out,{recursive:true});
 const html=fs.readFileSync(path.join(__dirname,'../index.html'),'utf8');
-assert.equal(html,fs.readFileSync(path.join(__dirname,'../island.html'),'utf8'));
-for(const [pattern,hash] of [[/const LINKS = (\[[\s\S]*?\n\]);/,'ace50acab071aea8f309c15e55bc67c2afc8e17f36b5a4544a980c942c1f1d42'],[/const TRACKS=(\[[\s\S]*?\n\]);/,'da871476abe678cee5e02d374c710a1ec98d904195550ca94ab30d34ee8a558b']])assert.equal(crypto.createHash('sha256').update(html.match(pattern)[1]).digest('hex'),hash);
-assert(!/<script[^>]+src=["']https?:/.test(html));
 // Verify the binary's real transforms/accessors before any browser adaptation.
 function measureButterflyGLB(){
  const THREE=require('../vendor/three.min.js'),buffer=fs.readFileSync(path.join(__dirname,'../assets/models/LM24_Butterfly.glb'));
@@ -23,7 +22,6 @@ function measureButterflyGLB(){
  const pivotY=(parts.WingLL.max[1]+parts.WingUL.min[1])/2;assert(Math.abs(pivotY-1.145)<1e-6);assert(Math.abs(parts.Body.max[0]-.045)<1e-6);
  return {nodes:g.nodes.length,meshes:g.meshes.length,materials:g.materials.length,skins:0,animations:0,parts,pivotY};
 }
-const butterflySource=measureButterflyGLB();
 
 // Display-space luminance: full composited WebGL frame, before HTML HUD/vignette.
 // Night mean .025–.32; solid monument mean .025–.48 and p95 <=.65.
@@ -193,14 +191,26 @@ async function butterflyAudit(p,mobile){
 }
 
 async function run(){
- const browser=await chromium.launch({channel:'chrome',headless:true});const report={wave:'2A-r1',butterflySource,generatedAt:new Date().toISOString(),sourceSha256:crypto.createHash('sha256').update(html).digest('hex'),complete:false,thresholds:{whiteDesktop:.02,whiteMobile:.04,maxWhiteComponent:.005,nightMean:[.025,.32],bodyMean:[.025,.48],bodyP95:.65,maxUnbrokenPlane:12,viewKDesktop:.5,viewKPortrait:.62}};
+ let browser,activePage;
+ const report={wave:'2A-r1',acceptanceScope:'Historical browser/geometry contract; not current crafted-building acceptance',generatedAt:new Date().toISOString(),sourceSha256:crypto.createHash('sha256').update(html).digest('hex'),browserRun:false,complete:false,thresholds:{whiteDesktop:.02,whiteMobile:.04,maxWhiteComponent:.005,nightMean:[.025,.32],bodyMean:[.025,.48],bodyP95:.65,maxUnbrokenPlane:12,viewKDesktop:.5,viewKPortrait:.62}};
  try{
+ report.stage='source-contract';
+ report.sourcePreflight=verifySourceContract(html,fs.readFileSync(path.join(__dirname,'../island.html'),'utf8'));
+ report.stage='historical-binary-contract';report.butterflySource=measureButterflyGLB();
+ if(process.argv.includes('--source-only')){report.stage='source-complete';report.sourceOnly=true;console.log(JSON.stringify(report,null,2));return;}
+ report.stage='browser-launch';const {chromium}=require(process.env.PLAYWRIGHT_PATH||'playwright');
+ browser=await chromium.launch({channel:'chrome',headless:true});report.browserRun=true;
  for(const mobile of [false,true]){
   const context=await browser.newContext({viewport:mobile?{width:390,height:844}:{width:1440,height:900},deviceScaleFactor:mobile?3:1,isMobile:mobile,hasTouch:mobile});
   await context.addInitScript(()=>{const raf=window.requestAnimationFrame.bind(window);window.requestAnimationFrame=fn=>raf(function tick(t){if(window.__pauseFrames)raf(tick);else fn(t);});const AudioNative=window.Audio;window.__testAudio=[];window.Audio=function(...args){const a=new AudioNative(...args);window.__testAudio.push(a);return a;};window.Audio.prototype=AudioNative.prototype;});
   await context.route('**/*',route=>{if(new URL(route.request().url()).origin!==new URL(url).origin)return route.fulfill({status:200,contentType:'text/html',body:'<title>Destination intercepted by regression test</title>'});return route.continue();});
-  const p=await context.newPage(),errors=[];p.on('pageerror',e=>{errors.push(e.stack);console.error(e.stack)});p.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
-  await p.goto(url);await p.waitForFunction(()=>window.__garden?.modelLoads.loaded.length===34);
+  const p=await context.newPage(),errors=[];activePage=p;p.on('pageerror',e=>{errors.push(e.stack);console.error(e.stack)});p.on('console',m=>{if(m.type()==='error')errors.push(m.text())});
+  report.stage='page-load';await p.goto(url);
+  report.stage='runtime-readiness';await p.waitForFunction(()=>window.__garden||document.querySelector('#error')?.hidden===false);
+  if(!await p.evaluate(()=>!!window.__garden))throw new Error('3D runtime did not initialize: '+await p.locator('#error').innerText());
+  report.stage='legacy-architecture-contract';
+  if(await p.evaluate(()=>__garden.landmarks.some(l=>!!l.crafted)))throw new Error('This historical suite assumes monument GLBs, 34 model loads and 24m+ heights. Current crafted buildings require their own browser acceptance; legacy thresholds have not been weakened.');
+  report.stage='legacy-browser-acceptance';await p.waitForFunction(()=>window.__garden?.modelLoads.loaded.length===34);
   const initial=await p.evaluate(()=>({y:__garden.camera.position.y,loads:__garden.modelLoads,far:__garden.camera.far,radius:__garden.WORLD.ISLAND_RADIUS}));
   assert.equal(initial.loads.failed.length,0);assert(initial.y<6);assert(initial.far>=2200);assert(initial.radius===150);
   const photos={};await p.evaluate(()=>__garden.setSky(.55));await p.waitForTimeout(100);photos.intro=await exposure(p,'intro',mobile);await p.click('#start');
@@ -277,6 +287,11 @@ async function run(){
  const fallback=await browser.newPage();await fallback.route('**/*.glb',r=>r.abort());await fallback.goto(url);await fallback.waitForFunction(()=>window.__garden?.modelLoads.failed.length===34);
  assert(await fallback.evaluate(()=>__garden.landmarks.every(l=>l.bboxHeight>=24&&Math.abs(l.groundY-l.platformY)<.001)&&__garden.mathMonuments[0].bboxHeight>=48));const fallbackDressing=await dressingAudit(fallback,true);assert.deepEqual(fallbackDressing.errors,[]);assert.equal(fallbackDressing.rows.length,29);await fallback.screenshot({path:path.join(out,'fallback.png')});await fallback.close();report.fallback={passed:true,dressing:fallbackDressing};
  report.complete=true;fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify({desktop:report.desktop.performance,mobile:report.mobile.performance,fallback:true,artifacts:out},null,2));
- }catch(error){report.failure=String(error);throw error;}finally{fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(report,null,2));await browser.close();}
+ }catch(error){
+  report.failure=String(error);report.failureStage=report.stage;
+  report.failureClassification=report.stage==='source-contract'?'source-contract':report.stage==='browser-launch'?'browser-environment':report.stage==='legacy-architecture-contract'?'legacy-contract-not-applicable':report.stage.startsWith('legacy-')?'historical-acceptance-failure':'runtime-or-environment-needs-investigation';
+  if(activePage&&!activePage.isClosed())report.runtimeDiagnostics=await activePage.evaluate(()=>({hasGarden:!!window.__garden,errorText:document.querySelector('#error')?.innerText||'',loads:window.__garden?.modelLoads||null,craftedBuildings:window.__garden?.landmarks.filter(l=>!!l.crafted).length??null})).catch(()=>null);
+  throw error;
+ }finally{fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(report,null,2));await browser?.close();}
 }
 run().catch(e=>{console.error(e);process.exitCode=1});
