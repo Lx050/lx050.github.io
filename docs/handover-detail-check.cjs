@@ -8,7 +8,7 @@ const root=path.resolve(__dirname,'..'),T=require(root+'/vendor/three.min.js'),o
 const baseline='62e4317998f330c1adcc4f94a70395a1427e7681';
 function load(old){
  const c={console,document:{createElement(){const canvas={width:0,height:0,operations:[]};canvas.getContext=()=>new Proxy({measureText:t=>({width:String(t).length*10}),createLinearGradient:()=>({addColorStop(...args){canvas.operations.push(['addColorStop',...args]);}})},{get:(o,k)=>o[k]||((...args)=>canvas.operations.push([k,...args])),set:(o,k,v)=>{canvas.operations.push(['set',k,v]);o[k]=v;return true;}});return canvas;}}};c.window=c;vm.createContext(c);
- for(const n of [...(!old?['vault-detail','rss-detail']:[]),'architecture','content-core',...(!old&&fs.existsSync(root+'/assets/handover-detail.js')?['handover-detail']:[]),'content-literary','reading-catalog','reading-panels']){const file='assets/'+n+'.js',source=old?cp.execFileSync('git',['-C',root,'show',baseline+':'+file],{encoding:'utf8',maxBuffer:32*1024*1024}):fs.readFileSync(root+'/'+file,'utf8');vm.runInContext(source,c,{filename:file});}return c;
+ for(const n of [...(!old?['dossier-detail','vault-detail','rss-detail']:[]),'architecture','content-core',...(!old&&fs.existsSync(root+'/assets/handover-detail.js')?['handover-detail']:[]),'content-literary','reading-catalog','reading-panels']){const file='assets/'+n+'.js',source=old?cp.execFileSync('git',['-C',root,'show',baseline+':'+file],{encoding:'utf8',maxBuffer:32*1024*1024}):fs.readFileSync(root+'/'+file,'utf8');vm.runInContext(source,c,{filename:file});}return c;
 }
 const now=load(false),old=load(true),build=c=>c.CourtyardArchitecture.build({THREE:T,index:19,title:'置身青媒内',zone:0});
 const b=build(now),before=build(old),detail=b.root.getObjectByName('handover-blender-static');

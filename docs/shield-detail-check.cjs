@@ -7,7 +7,7 @@ const root=path.resolve(__dirname,'..'),T=require(root+'/vendor/three.min.js'),o
 const baseline='603d27c49075c6139da63d8c114e1120e4bcfc91';
 function load(old){
  const c={console,document:{createElement(){return{width:0,height:0,getContext(){return new Proxy({measureText:t=>({width:String(t).length*10}),createLinearGradient:()=>({addColorStop(){}})},{get:(o,k)=>o[k]||(()=>{})});}};}}};c.window=c;vm.createContext(c);
- for(const n of [...(!old?['vault-detail','rss-detail']:[]),'architecture','content-core',...(!old?['shield-detail']:[]),...(!old?['gateway-detail']:[]),...(!old?['reme-detail']:[]),...(!old?['mindcare-detail']:[]),'content-services','reading-catalog','reading-panels']){const file='assets/'+n+'.js',source=old?cp.execFileSync('git',['-C',root,'show',baseline+':'+file],{encoding:'utf8',maxBuffer:32*1024*1024}):fs.readFileSync(root+'/'+file,'utf8');vm.runInContext(source,c,{filename:file});}return c;
+ for(const n of [...(!old?['dossier-detail','vault-detail','rss-detail']:[]),'architecture','content-core',...(!old?['shield-detail']:[]),...(!old?['gateway-detail']:[]),...(!old?['reme-detail']:[]),...(!old?['mindcare-detail']:[]),'content-services','reading-catalog','reading-panels']){const file='assets/'+n+'.js',source=old?cp.execFileSync('git',['-C',root,'show',baseline+':'+file],{encoding:'utf8',maxBuffer:32*1024*1024}):fs.readFileSync(root+'/'+file,'utf8');vm.runInContext(source,c,{filename:file});}return c;
 }
 const now=load(false),old=load(true),build=c=>c.CourtyardArchitecture.build({THREE:T,index:7,title:'金陵专利局',zone:0});
 const b=build(now),before=build(old),detail=b.root.getObjectByName('shield-blender-static');assert(detail&&detail.parent===b.root);
