@@ -209,7 +209,10 @@
         }
       }
       for (const z of [-5.6, 0, 4.45]) b.beam('steel', [s * 5.95, 5.08, z], [s * 5.95, 7.05, z], .045, .045, true);
-      returnedPath(b, s, 3.55, -6.7, 6.8, 'ceramic');
+      if (s > 0) {
+        // Follow the verified bypass around the fixed reading rest, not through it.
+        C.pathLine(b, [[0, -6.9], [2.1, -6.9], [2.1, -4.7], [3.55, -4.7], [3.55, 6.8], [0, 6.8]], 'ceramic', .04);
+      } else returnedPath(b, s, 3.55, -6.7, 6.8, 'ceramic');
       // A comparison bench, with blank metrics strips: no invented throughput.
       b.table(s * 5.9, .55, 3.5, 1.45, .99, 'oak');
       for (const off of [-.6, .6]) {
