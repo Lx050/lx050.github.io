@@ -673,6 +673,7 @@
       ring('bronze', -4.6, 3.1, -7.72, .62, .07, null, true);
       for (let n = 0; n < 8; n++) { const a = n * TAU / 8; beam('bronze', [-4.6, 3.1, -7.74], [-4.6 + Math.cos(a) * .62, 3.1 + Math.sin(a) * .62, -7.74], .048, .048, true); }
       skylight(0, 3, 10.04, 1.4, 2); description = 'Copper barrel-vault archive with stone buttresses, secure drawers and a monumental wheel door parked clear of the entrance'; signY = 5.4;
+      global.CourtyardVaultDetail.attach(b);
     } else if (i === 10) {
       w = 18; d = 15; deck(w, d);
       for (const s of [-1, 1]) {

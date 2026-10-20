@@ -7,7 +7,7 @@ const crypto = require('crypto');
 const root = path.resolve(__dirname, '..');
 const THREE = require(path.join(root, 'vendor/three.min.js'));
 const sources = [
-  'assets/rss-detail.js','assets/architecture.js', 'assets/content-core.js',
+  'assets/vault-detail.js','assets/rss-detail.js','assets/architecture.js', 'assets/content-core.js',
   'assets/shield-detail.js','assets/gateway-detail.js','assets/reme-detail.js','assets/mindcare-detail.js','assets/content-services.js', 'assets/rubbing-detail.js','assets/proof-detail.js','assets/workshop-detail.js','assets/handover-detail.js','assets/content-literary.js'
 ];
 const context = {

@@ -1,0 +1,50 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Vaultwarden · 开放门廊</title><style>body{margin:0;background:#e5e2d8}canvas{display:block}aside{position:absolute;left:24px;top:20px;max-width:310px;font:15px/1.5 system-ui;color:#343e36;background:#f8f5ebed;padding:14px 18px}small{display:block;font-size:11px;margin-top:6px}label{display:block;margin-top:10px}a{color:#5b664c}input{width:150px;vertical-align:middle}</style></head><body><aside>Vaultwarden · 开放门廊<small>铜色筒拱之下增加三层石质入口拱、阶状拱脚与空心柱套，侧停大轮增加静态承托。保留原有通路、壳体、家具与入口说明；不登录或虚构内部功能。</small><label>原屋顶通风窗相位 <input id="phase" aria-label="原屋顶通风窗相位" type="range" min="0" max="1" step="0.01" value="0.5"><output id="value">0.50</output></label><small><a href="?view=exterior">外观</a> · <a href="?view=court">内廊</a> · <a href="?view=joint">接合</a></small><small>此页面供浏览器实测；静态审计和 Blender 预览不等于浏览器导航、帧率或结构安全验证。</small></aside>
+<script src="../vendor/three.min.js"></script>
+<script src="../assets/reading-catalog.js"></script>
+<script src="../assets/reading-panels.js"></script>
+<script src="../assets/rss-detail.js"></script>
+<script src="../assets/vault-detail.js?v=d822f00149247698"></script>
+<script src="../assets/architecture.js"></script>
+<script src="../assets/content-core.js"></script>
+<script src="../assets/nuanling-detail.js"></script>
+<script src="../assets/nuanling-app-detail.js"></script>
+<script src="../assets/editor-detail.js"></script>
+<script src="../assets/ink-detail.js"></script>
+<script src="../assets/restoration-detail.js"></script>
+<script src="../assets/huayun-detail.js"></script>
+<script src="../assets/alternate-detail.js"></script>
+<script src="../assets/content-creation-care.js"></script>
+<script src="../assets/shield-detail.js"></script>
+<script src="../assets/gateway-detail.js"></script>
+<script src="../assets/reme-detail.js"></script>
+<script src="../assets/mindcare-detail.js"></script>
+<script src="../assets/content-services.js"></script>
+<script src="../assets/twinstars-detail.js"></script>
+<script src="../assets/causal-detail.js"></script>
+<script src="../assets/versions-detail.js"></script>
+<script src="../assets/city-detail.js"></script>
+<script src="../assets/portraits-detail.js"></script>
+<script src="../assets/session-detail.js"></script>
+<script src="../assets/content-narratives.js"></script>
+<script src="../assets/rubbing-detail.js"></script>
+<script src="../assets/proof-detail.js"></script>
+<script src="../assets/workshop-detail.js"></script>
+<script src="../assets/handover-detail.js"></script>
+<script src="../assets/content-literary.js"></script>
+<script src="../assets/moonsnow-detail.js"></script>
+<script src="../assets/moon-snow-garden.js"></script>
+<script src="../assets/content-butterfly.js"></script>
+<script>
+'use strict';
+const T=THREE,scene=new T.Scene();scene.background=new T.Color(0xe5e2d8);
+const renderer=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setPixelRatio(1);renderer.setSize(innerWidth,innerHeight);renderer.outputEncoding=T.sRGBEncoding;renderer.shadowMap.enabled=true;renderer.shadowMap.type=T.PCFSoftShadowMap;document.body.appendChild(renderer.domElement);
+const camera=new T.PerspectiveCamera(40,innerWidth/innerHeight,.1,150),view=new URLSearchParams(location.search).get('view');
+const views={exterior:[[-18,8.5,-25],[0,4.6,0],40],court:[[0,1.65,4.4],[0,5.0,-7.0],20],joint:[[-9.8,5.35,-12.4],[-6.60,5.1,-7.4],55]},chosen=views[view]||views.exterior;camera.position.set(...chosen[0]);camera.lookAt(...chosen[1]);camera.setFocalLength(chosen[2]);camera.updateProjectionMatrix();
+scene.add(new T.HemisphereLight(0xfff5e0,0x7c8b80,1.1));const sun=new T.DirectionalLight(0xffefd6,2);sun.position.set(-12,22,-16);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-22,right:22,top:22,bottom:-22,near:1,far:70});sun.shadow.bias=-.0003;scene.add(sun);
+const building=CourtyardArchitecture.build({THREE:T,index:9,title:'Vaultwarden · 开放门廊',zone:0});scene.add(building.root);CourtyardReadingPanels.attach({THREE:T,building,index:9,preview:CourtyardReadingCatalog[9]});
+const ground=new T.Mesh(new T.PlaneGeometry(100,100),new T.MeshStandardMaterial({color:0xc4c8b7,roughness:1}));ground.rotation.x=-Math.PI/2;ground.position.y=-.095;ground.receiveShadow=true;scene.add(ground);
+window.qa={building:9,parts:CourtyardVaultDetail.data.sections.static.parts,detailTriangles:CourtyardVaultDetail.data.sections.static.triangles,readingPanels:building.metadata.readingPanels};
+function render(){renderer.render(scene,camera);Object.assign(window.qa,{triangles:renderer.info.render.triangles,calls:renderer.info.render.calls,geometries:renderer.info.memory.geometries});}
+function setPhase(value){for(const m of building.mechanisms)m.update?.(value);window.qa.phase=value;document.getElementById('value').textContent=value.toFixed(2);render();}
+document.getElementById('phase').addEventListener('input',e=>setPhase(Number(e.target.value)));window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);render();});Object.assign(window,{building,scene,camera,renderer,setPhase});setPhase(.5);
+</script></body></html>
