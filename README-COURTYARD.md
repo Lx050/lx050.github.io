@@ -1,3 +1,7 @@
+# Maniforld · 海陆空探索世界
+
+默认入口现为大尺度探索世界。原庭院保留在 `?courtyard=1`。新世界的范围、操作、验证与限制见 [docs/EXPLORATION_WORLD.md](docs/EXPLORATION_WORLD.md)。
+
 # Maniforld 数字庭院：内容与空间优化版
 
 此版本在 f2c296016f413c47da684326e6e8e1313de57af4 的基础上完成内容建筑与黄昏配色优化。发布记录以 GitHub Pages 对应提交的部署结果为准。完整目录可直接运行；小体积更新包须先按包内说明应用到准确基线。

@@ -1,0 +1,34 @@
+/* Offline capture of actual exploration scene. Never browser/WebGL/FPS evidence. */
+'use strict';
+const fs=require('fs'),path=require('path'),crypto=require('crypto');
+const root=path.resolve(__dirname,'..'),out=path.join(root,'qa-results/exploration/renders');
+const digest=x=>crypto.createHash('sha256').update(x).digest('hex');
+async function main(){
+const {garden:g,context:ctx,html,logs}=await require('./exploration-host.cjs').loadHost(),T=ctx.THREE,w=g.exploration,G=ctx.CourtyardExplorationGeography;
+g.start();w.travel(0);w.tick(.016);
+const p=w.places[0],front=p.point(25,-38),target=p.point(0,0),c=v=>[v.x,-v.z,v.y];
+const views=[{name:'whole-world',title:'01 / SEA, LAND AND SKY',position:[320,-3100,2300],target:[0,30,60],scale:3250,ratio:[1400,1000],note:'2.8 x 2.4 km | 26 building-levels | 12 landmasses | Sky islands: 180-280m'},
+{name:'moxi-human-scale',title:'02 / MOXI: BUILDING, PATH AND HUMAN',position:[front.x,-front.z,p.y+24],target:[target.x,-target.z,p.y+3.7],scale:61,ratio:[1400,1000],note:'Actual Moxi building, path and player | Building footprint: approx. 17.5 x 18.4m'}];
+function forceFull(){for(const p of w.places){p.lm.group.visible=true;p.proxy.visible=false;if(p.building?.detail)p.building.detail.visible=true;}}
+function capture(name,views){
+forceFull();w.scene.updateMatrixWorld(true);
+const geometries={},materials={},objects=[],skipped={invisible:0,sprite:0,points:0,line:0,background:0,empty:0};let meshes=0,triangles=0;
+const im=new T.Matrix4(),world=new T.Matrix4(),vec=new T.Vector3();
+function material(m){if(materials[m.uuid])return m.uuid;materials[m.uuid]={name:m.name||m.type,color:m.color?.toArray()||m.uniforms?.tint?.value?.toArray()||m.uniforms?.uDeep?.value?.toArray()||[.11,.15,.16],emissive:m.emissive?.toArray()||[0,0,0],emissiveIntensity:m.emissiveIntensity||0,roughness:m.roughness??.9,metalness:m.metalness??0,opacity:m.opacity??1,transparent:!!m.transparent,side:m.side,hasMap:!!m.map,shader:!!m.isShaderMaterial,flatShading:!!m.flatShading,vertexColors:!!m.vertexColors};return m.uuid;}
+function visit(o,visible=true){visible=visible&&o.visible;if(!visible){skipped.invisible++;return;}if(o.isSprite){skipped.sprite++;return;}if(o.isPoints){skipped.points++;return;}if(o.isLine){skipped.line++;return;}
+if(o.isMesh){o.getWorldPosition(vec);if(o.name!=='single-plane-sea'&&(o.renderOrder<=-900||o.material?.fog===false&&!o.material?.depthWrite||Math.abs(vec.x)>1500||Math.abs(vec.z)>1400||vec.y>600)){skipped.background++;return;}
+const geo=o.geometry,p=geo.attributes.position;if(!p){skipped.empty++;return;}if(!geometries[geo.uuid]){const verts=[];for(let i=0;i<p.count;i++)verts.push([p.getX(i),p.getY(i),p.getZ(i)]);geometries[geo.uuid]={name:geo.name||geo.type,verts,indices:geo.index?Array.from(geo.index.array):Array.from({length:p.count},(_,i)=>i),groups:geo.groups,color:geo.attributes.color?Array.from(geo.attributes.color.array):null};}
+const ms=(Array.isArray(o.material)?o.material:[o.material]).map(material);meshes++;
+for(let k=0;k<(o.isInstancedMesh?o.count:1);k++){world.copy(o.matrixWorld);if(o.isInstancedMesh){o.getMatrixAt(k,im);world.multiply(im);}objects.push({name:o.name||o.parent?.name||o.type,geometry:geo.uuid,materials:ms,matrix:Array.from(world.elements),instanceColor:o.instanceColor?[o.instanceColor.getX(k),o.instanceColor.getY(k),o.instanceColor.getZ(k)]:null});triangles+=geometries[geo.uuid].indices.length/3;}}
+for(const child of o.children)visit(child,visible);}
+visit(w.scene);
+const sources=['index.html','docs/exploration-host.cjs','docs/exploration-render-export.cjs','tools/render-exploration.py','vendor/three.min.js','vendor/three/GLTFLoader.js',...g.modelLoads.loaded,...Array.from(html.matchAll(/src="(assets\/[^"?]+)(?:\?[^\"]*)?"/g)).map(m=>m[1])];
+const report={type:'OFFLINE CPU GEOMETRY REVIEW; NOT PRODUCTION BROWSER / WEBGL / FPS',createdAt:new Date().toISOString(),capture:name,meshes,instances:objects.length,triangles,uniqueGeometries:Object.keys(geometries).length,materials:Object.keys(materials).length,sourceHashes:Object.fromEntries([...new Set(sources)].filter(f=>fs.existsSync(path.join(root,f))).map(f=>[f,digest(fs.readFileSync(path.join(root,f)))])),sceneFingerprint:digest(JSON.stringify({geometries,materials,objects})),views,skipped,mode:w.inspect(),geography:{boundary:G.boundary,islands:G.islands,places:G.places,docks:G.docks},coverage:['Actual exploration host executes production script builders and bundled GLTFLoader.','All 26 actual architecture roots and detail groups forced visible for offline inspection; no distant proxy geometry. This is intentionally not runtime LOD.','Actual island meshes, roads, water plane, vehicle and human transforms; no invented scenery or replacement architecture.','Source scalar material data and vertex colors retained in capture.'],limitations:['Offline CPU Cycles geometry review, not a browser screenshot or WebGL/FPS/interaction proof.','Browser textures, canvas text, procedural shaders, fog, bloom, reflections, alpha maps and exact lighting are not reproduced.','Ocean uses the actual plane but a disclosed light-blue neutral review material, not its production wave shader. Sky uses neutral offline world lighting.','Sprites, point particles, lines, sky dome and distant backdrop geometry omitted; explanatory labels are not production UI.'],logs};
+fs.mkdirSync(out,{recursive:true});fs.writeFileSync(path.join(out,name+'-scene.json'),JSON.stringify({report,geometries,materials,objects}));fs.writeFileSync(path.join(out,name+'-export-report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify({capture:name,meshes,instances:objects.length,triangles,sceneFingerprint:report.sceneFingerprint,sourceHashes:Object.fromEntries(Object.entries(report.sourceHashes).filter(([k])=>k.includes('exploration')||k==='index.html'))},null,2));
+}
+capture('world',views);
+w.travelDock('dock-service-rss');if(!w.chooseMode('BOAT'))throw Error('Actual boat boarding failed');w.tick(.016);
+const d=w.docks.find(d=>d.id==='dock-service-rss'),q=d.water;
+capture('boat',[{name:'rss-boat-shore',title:'03 / BOAT AND ISLAND SHORE',position:[q.x+26,-q.z-32,18],target:[q.x-8,-q.z,4.1],scale:70,ratio:[1400,1000],note:'Actual boarded boat and player at RSS dock | Authored hull, pier and shoreline'}]);
+}
+main().catch(e=>{console.error(e);process.exitCode=1});

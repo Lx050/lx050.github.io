@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0c0e10">
-<meta name="description" content="Lx050 的数字庭院。提一盏灯，走近作品、服务与故事。">
+<meta name="description" content="Lx050 的数字庭院。海陆空之间，二十六处作品与故事，提灯远行。">
 <title>Lx050 · 夜游数字庭院</title>
 <script>
 // 夜间随机播放曲目（东方古曲/乐器 + 西方古典与夏夜氛围），本站自托管、按需加载；播完自动随机下一首。
@@ -172,6 +172,7 @@ const TRACKS=[
 @media(max-width:480px) and (max-height:600px) and (orientation:portrait){.mapbox{width:72px}.mapbox canvas{width:72px;height:72px}.mapbox #location{display:none}#nearby-controls{max-height:calc(100dvh - var(--joy-bottom) - var(--joy-size) - 252px)}}
 
 </style>
+<link rel="stylesheet" href="assets/exploration-world.css?v=9e5e558a7324b509">
 </head>
 <body>
 <main id="world" tabindex="-1" aria-label="可探索的三维数字庭院。使用 WASD 或方向键行走；靠近建筑后按回车翻阅建筑中的碑文。"></main>
@@ -273,10 +274,16 @@ const TRACKS=[
 <script src="assets/courtyard-roads.js?v=974ba2682ebc22af"></script>
 <script src="assets/courtyard-masterplan.js?v=ca5318aa97c26874"></script>
 <script src="assets/detail-lod.js?v=3cc8af34c41bee31"></script>
+<script src="assets/exploration-geography.js?v=3aaa59220687f0b7"></script>
+<script src="assets/exploration-levels.js?v=3969ab84e85022bf"></script>
+<script src="assets/exploration-transport.js?v=01489168024d33f0"></script>
+<script src="assets/exploration-world.js?v=9db2d02f0e06b6d9"></script>
 <script>
 (() => {
 'use strict';
 if(new URLSearchParams(location.search).has('architectureQA')){window.__courtyardErrors=[];window.addEventListener('error',e=>window.__courtyardErrors.push(e.message));window.addEventListener('unhandledrejection',e=>window.__courtyardErrors.push(String(e.reason)));}
+let explorationWorld=null;
+const explorationEnabled=!new URLSearchParams(location.search).has('courtyard');
 let butterflySea=null; // Landmark #23 metre-space deck and collision field.
 // Wave 1 · metres. Human geometry is deliberately never scaled with the world.
 const WORLD=Object.freeze({PLAYER_HEIGHT:1.7,ISLAND_RADIUS:150,INNER_RING:70,OUTER_RING:124,
@@ -2259,7 +2266,7 @@ $('enter-link').addEventListener('click',e=>{if(nearest&&!e.defaultPrevented)mar
 $('enter-link').addEventListener('auxclick',e=>{if(e.button===1&&nearest&&!e.defaultPrevented)markVisited(nearest.index);});
 function start(){
   if(!ready||started||failed)return;started=true;clearInput();$('intro').classList.add('gone');$('intro').inert=true;$('hud').inert=false;document.body.classList.add('playing');$('world').focus();
-  bgm.start();
+  bgm.start();explorationWorld?.start();
 }
 $('intro').addEventListener('click',start);
 function teleport(x,z){
@@ -3403,6 +3410,7 @@ function frame(now){
   requestAnimationFrame(frame);if(qaFramePaused){lastTime=0;return;}if(readingRoom?.isOpen){lastTime=0;return;}if(failed||document.hidden){lastTime=0;return;}
   const raw=lastTime?(now-lastTime)/1000:1/60,dt=Math.min(raw,.12);lastTime=now;
   if(worldActive()){WorldHost.tick(dt);renderer.info.reset();composer.render(dt);return;}
+  if(explorationWorld?.active){elapsed+=dt;explorationWorld.tick(dt);renderer.info.reset();composer.render(dt);return;}
   elapsed+=dt;
   skyTick(dt);
   buildingActions?.update(dt);
@@ -3421,7 +3429,7 @@ function frame(now){
 document.querySelectorAll('[data-roof]').forEach(button=>button.onclick=()=>{setRoofState(button.dataset.roof);gardenWeather?.invalidateShelter();});
 $('roof-flight').onclick=()=>{const b=landmarks[23].butterfly;b.flight.enabled=!b.flight.enabled;if(!b.flight.enabled){b.mechanical.target=b.mechanical.progress;b.mechanical.velocity=0;b.mechanical.state='悬浮暂停';}document.querySelectorAll('[data-roof]').forEach(button=>button.setAttribute('aria-pressed','false'));updateRoofMechanism(b,0);};
 $('roof-skeleton').onclick=()=>{const r=landmarks[23].butterfly.mechanical;r.skeleton=!r.skeleton;$('roof-skeleton').setAttribute('aria-pressed',String(r.skeleton));updateRoofMechanism(landmarks[23].butterfly,0);};
-window.__garden={get roadScenery(){return courtyardRoadScenery;},get roadHierarchy(){return courtyardRoadHierarchy;},get masterplan(){return courtyardMasterplan;},get weather(){return gardenWeather;},get buildingActions(){return buildingActions;},get reader(){return readingRoom;},get readingPanels(){return architecturalRecords.map(b=>({index:b.index,panels:b.readingPanels}));},mechanicalStep(dt){updateButterflySea(dt,landmarks[23]);},setRoofState,get worldHost(){return WorldHost;},get transitionDirector(){return TransitionDirector;},get renderPass(){return mainRenderPass;},__w2bTest:w2bTest,get skyT(){return skyT;},get atlas(){return {...atlasState,scales:[...atlasState.scales]};},get motor(){return {...motor,speed:velocity.length(),currentSpeed,sprinting};},get navigation(){return navigationBuildings;},requestJump,stepWalker,WORLD,scene,renderer,camera,composer,cameraLook,subjectBounds,monumentFaces,walkable,surfaceHeight,terrainHeight,renderedTerrainHeight,roadSurface,islandRoads,bridgeSurfaceHeight,teleport,start,player,cameraState,modelLoads,
+window.__garden={get exploration(){return explorationWorld;},get roadScenery(){return courtyardRoadScenery;},get roadHierarchy(){return courtyardRoadHierarchy;},get masterplan(){return courtyardMasterplan;},get weather(){return gardenWeather;},get buildingActions(){return buildingActions;},get reader(){return readingRoom;},get readingPanels(){return architecturalRecords.map(b=>({index:b.index,panels:b.readingPanels}));},mechanicalStep(dt){updateButterflySea(dt,landmarks[23]);},setRoofState,get worldHost(){return WorldHost;},get transitionDirector(){return TransitionDirector;},get renderPass(){return mainRenderPass;},__w2bTest:w2bTest,get skyT(){return skyT;},get atlas(){return {...atlasState,scales:[...atlasState.scales]};},get motor(){return {...motor,speed:velocity.length(),currentSpeed,sprinting};},get navigation(){return navigationBuildings;},requestJump,stepWalker,WORLD,scene,renderer,camera,composer,cameraLook,subjectBounds,monumentFaces,walkable,surfaceHeight,terrainHeight,renderedTerrainHeight,roadSurface,islandRoads,bridgeSurfaceHeight,teleport,start,player,cameraState,modelLoads,
   get butterfly(){return landmarks[23].butterfly;},get sharedIvory(){return M.ivory;},BUTTERFLY,
   get landmarks(){return landmarks.map(lm=>({index:lm.index,title:lm.entry.title,bboxHeight:lm.bboxHeight,groundY:lm.groundY,x:lm.entry.x,z:lm.entry.z,bounds:lm.bounds,platformY:lm.site.groundY,targetHeight:lm.targetHeight,entryPoint:lm.entryPoint,...(lm.gatePoint?{gatePoint:lm.gatePoint}:{}),site:lm.site,labelY:lm.group.position.y+lm.name.position.y}));},
   get mathMonuments(){return mathMonuments.map(({group,model,lod,fallback,bounds,site,name,...r})=>r);},
@@ -3470,7 +3478,16 @@ if(new URLSearchParams(location.search).has('architectureQA'))window.__garden.ar
  }
 };
 
-ready=true;$('start').disabled=false;$('start').innerHTML='提灯入庭<span class="arrow">↗</span>';
+if(explorationEnabled){
+ try{explorationWorld=window.CourtyardExplorationWorld.create({THREE,scene,player,body,camera,cameraLook,cameraState,motor,keys,joy,records:architecturalRecords,landmarks,navigation:navigationBuildings,
+  environment:[hemi,moon,moon.target,sun,sun.target,fill,skyDome,stars,sunOrb,sunHalo,sunCorona,moonOrb,moonHalo,moonGlow,...clouds],renderPass:mainRenderPass,
+  skyTick,stepWalker,stepOrbit,clear:clearInput,modalOpen,reader:readingRoom,actions:buildingActions,updateButterfly:dt=>updateButterflySea(dt,landmarks[23]),updateButterflyReflection:updateButterflySeaReflection,lightQuality:()=>lightQuality,reduced:()=>reduced});}catch(error){console.warn('Exploration initialization failed',error);fail('探索世界暂时无法完整加载。请刷新重试，或从目录直接阅读全部 26 处内容。');return;}
+ $('world').setAttribute('aria-label','可探索的海陆空世界。WASD 或摇杆移动，M 地图与自由传送，E 进入建筑关卡，F 飞行，V 载具，B 登船。');$('home').textContent='回起点';$('home').title='安全返回起航岛（R）';document.querySelector('.subtitle').textContent='数字庭院 · 远行';
+ document.querySelector('.intro-kicker').textContent='A WORLD OF THOUGHTS / 海 · 陆 · 空';
+ document.querySelector('.intro-description').innerHTML='作品与故事，散落在大陆、群岛和云端。<br>步行、驾车、乘船，或者展开翼远行。';
+ $('intro-controls').innerHTML=touch?'左下摇杆移动 · 拖动环顾 · 地图直达所有入口<br>不必完成关卡，也可随时自由阅读':'WASD 移动 · F 飞行 · V 载具 · B 登船 · M 地图<br>所有地点自由传送，原文始终开放';
+}
+ready=true;$('start').disabled=false;$('start').innerHTML=(explorationEnabled?'提灯远行':'提灯入庭')+'<span class="arrow">↗</span>';
 drawMap();requestAnimationFrame(frame);
 })();
 </script>
