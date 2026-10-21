@@ -1,0 +1,20 @@
+/* Source-bound first exploration release. Not browser, WebGL, touch or FPS QA. */
+'use strict';
+const fs=require('node:fs'),path=require('node:path'),cp=require('node:child_process'),crypto=require('node:crypto'),assert=require('node:assert/strict');
+const root=path.resolve(__dirname,'..'),out=path.join(root,'qa-results/exploration/release'),base='7bf71adc9fb3e80cc86ad01fbe9e207f26aa37c6';fs.mkdirSync(out,{recursive:true});
+const hash=f=>crypto.createHash('sha256').update(fs.readFileSync(path.join(root,f))).digest('hex');
+const files=['index.html','island.html','assets/exploration-geography.js','assets/exploration-levels.js','assets/exploration-transport.js','assets/exploration-world.js','assets/exploration-world.css','docs/deployment-verify.html'];
+const snapshot=()=>Object.fromEntries(files.map(f=>[f,hash(f)]));
+const report={generatedAt:new Date().toISOString(),baseline:base,passed:false,before:snapshot(),checks:[],limits:['Real bundled scene geometry and original motors execute with an inert DOM/renderer.','No production browser, WebGL shader, GPU/FPS, Safari, physical touch or mobile viewport acceptance.','All original buildings stay in memory; distance visibility and bounded update/collision ranges are not full streaming.']};
+try{
+ assert.equal(cp.execFileSync('git',['diff','--name-only','--diff-filter=MDR',base,'--','assets','vendor','worlds'],{cwd:root,encoding:'utf8'}).trim(),'','all baseline modules/assets are retained byte-for-byte');
+ const html=fs.readFileSync(root+'/index.html','utf8'),verify=fs.readFileSync(root+'/docs/deployment-verify.html','utf8'),expected=JSON.parse(verify.match(/const expected=(\{.*?\});/s)[1]);
+ assert.equal(html,fs.readFileSync(root+'/island.html','utf8'));
+ for(const [f,h]of Object.entries(expected))assert.equal(hash(f),h,'deployment manifest '+f);
+ for(const m of html.matchAll(/(assets\/exploration-[a-z]+\.(?:js|css))\?v=([a-z0-9]+)/g))assert.equal(m[2],hash(m[1]).slice(0,16),'content cache token '+m[1]);
+ report.checks.push({name:'original modules preserved, entry parity, release manifest and cache identity',passed:true});
+ for(const file of ['docs/exploration-geography-check.cjs','docs/exploration-levels-check.cjs','docs/exploration-transport-check.cjs','docs/exploration-world-check.cjs']){const started=Date.now(),r=cp.spawnSync(process.execPath,[file],{cwd:root,encoding:'utf8',maxBuffer:32e6,timeout:300000});const log=path.basename(file)+'.log';fs.writeFileSync(path.join(out,log),(r.stdout||'')+(r.stderr||'')+(r.error?String(r.error):''));report.checks.push({name:file,passed:r.status===0&&!r.error,milliseconds:Date.now()-started,log});assert.equal(r.status,0,file);}
+ const fallback=cp.spawnSync(process.execPath,['-e',`require('./docs/exploration-host.cjs').loadHost().then(({garden:g})=>{require('node:assert/strict').equal(g.exploration,null);g.start();require('node:assert/strict').equal(g.landmarks.filter(x=>x.index<26).length,26);console.log('explicit legacy scene loads, 26 original landmarks retained')}).catch(e=>{console.error(e);process.exitCode=1})`],{cwd:root,env:{...process.env,EXPLORATION_QUERY:'?architectureQA=1&courtyard=1'},encoding:'utf8',timeout:120000});fs.writeFileSync(out+'/legacy-fallback.log',(fallback.stdout||'')+(fallback.stderr||''));assert.equal(fallback.status,0,'explicit legacy fallback');report.checks.push({name:'explicit legacy fallback load smoke check',passed:true});
+ report.after=snapshot();assert.deepEqual(report.after,report.before,'source immutable during acceptance');report.passed=true;
+}catch(error){report.error=String(error);console.error(error);}
+fs.writeFileSync(out+'/report.json',JSON.stringify(report,null,2));console.log(JSON.stringify({passed:report.passed,checks:report.checks.length,report:out+'/report.json'}));if(!report.passed)process.exitCode=1;
