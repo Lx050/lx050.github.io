@@ -28,8 +28,14 @@
     const coveredPaving=mat('coveredPaving',0x737e74,'paving');surfaces.find(s=>s.material===coveredPaving).exposure=0;
     const unit=new T.Object3D();
     function piece(name,material,x,y,z,sx,sy,sz,angle=0,geometry=box){const key=name+':'+material.uuid+':'+geometry.uuid;let b=batches.get(key);if(!b){b={name,geometry,material,rows:[]};batches.set(key,b);}unit.position.set(x,y,z);unit.rotation.set(0,angle,0);unit.scale.set(sx,sy,sz);unit.updateMatrix();b.rows.push(unit.matrix.clone());}
-    // Subdivision follows the SAME terrain field, not a floating rectangular slab.
-    function patch(name,material,corners){let p=patches.get(name);if(!p){p={name,material,vertices:[],indices:[]};patches.set(name,p);}const n=p.vertices.length/3;for(const [x,z] of corners)p.vertices.push(x,height(x,z)+(material===materials.bronze?.068:.052),z);p.indices.push(n,n+2,n+1,n,n+3,n+2);}
+    // Shared clipping follows each rendered terrain triangle exactly. No coarse
+    // analytic quad may cut through the visible terrain at a slope transition.
+    function patch(name,material,corners){
+      let p=patches.get(name);if(!p){p={name,material,vertices:[],indices:[]};patches.set(name,p);}
+      const offset=material===materials.bronze?.068:.052;
+      if(options.surface){options.surface.addPolygon(corners,{offset,layer:'masterplan-'+name,walkable:true,color:[1,1,1],overlapGroup:offset===.068?'masterplan-inlays':'masterplan-fields'});return;}
+      const n=p.vertices.length/3;for(const [x,z] of corners)p.vertices.push(x,height(x,z)+offset,z);p.indices.push(n,n+2,n+1,n,n+3,n+2);
+    }
     function carpet(name,material,cx,cz,w,d,yaw=0,step=1){const nx=Math.ceil(w/step),nz=Math.ceil(d/step),c=Math.cos(yaw),s=Math.sin(yaw);const point=(x,z)=>[cx+c*x+s*z,cz-s*x+c*z];for(let i=0;i<nx;i++)for(let j=0;j<nz;j++){const a=-w/2+i*w/nx,b=-d/2+j*d/nz;patch(name,material,[point(a,b),point(a+w/nx,b),point(a+w/nx,b+d/nz),point(a,b+d/nz)]);}}
     const local=(site,x,z)=>({x:site.x+site.uz*x+site.ux*z,z:site.z-site.ux*x+site.uz*z});
     const radial=(r,a)=>({x:Math.sin(a)*r,z:Math.cos(a)*r});
@@ -92,12 +98,9 @@
     for(const index of [0,20]){const s=sites[index],b=buildings.find(b=>b.index===index),front=b?-b.depth/2:-10,yaw=Math.atan2(s.ux,s.uz);for(const side of [-1,1]){const p=local(s,side*(index===0?5.4:4.1),front-3);carpet(index===0?'moxi-open-frame':'moonsnow-quiet-frame',materials[index===0?'bronze':'shade'],p.x,p.z,index===0?.18:.36,5,yaw);}}
     // Existing north-edge spine clips the unchanged Mosheng facade. A short
     // east-side bypass reconnects the same spine, without relocating any building.
-    const repairs=[{id:'north-spine',points:[{x:0,z:-104},{x:3.3,z:-112},{x:3.3,z:-134},{x:0,z:-142}],width:3}];
-    for(const repair of repairs)for(let i=1;i<repair.points.length;i++){
-      const a=repair.points[i-1],b=repair.points[i],length=Math.hypot(b.x-a.x,b.z-a.z),yaw=Math.atan2(b.x-a.x,b.z-a.z),n=Math.ceil(length/.7);
-      for(let j=0;j<n;j++){const t=(j+.5)/n,x=a.x+(b.x-a.x)*t,z=a.z+(b.z-a.z)*t;carpet('north-spine-local-bypass',materials.stone,x,z,repair.width,length/n+.02,yaw,.7);}
-      for(let j=0;j<length;j+=2.8){const t=j/length,x=a.x+(b.x-a.x)*t,z=a.z+(b.z-a.z)*t;carpet('north-spine-bypass-inlay',materials.bronze,x,z,.12,1.2,yaw);}
-    }
+    const repairs=[{id:'north-spine',points:[{x:0,z:-104},{x:4,z:-112},{x:4,z:-134},{x:0,z:-142}],width:3}];
+    // The road network now owns this full-width reroute. Keep its established
+    // route record for tours, but do not paint a duplicate lane or bronze stripe.
     const sea=options.butterflySea,s23=sites[23],butterflyAngle=Math.atan2(s23.ux,s23.uz);
     function arc(radius,a,b){let delta=(b-a+Math.PI*3)%(Math.PI*2)-Math.PI;const n=Math.max(1,Math.ceil(Math.abs(delta)*radius/1.5));return Array.from({length:n+1},(_,i)=>radial(radius,a+delta*i/n));}
     const approach=index=>{const s=sites[index],b=buildings.find(b=>b.index===index);return local(s,0,-(b?b.depth/2+2:16));};
@@ -116,7 +119,7 @@
     Object.values(routes).forEach(routeMesh);
     // The permanent pilot cues are side markings, not another trail competing with it.
     for(let i=4;i<pilot.length-1;i+=4){const p=pilot[i],r=Math.hypot(p.x,p.z);if(r>135)continue;const a=Math.atan2(p.x,p.z);for(const side of [-1,1]){const q=radial(r+side*1.95,a);carpet('pilot-wayfinding',materials.bronze,q.x,q.z,.12,.65,a);}}
-    for(const p of patches.values()){const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(p.vertices,3));g.setIndex(p.indices);g.computeVertexNormals();ownedGeometry.push(g);const m=new T.Mesh(g,p.material);m.name=p.name;m.receiveShadow=true;m.castShadow=false;root.add(m);}
+    for(const p of patches.values()){let m;if(options.surface){m=options.surface.buildMesh(p.material,'masterplan-'+p.name);}else{const g=new T.BufferGeometry();g.setAttribute('position',new T.Float32BufferAttribute(p.vertices,3));g.setIndex(p.indices);g.computeVertexNormals();m=new T.Mesh(g,p.material);}ownedGeometry.push(m.geometry);m.name=p.name;m.userData.roadSurface=true;m.receiveShadow=true;m.castShadow=false;root.add(m);}
     for(const b of batches.values()){const m=new T.InstancedMesh(b.geometry,b.material,b.rows.length);b.rows.forEach((matrix,i)=>m.setMatrixAt(i,matrix));m.instanceMatrix.needsUpdate=true;m.name=b.name;m.castShadow=false;m.receiveShadow=true;root.add(m);}
     // Furniture shared by one pocket/material becomes one instance draw while exact
     // collision boxes remain independently testable. Roof meshes stay addressable.

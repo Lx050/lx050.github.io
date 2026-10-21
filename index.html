@@ -268,7 +268,10 @@ const TRACKS=[
 <script src="assets/garden-weather.js?v=3ada6dfb318d1b2c"></script>
 <script src="assets/building-actions.js?v=8c96ad3133fecd14"></script>
 <script src="assets/courtyard-runtime.js?v=b38226026c57f636"></script>
-<script src="assets/courtyard-masterplan.js?v=6ebcd82c3712ba58"></script>
+<script src="assets/road-surface.js?v=4a4536c49952a6d2"></script>
+<script src="assets/road-scenery.js?v=392d39cc34c28d4d"></script>
+<script src="assets/courtyard-roads.js?v=974ba2682ebc22af"></script>
+<script src="assets/courtyard-masterplan.js?v=ca5318aa97c26874"></script>
 <script src="assets/detail-lod.js?v=3cc8af34c41bee31"></script>
 <script>
 (() => {
@@ -581,15 +584,86 @@ function flushInstances(){
     scene.add(m);b.transforms=[];
   }
 }
+const MATH_ISLES=[
+  {key:'K',name:'柯尼斯堡洲',note:'七桥之问 · 1736',x:52,z:-2,r:12,glb:'assets/models/LM27_Konigsberg.glb',root:'Konigsberg'},
+  {key:'L',name:'叙拉古洲',note:'圆柱容球 · 阿基米德',x:58,z:-26,r:6,glb:'assets/models/LM28_Syracuse.glb',root:'Syracuse'},
+  {key:'S',name:'图卢兹洲',note:'页边批注 · 费马',x:36,z:-32,r:9,glb:'assets/models/LM29_Toulouse.glb',root:'Toulouse'}
+];
+MATH_ISLES.forEach(is=>{is.x*=WORLD.MATH_SCALE;is.z*=WORLD.MATH_SCALE;is.r*=WORLD.MATH_SCALE;});
+const MAINLAND={x:0,z:0,r:WORLD.ISLAND_RADIUS};
+function bridgeSpan(a,b){
+  const dx=b.x-a.x,dz=b.z-a.z,d=Math.hypot(dx,dz),ux=dx/d,uz=dz/d;
+  return {x1:a.x+ux*a.r,z1:a.z+uz*a.r,x2:b.x-ux*b.r,z2:b.z-uz*b.r};
+}
+function mkBridge(id,a,b,off,name,bonus){
+  off*=WORLD.MATH_SCALE;
+  const inset=3+off*off/(2*Math.min(a.r,b.r));
+  const s=bridgeSpan({...a,r:a.r-inset},{...b,r:b.r-inset}),nx=-(s.z2-s.z1),nz=(s.x2-s.x1),nl=Math.hypot(nx,nz)||1;
+  return {id,name,bonus:!!bonus,x1:s.x1+nx/nl*off,z1:s.z1+nz/nl*off,x2:s.x2+nx/nl*off,z2:s.z2+nz/nl*off};
+}
+const BRIDGES=[
+  mkBridge(1,MAINLAND,MATH_ISLES[0],-2.7,'森林桥'),
+  mkBridge(2,MAINLAND,MATH_ISLES[0],2.7,'市民桥'),
+  mkBridge(3,MATH_ISLES[2],MATH_ISLES[0],-1.25,'铁匠桥'),
+  mkBridge(4,MATH_ISLES[2],MATH_ISLES[0],1.25,'人行桥'),
+  mkBridge(5,MATH_ISLES[0],MATH_ISLES[1],0,'高桥'),
+  mkBridge(6,MAINLAND,MATH_ISLES[1],0,'绿桥'),
+  mkBridge(7,MATH_ISLES[2],MATH_ISLES[1],0,'木桥'),
+  mkBridge(8,MAINLAND,MATH_ISLES[2],0,'新桥',true)
+];
+let bridge8Open=false;
+// One causeway layout is used by the existing palace and the shoreline cut.
+const shorelineSea=butterflySeaLayout(terraceSites[23]);
+// Grade only the two inherited mainland bridgehead depressions. The real
+// bridge endpoints define a six-metre approach, with feathered earth shoulders;
+// buildings, site heights and bridge decks keep their original transforms.
+function islandGroundHeight(x,z){
+  let y=terrainHeight(x,z);
+  for(const b of BRIDGES){if(b.id!==1&&b.id!==2)continue;
+    const dx=b.x2-b.x1,dz=b.z2-b.z1,len=Math.hypot(dx,dz),rx=x-b.x1,rz=z-b.z1;
+    const along=(rx*dx+rz*dz)/len,side=Math.abs((-rx*dz+rz*dx)/len);
+    if(along< -7||along>7||side>5)continue;
+    const shoulder=1-smooth01((side-2.4)/2.6),approach=smooth01((along+7)/6)*(1-smooth01((along-3)/4));
+    const join=bridgeDeckY(-(len+2)/2,len+2,.18)-.035;
+    if(join>y)y+=(join-y)*shoulder*approach;
+  }
+  // The original descending causeway used to disappear through the island
+  // edge. Cut the earth below that unchanged deck, with broad soft shoulders.
+  const along=x*shorelineSea.ux+z*shorelineSea.uz,side=Math.abs(-x*shorelineSea.uz+z*shorelineSea.ux);
+  if(along>=shorelineSea.start-5&&along<=WORLD.ISLAND_RADIUS+4&&side<7.6){
+    const blend=smooth01((along-shorelineSea.start+5)/3)*(1-smooth01((side-4.6)/3));
+    const cut=butterflySeaDeck(along,shorelineSea)-.075;if(y>cut)y+=(cut-y)*blend;
+  }
+  return y;
+}
 const terrainGeometry=new THREE.PlaneGeometry(WORLD.ISLAND_RADIUS*2,WORLD.ISLAND_RADIUS*2,180,180);
 terrainGeometry.rotateX(-Math.PI/2);
 const terrainPos=terrainGeometry.attributes.position;
-for(let i=0;i<terrainPos.count;i++)terrainPos.setY(i,terrainHeight(terrainPos.getX(i),terrainPos.getZ(i)));
+for(let i=0;i<terrainPos.count;i++)terrainPos.setY(i,islandGroundHeight(terrainPos.getX(i),terrainPos.getZ(i)));
 const terrainIndices=[];const src=terrainGeometry.index.array;
 for(let i=0;i<src.length;i+=3){if([src[i],src[i+1],src[i+2]].every(v=>Math.hypot(terrainPos.getX(v),terrainPos.getZ(v))<=WORLD.ISLAND_RADIUS+1))terrainIndices.push(src[i],src[i+1],src[i+2]);}
 terrainGeometry.setIndex(terrainIndices);terrainGeometry.computeVertexNormals();
+const roadSurface=CourtyardRoadSurface.create({THREE,geometry:terrainGeometry,radius:WORLD.ISLAND_RADIUS});
+const renderedTerrainHeight=(x,z)=>roadSurface.heightAt(x,z);
 mesh(terrainGeometry,M.ground,scene,0,0,0).castShadow=false;
-mesh(new THREE.CylinderGeometry(WORLD.ISLAND_RADIUS+1,WORLD.ISLAND_RADIUS*.9533333333,8,96,1,true),M.edge,scene,0,-4.05,0).castShadow=false;
+// Retain the original 96-sided cliff everywhere. Only subdivide the two
+// original shore facets at the inlet, so its upper rim follows the earth cut.
+const cliffBase=new THREE.CylinderGeometry(WORLD.ISLAND_RADIUS+1,WORLD.ISLAND_RADIUS*.9533333333,8,96,1,true),cliffPoints=[],cliffNormals=[],cliffUV=[],cliffIndices=[];
+const cliffPos=cliffBase.attributes.position,cliffNormal=cliffBase.attributes.normal;
+for(let i=0;i<96;i++){
+  const a=new THREE.Vector3().fromBufferAttribute(cliffPos,i),b=new THREE.Vector3().fromBufferAttribute(cliffPos,i+1),c=new THREE.Vector3().fromBufferAttribute(cliffPos,i+97),d=new THREE.Vector3().fromBufferAttribute(cliffPos,i+98);
+  const near=[a,b].some(p=>p.x*shorelineSea.ux+p.z*shorelineSea.uz>140&&Math.abs(-p.x*shorelineSea.uz+p.z*shorelineSea.ux)<12),count=near?Math.ceil(a.distanceTo(b)/.7):1;
+  for(let j=0;j<count;j++){
+    const n=cliffPoints.length/3;
+    for(const [t,top] of [[j/count,true],[j/count,false],[(j+1)/count,true],[(j+1)/count,false]]){
+      const p=(top?a:c).clone().lerp(top?b:d,t);if(top&&near){const side=Math.abs(-p.x*shorelineSea.uz+p.z*shorelineSea.ux);if(side<7.6)p.y=Math.min(p.y,islandGroundHeight(p.x,p.z)+4.05-.012);}
+      cliffPoints.push(p.x,p.y,p.z);const normal=new THREE.Vector3().fromBufferAttribute(cliffNormal,i).lerp(new THREE.Vector3().fromBufferAttribute(cliffNormal,i+1),t).normalize();cliffNormals.push(normal.x,normal.y,normal.z);cliffUV.push((i+t)/96,top?1:0);
+    }
+    cliffIndices.push(n,n+1,n+2,n+1,n+3,n+2);
+  }
+}
+const cliffGeometry=new THREE.BufferGeometry();cliffGeometry.setAttribute('position',new THREE.Float32BufferAttribute(cliffPoints,3));cliffGeometry.setAttribute('normal',new THREE.Float32BufferAttribute(cliffNormals,3));cliffGeometry.setAttribute('uv',new THREE.Float32BufferAttribute(cliffUV,2));cliffGeometry.setIndex(cliffIndices);cliffBase.dispose();
+mesh(cliffGeometry,M.edge,scene,0,-4.05,0).castShadow=false;
 mesh(new THREE.CylinderGeometry(WORLD.ISLAND_RADIUS*.9533333333,WORLD.ISLAND_RADIUS*.7,18,48),M.dark,scene,0,-17,0).castShadow=false;
 ring(scene,0,0,WORLD.ISLAND_RADIUS,0x8b8271,.23,.025);
 const distantLand=[];
@@ -637,95 +711,87 @@ ring(garden,0,0,3.75,0xc0563e,.32);
 const jitter=n=>{const s=Math.sin(n*127.1+311.7)*43758.5453;return s-Math.floor(s);};
 let seed=504;function random(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296;}
 const glbTrees=[],glbRingLanterns=[],glbVisitorProc=[];
-function pathSlab(x,z,y,ry,w=3,l=1.2){instance(G.box,M.path,x,y-.04,z,w,.08,l,ry);}
-// Road 3b: visual-only courses. pathSlab stays untouched for all terrace approaches.
-// These private batches never enter pickables, colliders or cameraBoxes.
+// All island paving is cut to the same rendered terrain triangles as the feet.
+function pathSlab(x,z,y,ry,w=3,l=1.2){roadSurface.addSlab(x,z,w,l,ry,{offset:.035,layer:'island-road-approaches',overlapGroup:'island-road-courses'});}
+// Three centimetres of stone, not a raised path or hidden collision platform.
 const islandRoads=(()=>{
   const radii=[WORLD.INNER_RING-WORLD.TERRACE_RADIUS-WORLD.APPROACH_LENGTH,WORLD.OUTER_RING-WORLD.TERRACE_RADIUS-WORLD.APPROACH_LENGTH];
   let state=310819;const noise=()=>{state=(state*1664525+1013904223)>>>0;return state/4294967296;};
   const stone=material(0x707e78,{roughness:.93}),edge=material(0x7b8881,{roughness:.94}),joint=material(0x353e3a);
-  // Same CanvasTexture / seeded LCG vocabulary as seaPavingMaterial: quiet grain,
-  // matte stone, no downloaded image. Physical gaps expose the continuous dark bed.
   const canvas=document.createElement('canvas');canvas.width=canvas.height=128;
   const ctx=canvas.getContext('2d');ctx.fillStyle='#eff0ec';ctx.fillRect(0,0,128,128);
   for(let i=0;i<1600;i++){ctx.fillStyle=noise()<.5?'rgba(55,65,60,.035)':'rgba(255,255,245,.10)';ctx.fillRect(noise()*128,noise()*128,1,1);}
   stone.map=new THREE.CanvasTexture(canvas);stone.map.encoding=THREE.sRGBEncoding;
-  const surfaces=[],curbs=[],bedPositions=[],bedIndices=[];
+  const corridors=[],nodes=[],surfaces=[stone,edge,joint].map(material=>({material,kind:'paving',exposure:1}));
   function tint(){const v=.96+noise()*.07,w=(noise()-.5)*.018;return new THREE.Color().setRGB(v+w,v,v-w);}
-  function quad(points){const n=bedPositions.length/3;for(const [x,z,y] of points)bedPositions.push(x,y===undefined?terrainHeight(x,z)+.018:y,z);bedIndices.push(n,n+1,n+2,n,n+2,n+3);}
-  function slab(x,z,w,l,angle,offset=.035){
-    // Fit each small course to the local slope; the continuous bed seals every joint.
-    const ux=Math.sin(angle),uz=Math.cos(angle),vx=Math.cos(angle),vz=-Math.sin(angle);
-    const y=terrainHeight(x,z),along=(terrainHeight(x+ux*l/2,z+uz*l/2)-terrainHeight(x-ux*l/2,z-uz*l/2))/l;
-    const across=(terrainHeight(x+vx*w/2,z+vz*w/2)-terrainHeight(x-vx*w/2,z-vz*w/2))/w;
-    const q=new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.atan(along),angle,Math.atan(across),'YXZ'));
-    surfaces.push({m:new THREE.Matrix4().compose(new THREE.Vector3(x,y+offset-.006,z),q,new THREE.Vector3(w,.012,l)),color:tint()});
-  }
+  function quad(points,offset=.018){roadSurface.addPolygon(points,{offset,layer:'island-road-joint-bed',overlapGroup:'island-road-bed'});}
+  function slab(x,z,w,l,angle,color=tint()){roadSurface.addSlab(x,z,w,l,angle,{offset:.035,color,layer:'island-road-stone-courses',overlapGroup:'island-road-courses'});}
   function curb(x1,z1,x2,z2){
     const x=(x1+x2)/2,z=(z1+z2)/2;
-    // Cut both sides of each junction, each processional branch and each bridgehead.
+    // Open the edges at intersections, radial approaches, and bridgeheads.
     if(Math.min(Math.abs(x),Math.abs(z))<2.8&&radii.some(r=>Math.abs(Math.hypot(x,z)-r)<3))return;
     if(terraceSites.some(t=>{const dx=x-t.x,dz=z-t.z,along=dx*t.ux+dz*t.uz,side=-dx*t.uz+dz*t.ux;return Math.hypot(dx,dz)<t.radius+1||along< -t.radius&&along> -t.radius-WORLD.APPROACH_LENGTH-1.2&&Math.abs(side)<2.25;}))return;
     if(glbRingLanterns.some(p=>Math.hypot(p.x-x,p.z-z)<1.5)||colliders.some(c=>Math.hypot(c.x-x,c.z-z)<c.r+1.1))return;
     if(BRIDGES.some(b=>Math.min(Math.hypot(x-b.x1,z-b.z1),Math.hypot(x-b.x2,z-b.z2))<4))return;
-    const y1=terrainHeight(x1,z1),y2=terrainHeight(x2,z2),length=Math.hypot(x2-x1,z2-z1),angle=Math.atan2(x2-x1,z2-z1);
-    curbs.push({m:new THREE.Matrix4().compose(new THREE.Vector3(x,(y1+y2)/2+.075,z),new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.atan2(y2-y1,length),angle,0,'YXZ')),new THREE.Vector3(.22,.14,Math.hypot(length,y2-y1)-.025)),color:tint()});
+    const length=Math.hypot(x2-x1,z2-z1),angle=Math.atan2(x2-x1,z2-z1);
+    roadSurface.addSlab(x,z,.22,length-.025,angle,{offset:.145,depth:.14,color:tint(),layer:'island-road-low-curbs',walkable:false});
   }
-  function node(x,z,angle=0,size=4.8,top=.041){
+  function node(x,z,angle=0,size=4.8){
+    nodes.push({x,z,width:size,depth:size,yaw:angle});
     const point=(u,v)=>[x+Math.cos(angle)*u+Math.sin(angle)*v,z-Math.sin(angle)*u+Math.cos(angle)*v];
-    // A quiet six-by-six carpet with a slightly warmer cross; no raised dais.
     const n=6,step=size/n;
     for(let i=0;i<n;i++)for(let j=0;j<n;j++){
       const u=-size/2+i*step,v=-size/2+j*step;
-      quad([[u,v],[u,v+step],[u+step,v+step],[u+step,v]].map(([a,b])=>{const [px,pz]=point(a,b);return [px,pz,terrainHeight(px,pz)+top-.003];}));
-      const [px,pz]=point(u+step/2,v+step/2);slab(px,pz,step-.045,step-.045,angle,top);
-      if(i===2||i===3||j===2||j===3)surfaces[surfaces.length-1].color.multiplyScalar(1.035);
+      quad([[u,v],[u,v+step],[u+step,v+step],[u+step,v]].map(([a,b])=>point(a,b)));
+      const [px,pz]=point(u+step/2,v+step/2),color=tint();if(i===2||i===3||j===2||j===3)color.multiplyScalar(1.035);
+      slab(px,pz,step-.045,step-.045,angle,color);
     }
+  }
+  function spine(id,points,width=3.8){
+    corridors.push({id,kind:'avenue',width,points:points.map(([x,z])=>({x,z}))});
+    for(let k=1;k<points.length;k++){
+      const [x0,z0]=points[k-1],[x1,z1]=points[k],length=Math.hypot(x1-x0,z1-z0),ux=(x1-x0)/length,uz=(z1-z0)/length,angle=Math.atan2(ux,uz),vx=uz,vz=-ux;
+      const count=Math.ceil(length/1.2),step=length/count,point=(d,s)=>[x0+ux*d+vx*s,z0+uz*d+vz*s];
+      for(let i=0;i<count;i++){
+        const lo=i*step,hi=(i+1)*step,mid=(lo+hi)/2,half=width/2;
+        quad([point(lo,-half),point(hi,-half),point(hi,half),point(lo,half)]);
+        const split=(noise()-.5)*.12;
+        for(const [left,right] of [[-half,split],[split,half]]){const [x,z]=point(mid,(left+right)/2);slab(x,z,right-left-.045,step-(.035+noise()*.025),angle);}
+        for(const side of [-half-.19,half+.19])curb(...point(lo,side),...point(hi,side));
+      }
+    }
+    // Cover joints at the slight at-grade detours, never bridge building walls.
+    for(let i=1;i<points.length-1;i++)node(...points[i],0,width);
   }
   function build(){
     for(const r of radii){
       const n=Math.ceil(2*Math.PI*r/1.2),da=2*Math.PI/n;
+      corridors.push({id:'ring-'+r,kind:'ring',width:3.2,points:Array.from({length:n+1},(_,i)=>({x:Math.sin(i*da)*r,z:Math.cos(i*da)*r}))});
       for(let i=0;i<n;i++){
         const a=i*da,b=(i+1)*da,mid=(a+b)/2;
         quad([[r-1.6,a],[r+1.6,a],[r+1.6,b],[r-1.6,b]].map(([rad,t])=>[Math.sin(t)*rad,Math.cos(t)*rad]));
-        // Shared width splits and 3.5–6cm end joints keep every original centreline.
         const split=(noise()-.5)*.12;
-        for(const [lo,hi] of [[-1.6,split],[split,1.6]]){
-          const rad=r+(lo+hi)/2,theta=mid;
-          slab(Math.sin(theta)*rad,Math.cos(theta)*rad,hi-lo-.045,da*rad-(.035+noise()*.025),theta+Math.PI/2);
-        }
+        for(const [lo,hi] of [[-1.6,split],[split,1.6]]){const rad=r+(lo+hi)/2;slab(Math.sin(mid)*rad,Math.cos(mid)*rad,hi-lo-.045,da*rad-(.035+noise()*.025),mid+Math.PI/2);}
         for(const rad of [r-1.79,r+1.79])curb(Math.sin(a)*rad,Math.cos(a)*rad,Math.sin(b)*rad,Math.cos(b)*rad);
       }
     }
-    for(const [ux,uz] of [[0,1],[0,-1],[1,0],[-1,0]]){
-      const angle=Math.atan2(ux,uz),vx=uz,vz=-ux;
-      for(let r=4;r<149;r+=1.2){
-        const lo=Math.max(4,r-.6),hi=Math.min(149,r+.6),mid=(lo+hi)/2;
-        const point=(d,s)=>[ux*d+vx*s,uz*d+vz*s];
-        quad([point(lo,-1.5),point(hi,-1.5),point(hi,1.5),point(lo,1.5)]);
-        const split=(noise()-.5)*.12;
-        for(const [left,right] of [[-1.5,split],[split,1.5]]){const [x,z]=point(mid,(left+right)/2);slab(x,z,right-left-.045,hi-lo-(.035+noise()*.025),angle);}
-        for(const side of [-1.69,1.69])curb(...point(lo,side),...point(hi,side));
-      }
-      for(const r of radii)node(ux*r,uz*r,angle);
-    }
-    // Landing carpets live on land beyond the deck ends, using existing terrain only.
+    spine('south-avenue',[[0,4],[0,149]]);
+    // Replace the old painted line through Mosheng with a real open corridor.
+    spine('north-avenue',[[0,-4],[0,-104],[4,-112],[4,-134],[0,-142],[0,-149]]);
+    // Move the east outer edge away from the unchanged Five Versions facade.
+    spine('east-avenue',[[4,0],[108,0],[114,-1.7],[132,-1.7],[138,0],[149,0]]);
+    spine('west-avenue',[[-4,0],[-149,0]]);
+    for(const [ux,uz] of [[0,1],[0,-1],[1,0],[-1,0]])for(const r of radii)node(ux*r,uz*r,Math.atan2(ux,uz));
     for(const b of BRIDGES.filter(b=>!b.bonus)){
       const dx=b.x2-b.x1,dz=b.z2-b.z1,len=Math.hypot(dx,dz),ux=dx/len,uz=dz/len;
       for(const [x,z,sign] of [[b.x1,b.z1,-1],[b.x2,b.z2,1]]){
         const px=x+ux*sign*2.52,pz=z+uz*sign*2.52;
-        if(Math.hypot(px,pz)<WORLD.ISLAND_RADIUS-2||MATH_ISLES.some(is=>Math.hypot(px-is.x,pz-is.z)<is.r-2))node(px,pz,Math.atan2(ux,uz),3,.04);
+        if(Math.hypot(px,pz)<WORLD.ISLAND_RADIUS-2||MATH_ISLES.some(is=>Math.hypot(px-is.x,pz-is.z)<is.r-2))node(px,pz,Math.atan2(ux,uz),3);
       }
     }
-    const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(bedPositions,3));geometry.setIndex(bedIndices);geometry.computeVertexNormals();
-    const bed=new THREE.Mesh(geometry,joint);bed.name='island-road-joint-bed';bed.receiveShadow=true;scene.add(bed);
-    for(const [name,mat,rows] of [['island-road-stone-courses',stone,surfaces],['island-road-low-curbs',edge,curbs]]){
-      const im=new THREE.InstancedMesh(G.box,mat,rows.length);im.name=name;
-      rows.forEach((v,i)=>{im.setMatrixAt(i,v.m);im.setColorAt(i,v.color);});im.instanceMatrix.needsUpdate=true;im.instanceColor.needsUpdate=true;
-      im.frustumCulled=false;im.castShadow=false;im.receiveShadow=true;scene.add(im);
-    }
+    for(const [name,mat] of [['island-road-terraces',M.path],['island-road-approaches',M.path],['island-road-joint-bed',joint],['island-road-stone-courses',stone],['island-road-low-curbs',edge]]){const mesh=roadSurface.buildMesh(mat,name);if(mesh)scene.add(mesh);}
   }
-  return {build,stone,noise};
+  return {build,stone,noise,corridors,nodes,surfaces,inspect:()=>({corridors:corridors.map(c=>({id:c.id,kind:c.kind,width:c.width,points:c.points.length})),surface:roadSurface.inspect()})};
 })();
 function humanTree(x,z,h=6){
   const y=terrainHeight(x,z);glbTrees.push({x,z,y,h,rot:jitter(x+z)*6.28});
@@ -1059,12 +1125,13 @@ function advanceReveal(state,dt,activation,wasVisited,night){
   state.visited+=(Number(wasVisited)-state.visited)*(1-Math.exp(-dt*2));
   state.night+=(night-state.night)*(1-Math.exp(-dt*3));
 }
+function butterflySeaLayout(old){const {ux,uz}=old;return {x:ux*330,z:uz*330,ux,uz,radius:56,y:-14.4,start:139,end:276,startY:old.groundY,cameraBoxes:[],collisions:[]};}
 function prepareButterflySea(lm){
   const root=new THREE.Group(),old=lm.site,ux=old.ux,uz=old.uz;
   const b=lm.butterfly={root,phase:0,breath:0,reveal:0,visited:0,night:1};
   root.name='sea-butterfly-palace';root.rotation.y=Math.atan2(-ux,-uz);
   // Keep the original terrace as the shore landing; no neighbour is translated.
-  const sea=butterflySea={x:ux*330,z:uz*330,ux,uz,radius:56,y:-14.4,start:139,end:276,startY:old.groundY,cameraBoxes:[],collisions:[]};
+  const sea=butterflySea=butterflySeaLayout(old);
   lm.site={...old,x:sea.x,z:sea.z,radius:56,groundY:sea.y,baseY:WORLD.WATER_Y,steps:0,ring:330};
   lm.entry.x=sea.x;lm.entry.z=sea.z;lm.group.position.set(sea.x,sea.y,sea.z);
   Object.assign(b,{wings:[],gateLocal:new THREE.Vector3(0,0,25),sea});
@@ -1383,6 +1450,13 @@ function prepareButterflySea(lm){
   const toWorld=(r,side,y)=>[ux*r-uz*side,y,uz*r+ux*side];
   const angle=Math.atan2(ux,uz),L=sea.end-sea.start,N=Math.ceil(L/2);
   for(let i=0;i<N;i++){const r=sea.start+(i+.5)*L/N,y=butterflySeaDeck(r),next=butterflySeaDeck(r+L/N/2),prev=butterflySeaDeck(r-L/N/2),m=new THREE.Matrix4().compose(new THREE.Vector3(...toWorld(r,0,y-.25)),new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.atan2(next-prev,L/N),angle,0,'YXZ')),new THREE.Vector3(5.6,.5,L/N+.03));deck.push(m);}
+  // Read the top planes of the EXISTING Float32 box instances. Their tilted
+  // ends are not the old 30cm analytical cap, and do not create invisible floor.
+  sea.deckSamples=deck.map(matrix=>{
+    const actual=new THREE.Matrix4().fromArray(new Float32Array(matrix.elements));
+    const a=new THREE.Vector3(0,.5,-.5).applyMatrix4(actual),b=new THREE.Vector3(0,.5,.5).applyMatrix4(actual);
+    return {lo:a.x*ux+a.z*uz,hi:b.x*ux+b.z*uz,yLo:a.y,yHi:b.y};
+  });
   for(let r=sea.start+2;r<sea.end;r+=14){
     const y=butterflySeaDeck(r);
     for(const side of [-3,3]){
@@ -1531,14 +1605,27 @@ function updateRoofMechanism(b,dt){
   const controls=$('mechanical-controls');if(controls){controls.hidden=!started||worldActive()||!$('craft-controls').hidden||player.position.distanceTo(b.root.getWorldPosition(new THREE.Vector3()))>95;$('mechanical-status').textContent=b.flight.enabled?(reduced?'自动飞行 · 减少动态已静止':'自动飞行 · 悬浮振翅'):rig.state+(rig.locked?' · 已锁止':' · 机构运行中');}
 }
 
-function butterflySeaDeck(r){const s=butterflySea,t=THREE.MathUtils.clamp((r-s.start)/((s.end-s.start)*.72),0,1);return THREE.MathUtils.lerp(s.startY,s.y+.20,smooth01(t));}
+function butterflySeaDeck(r,s=butterflySea){const t=THREE.MathUtils.clamp((r-s.start)/((s.end-s.start)*.72),0,1);return THREE.MathUtils.lerp(s.startY,s.y+.20,smooth01(t));}
 function butterflySeaSurface(x,z){
   const s=butterflySea,along=x*s.ux+z*s.uz,side=-x*s.uz+z*s.ux,d=Math.hypot(x-s.x,z-s.z);
   if(d<=55.8){
     // A shallow water film between the continuous courts; deck/bridge tops agree.
     return s.y+.20;
   }
-  if(along>=s.start-.3&&along<=s.end+.5&&Math.abs(side)<=2.55)return butterflySeaDeck(along);
+  if(Math.abs(side)<=2.55&&s.deckSamples){
+    const rows=s.deckSamples,index=Math.floor((along-s.start)/(s.end-s.start)*rows.length);let top=null,before=null,after=null;
+    for(let i=Math.max(0,index-1);i<=Math.min(rows.length-1,index+1);i++){
+      const row=rows[i];
+      if(row.hi<along&&(!before||row.hi>before.hi))before=row;
+      if(row.lo>along&&(!after||row.lo<after.lo))after=row;
+      if(along<row.lo||along>row.hi)continue;
+      const y=row.yLo+(row.yHi-row.yLo)*(along-row.lo)/(row.hi-row.lo);top=top===null?y:Math.max(top,y);
+    }
+    if(top!==null)return top;
+    // A human foot spans the original centimetre joints between tilted boxes.
+    // Bridge those internal joints only, never extend the outer deck footprint.
+    if(before&&after&&after.lo-before.hi<.05)return before.yHi+(after.yLo-before.yHi)*(along-before.hi)/(after.lo-before.hi);
+  }
   return null;
 }
 function butterflyFlightBounds(b){
@@ -1673,7 +1760,7 @@ function prepareBuildingNavigation(wrap){
 function buildTerrace(lm){
   const t=lm.site,angle=Math.atan2(t.ux,t.uz),point=(d,side=0)=>[t.x+t.ux*d-t.uz*side,t.z+t.uz*d+t.ux*side];
   // Ground-level forecourt: no raised cylinder or mandatory stair approach.
-  disc(scene,t.x,t.z,t.radius,M.path,t.groundY+.012);
+  roadSurface.addPolygon(Array.from({length:32},(_,i)=>[t.x+Math.cos(i*Math.PI/16)*t.radius,t.z+Math.sin(i*Math.PI/16)*t.radius]),{offset:.012,layer:'island-road-terraces'});
   const stairRun=t.steps*WORLD.STEP_DEPTH;
   for(let k=0;k<t.steps;k++){
     const [x,z]=point(-t.radius-stairRun+(k+.5)*WORLD.STEP_DEPTH),h=(k+1)*WORLD.STEP_HEIGHT;
@@ -1804,34 +1891,6 @@ LINKS.forEach((entry,index)=>{
 });
 
 // ===== Batch 5: Konigsberg seven-bridge archipelago (Euler 1736). Main island + 3 math isles = 4 land masses, degrees (5,3,3,3): no Euler trail until the 8th bridge. =====
-const MATH_ISLES=[
-  {key:'K',name:'柯尼斯堡洲',note:'七桥之问 · 1736',x:52,z:-2,r:12,glb:'assets/models/LM27_Konigsberg.glb',root:'Konigsberg'},
-  {key:'L',name:'叙拉古洲',note:'圆柱容球 · 阿基米德',x:58,z:-26,r:6,glb:'assets/models/LM28_Syracuse.glb',root:'Syracuse'},
-  {key:'S',name:'图卢兹洲',note:'页边批注 · 费马',x:36,z:-32,r:9,glb:'assets/models/LM29_Toulouse.glb',root:'Toulouse'}
-];
-MATH_ISLES.forEach(is=>{is.x*=WORLD.MATH_SCALE;is.z*=WORLD.MATH_SCALE;is.r*=WORLD.MATH_SCALE;});
-const MAINLAND={x:0,z:0,r:WORLD.ISLAND_RADIUS};
-function bridgeSpan(a,b){
-  const dx=b.x-a.x,dz=b.z-a.z,d=Math.hypot(dx,dz),ux=dx/d,uz=dz/d;
-  return {x1:a.x+ux*a.r,z1:a.z+uz*a.r,x2:b.x-ux*b.r,z2:b.z-uz*b.r};
-}
-function mkBridge(id,a,b,off,name,bonus){
-  off*=WORLD.MATH_SCALE;
-  const inset=3+off*off/(2*Math.min(a.r,b.r));
-  const s=bridgeSpan({...a,r:a.r-inset},{...b,r:b.r-inset}),nx=-(s.z2-s.z1),nz=(s.x2-s.x1),nl=Math.hypot(nx,nz)||1;
-  return {id,name,bonus:!!bonus,x1:s.x1+nx/nl*off,z1:s.z1+nz/nl*off,x2:s.x2+nx/nl*off,z2:s.z2+nz/nl*off};
-}
-const BRIDGES=[
-  mkBridge(1,MAINLAND,MATH_ISLES[0],-2.7,'森林桥'),
-  mkBridge(2,MAINLAND,MATH_ISLES[0],2.7,'市民桥'),
-  mkBridge(3,MATH_ISLES[2],MATH_ISLES[0],-1.25,'铁匠桥'),
-  mkBridge(4,MATH_ISLES[2],MATH_ISLES[0],1.25,'人行桥'),
-  mkBridge(5,MATH_ISLES[0],MATH_ISLES[1],0,'高桥'),
-  mkBridge(6,MAINLAND,MATH_ISLES[1],0,'绿桥'),
-  mkBridge(7,MATH_ISLES[2],MATH_ISLES[1],0,'木桥'),
-  mkBridge(8,MAINLAND,MATH_ISLES[2],0,'新桥',true)
-];
-let bridge8Open=false;
 MATH_ISLES.forEach(is=>{
   mesh(new THREE.CylinderGeometry(is.r+1.2,is.r,1.2,56),M.ground,scene,is.x,-.6,is.z);
   const rim=mesh(new THREE.CylinderGeometry(is.r+1.3,is.r+1.05,.3,56),M.edge,scene,is.x,-.16,is.z);rim.castShadow=false;
@@ -1848,6 +1907,7 @@ function buildBridge(b){
   g.position.set((b.x1+b.x2)/2,0,(b.z1+b.z2)/2);g.rotation.y=ang;
   const geo=new THREE.PlaneGeometry(L,4.4,Math.ceil(L/.5),1);geo.rotateX(-Math.PI/2);
   const pos=geo.attributes.position;for(let i=0;i<pos.count;i++)pos.setY(i,bridgeDeckY(pos.getX(i),L,b.rise));geo.computeVertexNormals();
+  b.deckSamples=Array.from({length:Math.ceil(L/.5)+1},(_,i)=>({x:pos.getX(i),y:pos.getY(i)}));
   // Road 3a transverse Canvas joints, now in each bridge's own UV space.
   // Material-only paving sits exactly on the old sampled arch (zero height offset).
   const canvas=document.createElement('canvas');canvas.width=2048;canvas.height=256;
@@ -1904,19 +1964,24 @@ function walkable(x,z){
   for(const is of MATH_ISLES){if(Math.hypot(x-is.x,z-is.z)<=is.r)return true;}
   return false;
 }
+function bridgeSurfaceHeight(x,z,b,half=b.halfWidth){
+  const dx=b.x2-b.x1,dz=b.z2-b.z1,len=Math.hypot(dx,dz),rx=x-(b.x1+b.x2)/2,rz=z-(b.z1+b.z2)/2;
+  const along=(rx*dx+rz*dz)/len,side=(-rx*dz+rz*dx)/len,samples=b.deckSamples;
+  // Match the rendered RECTANGLE, not the old capsule around bridge endpoints.
+  if(!samples||along<samples[0].x||along>samples[samples.length-1].x||Math.abs(side)>half)return null;
+  const f=(along-samples[0].x)/(samples[samples.length-1].x-samples[0].x)*(samples.length-1),i=Math.min(samples.length-2,Math.floor(f)),a=samples[i],q=samples[i+1];
+  return a.y+(q.y-a.y)*(along-a.x)/(q.x-a.x);
+}
 function surfaceHeight(x,z){
   if(butterflySea){const y=butterflySeaSurface(x,z);if(y!==null)return y;}
-  for(const b of BRIDGES){if(b.bonus&&!bridge8Open)continue;if(onBridgeSeg(x,z,b,b.halfWidth)){
-    const dx=b.x2-b.x1,dz=b.z2-b.z1,len=Math.hypot(dx,dz),t=((x-b.x1)*dx+(z-b.z1)*dz)/(len*len);
-    return bridgeDeckY((t-.5)*len,b.length,b.rise);
-  }}
-  for(const t of terraceSites){
-    const dx=x-t.x,dz=z-t.z;if(Math.hypot(dx,dz)<=t.radius)return t.groundY;
-    const along=dx*t.ux+dz*t.uz,side=-dx*t.uz+dz*t.ux,run=t.steps*WORLD.STEP_DEPTH;
-    if(Math.abs(side)<=1.5&&along>=-t.radius-run&&along< -t.radius)return t.baseY+Math.min(t.steps,Math.floor((along+t.radius+run)/WORLD.STEP_DEPTH)+1)*WORLD.STEP_HEIGHT;
-  }
-  return Math.hypot(x,z)>WORLD.ISLAND_RADIUS?0:terrainHeight(x,z);
+  // Follow visible terrain/paving, not the first overlapping flat terrace.
+  // The former circle override caused a 1.05m phantom drop on the east spine.
+  const ground=Math.hypot(x,z)>WORLD.ISLAND_RADIUS?0:renderedTerrainHeight(x,z),road=roadSurface.roadHeightAt(x,z);
+  let y=road===null?ground:Math.max(ground,road);
+  for(const b of BRIDGES){if(b.bonus&&!bridge8Open)continue;const deck=bridgeSurfaceHeight(x,z,b);if(deck!==null)y=Math.max(y,deck);}
+  return y;
 }
+
 const mathMonuments=[];
 MATH_ISLES.forEach((is,i)=>{
   const group=new THREE.Group();group.position.set(is.x,is.site.groundY,is.z);scene.add(group);
@@ -2142,11 +2207,14 @@ Object.keys(glbPerEntry).forEach(k=>{
   setupCraftedLandmark(lm);
 });
 flushInstances();
-const courtyardMasterplan=window.CourtyardMasterplan?.build({THREE,entries:LINKS,sites:terraceSites,terrainHeight,surfaceHeight,buildings:architecturalRecords,butterflySea,scenery:[...glbTrees,...glbRingLanterns]});
+const courtyardMasterplan=window.CourtyardMasterplan?.build({THREE,entries:LINKS,sites:terraceSites,terrainHeight:renderedTerrainHeight,surface:roadSurface,surfaceHeight,buildings:architecturalRecords,butterflySea,scenery:[...glbTrees,...glbRingLanterns]});
+const courtyardRoadHierarchy=window.CourtyardRoadHierarchy?.build({THREE,surface:roadSurface,pockets:courtyardMasterplan?.pockets||[],islandRoads});
+if(courtyardRoadHierarchy)scene.add(courtyardRoadHierarchy.root);
 if(courtyardMasterplan){
  scene.add(courtyardMasterplan.root);
  for(const b of courtyardMasterplan.obstacles){CourtyardRuntime.register(THREE,b,b.root,99,'庭间歇脚');architecturalObstacles.push(b);craftedNavigation(b);}
 }
+const courtyardRoadScenery=window.CourtyardRoadScenery?.apply({THREE,trees:glbTrees,lanterns:glbRingLanterns,nodes:islandRoads.nodes,corridors:[...islandRoads.corridors,...(courtyardRoadHierarchy?.corridors||[])],sites:terraceSites,buildings:architecturalRecords,pockets:courtyardMasterplan?.pockets||[],forecourts:courtyardMasterplan?.forecourts||[],height:renderedTerrainHeight,approachLength:WORLD.APPROACH_LENGTH,lanternHeight:WORLD.LANTERN_HEIGHT,islandRadius:WORLD.ISLAND_RADIUS,obstacles:architecturalObstacles,masterplanRoot:courtyardMasterplan?.root,scene});
 const particleCount=lightQuality?16:80,particlePositions=new Float32Array(particleCount*3),particleBase=[];
 for(let i=0;i<particleCount;i++){const a=random()*Math.PI*2,r=Math.sqrt(random())*WORLD.ISLAND_RADIUS;particleBase.push([Math.cos(a)*r,terrainHeight(Math.cos(a)*r,Math.sin(a)*r)+.7+random()*4,Math.sin(a)*r,random()*6]);particlePositions.set(particleBase[i].slice(0,3),i*3);}
 const particleGeometry=new THREE.BufferGeometry();particleGeometry.setAttribute('position',new THREE.BufferAttribute(particlePositions,3));
@@ -2310,6 +2378,18 @@ const mapContext=$('map').getContext('2d');
 // Canvas uses +x right, +z down. Forward=(-sin(yaw),-cos(yaw));
 // R(yaw) maps it to (0,-1). North's counterclockwise bearing is -yaw.
 const mapZoneColors=['#849e96','#939eb1','#ad927e','#a092ad'];
+// Maps use the exact physical corridor polylines, including both repaired
+// detours and the quiet/branch curves. No old straight line through a facade.
+function drawRoadMap(ctx,px,pz,unit){
+  ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
+  for(const road of [...islandRoads.corridors,...(courtyardRoadHierarchy?.corridors||[])]){
+    ctx.strokeStyle=road.kind==='quiet'?'#abbba5aa':road.kind==='branch'?'#c1b59b99':'#aab5a899';
+    ctx.lineWidth=Math.max(.65,road.width*unit*.65);ctx.beginPath();
+    road.points.forEach((p,i)=>i?ctx.lineTo(px(p.x),pz(p.z)):ctx.moveTo(px(p.x),pz(p.z)));ctx.stroke();
+  }
+  ctx.restore();
+}
+
 function drawMap(){
   const ctx=mapContext,size=288,c=size/2,r=c-18,scale=.62,yaw=cameraState.yaw;
   ctx.clearRect(0,0,size,size);ctx.save();ctx.translate(c,c);
@@ -2317,9 +2397,7 @@ function drawMap(){
   ctx.rotate(yaw);ctx.translate(-player.position.x*scale,-player.position.z*scale);
   ctx.fillStyle='rgba(42,57,59,.28)';ctx.strokeStyle='rgba(174,190,183,.32)';ctx.lineWidth=1;
   ctx.beginPath();ctx.arc(0,0,WORLD.ISLAND_RADIUS*scale,0,Math.PI*2);ctx.fill();ctx.stroke();
-  ctx.strokeStyle='rgba(190,198,187,.23)';ctx.beginPath();
-  for(const ring of [WORLD.INNER_RING,WORLD.OUTER_RING]){const radius=(ring-WORLD.TERRACE_RADIUS-WORLD.APPROACH_LENGTH)*scale;ctx.moveTo(radius,0);ctx.arc(0,0,radius,0,Math.PI*2);}
-  const edge=WORLD.ISLAND_RADIUS*scale;ctx.moveTo(-edge,0);ctx.lineTo(edge,0);ctx.moveTo(0,-edge);ctx.lineTo(0,edge);ctx.stroke();
+  drawRoadMap(ctx,x=>x*scale,z=>z*scale,scale);
   ctx.strokeStyle='rgba(180,157,117,.65)';ctx.lineWidth=1.4;ctx.beginPath();
   for(const b of BRIDGES){if(b.bonus&&!bridge8Open)continue;ctx.moveTo(b.x1*scale,b.z1*scale);ctx.lineTo(b.x2*scale,b.z2*scale);}ctx.stroke();
   for(const isle of MATH_ISLES){ctx.strokeStyle='rgba(174,190,183,.28)';ctx.beginPath();ctx.arc(isle.x*scale,isle.z*scale,isle.r*scale,0,Math.PI*2);ctx.stroke();ctx.fillStyle='#849e96';ctx.beginPath();ctx.arc(isle.x*scale,isle.z*scale,2,0,Math.PI*2);ctx.fill();}
@@ -2352,7 +2430,7 @@ ZONES.forEach((zone,index)=>{
   });$('atlas-list').append(section);
   const legend=document.createElement('span');legend.style.setProperty('--zone',mapZoneColors[index]);const dot=document.createElement('i');legend.append(dot,zone.name);$('atlas-legend').append(legend);
 });
-for(const text of ['━ 七桥（金）','▲ 当前位置','↑ N 北','金点：已访 · 白圈：最近']){const span=document.createElement('span');span.textContent=text;$('atlas-legend').append(span);}
+for(const text of ['━ 通衢 · ∿ 曲径 · 细线支路','━ 七桥（金）','▲ 当前位置','↑ N 北','金点：已访 · 白圈：最近']){const span=document.createElement('span');span.textContent=text;$('atlas-legend').append(span);}
 function selectCourtyardRoute(id){
  const selected=courtyardMasterplan?.selectRoute(id);$('route-pilot').setAttribute('aria-pressed',String(selected==='pilot'));$('route-first').setAttribute('aria-pressed',String(selected==='firstVisit'));$('route-clear').hidden=!selected;
  $('route-status').textContent=selected?courtyardMasterplan.routes[selected].name+' · 沿金色虚线自由走，不自动移动；可随时取消。':'游线可选，不会自动移动；随时继续自由漫游。';drawAtlas();return selected;
@@ -2394,8 +2472,7 @@ function drawAtlas(){
   const circle=(x,z,r)=>{ctx.beginPath();ctx.arc(px(x),pz(z),r*unit,0,Math.PI*2);};
   ctx.fillStyle='#243336';ctx.strokeStyle='#73847b';ctx.lineWidth=1;circle(0,0,WORLD.ISLAND_RADIUS);ctx.fill();ctx.stroke();
   for(const isle of MATH_ISLES){circle(isle.x,isle.z,isle.r);ctx.fill();ctx.stroke();}
-  ctx.strokeStyle='#8f9b8b66';ctx.beginPath();for(const ring of [WORLD.INNER_RING,WORLD.OUTER_RING]){const r=ring-WORLD.TERRACE_RADIUS-WORLD.APPROACH_LENGTH;ctx.moveTo(px(r),pz(0));ctx.arc(px(0),pz(0),r*unit,0,Math.PI*2);}
-  const edge=WORLD.ISLAND_RADIUS;ctx.moveTo(px(-edge),pz(0));ctx.lineTo(px(edge),pz(0));ctx.moveTo(px(0),pz(-edge));ctx.lineTo(px(0),pz(edge));ctx.stroke();
+  drawRoadMap(ctx,px,pz,unit);
   ctx.strokeStyle='#c9ad78';ctx.lineWidth=1.6;ctx.beginPath();for(const b of BRIDGES){if(b.bonus)continue;ctx.moveTo(px(b.x1),pz(b.z1));ctx.lineTo(px(b.x2),pz(b.z2));}ctx.stroke();
   const routeId=courtyardMasterplan?.inspect().selectedRoute,route=routeId&&courtyardMasterplan.routes[routeId];
   if(route){ctx.save();ctx.strokeStyle='#e5c586';ctx.lineWidth=2;ctx.setLineDash([5,4]);ctx.beginPath();route.points.forEach((p,i)=>i?ctx.lineTo(px(p.x),pz(p.z)):ctx.moveTo(px(p.x),pz(p.z)));ctx.stroke();ctx.restore();}
@@ -3317,7 +3394,7 @@ function applyBuildingAction(building,phase){const index=typeof building==='numb
 // roof must nevertheless participate in weather, using the actual current skins.
 const butterflyWeatherShelter={root:landmarks[23].butterfly.creature,dynamic:true,meshes:()=>landmarks[23].butterfly.mechanical?.skins||[]};
 const gardenWeather=window.CourtyardWeather?.create({THREE,scene,camera,player,surfaceHeight,buildings:()=>[...navigationBuildings,butterflyWeatherShelter],lightQuality});
-gardenWeather?.bindSurfaces([{material:M.ground,kind:'ground'}, {material:M.path,kind:'paving'}, {material:islandRoads.stone,kind:'paving'}, {material:M.leaf,kind:'vegetation'}, ...(courtyardMasterplan?.surfaces||[])]);
+gardenWeather?.bindSurfaces([{material:M.ground,kind:'ground'}, {material:M.path,kind:'paving'}, ...islandRoads.surfaces, {material:M.leaf,kind:'vegetation'}, ...(courtyardMasterplan?.surfaces||[]),...(courtyardRoadHierarchy?.surfaces||[])]);
 $('weather-select').addEventListener('change',e=>{clearInput();gardenWeather?.setMode(e.target.value);});
 $('weather-select').addEventListener('focus',()=>clearInput());
 
@@ -3344,7 +3421,7 @@ function frame(now){
 document.querySelectorAll('[data-roof]').forEach(button=>button.onclick=()=>{setRoofState(button.dataset.roof);gardenWeather?.invalidateShelter();});
 $('roof-flight').onclick=()=>{const b=landmarks[23].butterfly;b.flight.enabled=!b.flight.enabled;if(!b.flight.enabled){b.mechanical.target=b.mechanical.progress;b.mechanical.velocity=0;b.mechanical.state='悬浮暂停';}document.querySelectorAll('[data-roof]').forEach(button=>button.setAttribute('aria-pressed','false'));updateRoofMechanism(b,0);};
 $('roof-skeleton').onclick=()=>{const r=landmarks[23].butterfly.mechanical;r.skeleton=!r.skeleton;$('roof-skeleton').setAttribute('aria-pressed',String(r.skeleton));updateRoofMechanism(landmarks[23].butterfly,0);};
-window.__garden={get masterplan(){return courtyardMasterplan;},get weather(){return gardenWeather;},get buildingActions(){return buildingActions;},get reader(){return readingRoom;},get readingPanels(){return architecturalRecords.map(b=>({index:b.index,panels:b.readingPanels}));},mechanicalStep(dt){updateButterflySea(dt,landmarks[23]);},setRoofState,get worldHost(){return WorldHost;},get transitionDirector(){return TransitionDirector;},get renderPass(){return mainRenderPass;},__w2bTest:w2bTest,get skyT(){return skyT;},get atlas(){return {...atlasState,scales:[...atlasState.scales]};},get motor(){return {...motor,speed:velocity.length(),currentSpeed,sprinting};},get navigation(){return navigationBuildings;},requestJump,stepWalker,WORLD,scene,renderer,camera,composer,cameraLook,subjectBounds,monumentFaces,walkable,surfaceHeight,terrainHeight,teleport,start,player,cameraState,modelLoads,
+window.__garden={get roadScenery(){return courtyardRoadScenery;},get roadHierarchy(){return courtyardRoadHierarchy;},get masterplan(){return courtyardMasterplan;},get weather(){return gardenWeather;},get buildingActions(){return buildingActions;},get reader(){return readingRoom;},get readingPanels(){return architecturalRecords.map(b=>({index:b.index,panels:b.readingPanels}));},mechanicalStep(dt){updateButterflySea(dt,landmarks[23]);},setRoofState,get worldHost(){return WorldHost;},get transitionDirector(){return TransitionDirector;},get renderPass(){return mainRenderPass;},__w2bTest:w2bTest,get skyT(){return skyT;},get atlas(){return {...atlasState,scales:[...atlasState.scales]};},get motor(){return {...motor,speed:velocity.length(),currentSpeed,sprinting};},get navigation(){return navigationBuildings;},requestJump,stepWalker,WORLD,scene,renderer,camera,composer,cameraLook,subjectBounds,monumentFaces,walkable,surfaceHeight,terrainHeight,renderedTerrainHeight,roadSurface,islandRoads,bridgeSurfaceHeight,teleport,start,player,cameraState,modelLoads,
   get butterfly(){return landmarks[23].butterfly;},get sharedIvory(){return M.ivory;},BUTTERFLY,
   get landmarks(){return landmarks.map(lm=>({index:lm.index,title:lm.entry.title,bboxHeight:lm.bboxHeight,groundY:lm.groundY,x:lm.entry.x,z:lm.entry.z,bounds:lm.bounds,platformY:lm.site.groundY,targetHeight:lm.targetHeight,entryPoint:lm.entryPoint,...(lm.gatePoint?{gatePoint:lm.gatePoint}:{}),site:lm.site,labelY:lm.group.position.y+lm.name.position.y}));},
   get mathMonuments(){return mathMonuments.map(({group,model,lod,fallback,bounds,site,name,...r})=>r);},
