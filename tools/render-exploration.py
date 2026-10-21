@@ -111,7 +111,7 @@ canvas.save(p)
 '''
 reports=[]
 for view in views:
- if CAPTURE=='boat': view={**view,'scale':48}
+ if view['name']=='rss-boat-shore': view={**view,'scale':48}
  camera.location=Vector(view['position'])+(Vector(view['position'])-Vector(view['target'])).normalized()*1000;camera.rotation_euler=(Vector(view['target'])-camera.location).to_track_quat('-Z','Y').to_euler();camera.data.type='ORTHO';camera.data.ortho_scale=view['scale']
  w,h=view['ratio'];scene.render.resolution_x=w;scene.render.resolution_y=h;scene.render.resolution_percentage=100
  output=OUT/(view['name']+'-cpu.png');scene.render.filepath=str(output)

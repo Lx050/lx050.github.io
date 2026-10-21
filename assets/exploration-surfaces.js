@@ -1,0 +1,15 @@
+/* Actual Float32 facets are the authority for ground, shoreline and floating solids.
+ * Coarse bins bound queries; circle/polygon distance checks cover the whole hull. */
+(function(global){'use strict';
+const cross=(a,b,c)=>(b.x-a.x)*(c.z-a.z)-(b.z-a.z)*(c.x-a.x);
+function bary(p,a,b,c,key='y'){const d=cross(a,b,c);if(Math.abs(d)<1e-8)return NaN;return(cross(p,b,c)*a[key]+cross(a,p,c)*b[key]+cross(a,b,p)*c[key])/d;}
+function inside(p,t){const a=cross(...t),s=Math.sign(a);return Math.abs(a)>1e-6&&t.every((q,j)=>cross(q,t[(j+1)%3],p)*s>=-Math.abs(a)*1e-8);}
+function clip(poly,value){const out=[];for(let j=0;j<poly.length;j++){const p=poly[j],q=poly[(j+1)%poly.length],a=value(p),b=value(q);if(a>=0)out.push(p);if((a>=0)!==(b>=0)){const t=a/(a-b),v={};for(const k of Object.keys(p))if(typeof p[k]==='number')v[k]=p[k]+(q[k]-p[k])*t;out.push(v);}}return out;}
+function disc(poly,x,z,r){if(poly.length<3)return false;let positive=false,negative=false;for(let j=0;j<poly.length;j++){const a=poly[j],b=poly[(j+1)%poly.length],s=cross(a,b,{x,z});positive ||=s>1e-8;negative ||=s< -1e-8;const dx=b.x-a.x,dz=b.z-a.z,t=Math.max(0,Math.min(1,((x-a.x)*dx+(z-a.z)*dz)/(dx*dx+dz*dz||1)));if((x-a.x-dx*t)**2+(z-a.z-dz*t)**2<=r*r+1e-8)return true;}const area=poly.reduce((n,a,j)=>n+a.x*poly[(j+1)%poly.length].z-poly[(j+1)%poly.length].x*a.z,0);return Math.abs(area)>1e-6&&!(positive&&negative);}
+function create(cell=32){const bins=new Map(),faces=[];function candidates(x0,z0,x1=x0,z1=z0){const out=new Set();for(let x=Math.floor(x0/cell);x<=Math.floor(x1/cell);x++)for(let z=Math.floor(z0/cell);z<=Math.floor(z1/cell);z++)for(const f of bins.get(x+':'+z)||[])out.add(f);return [...out];}
+function add(points,meta={}){const tri=points.map(p=>({x:Math.fround(p.x),y:Math.fround(p.y),z:Math.fround(p.z),...(Number.isFinite(p.bottom)?{bottom:Math.fround(p.bottom)}:{})}));if(Math.abs(cross(...tri))<=1e-6)return null;const f={tri,...meta};faces.push(f);for(let x=Math.floor(Math.min(...tri.map(p=>p.x))/cell);x<=Math.floor(Math.max(...tri.map(p=>p.x))/cell);x++)for(let z=Math.floor(Math.min(...tri.map(p=>p.z))/cell);z<=Math.floor(Math.max(...tri.map(p=>p.z))/cell);z++){const k=x+':'+z;if(!bins.has(k))bins.set(k,[]);bins.get(k).push(f);}return f;}
+function at(x,z,maxY=Infinity,filter=()=>true){let best=null;for(const f of bins.get(Math.floor(x/cell)+':'+Math.floor(z/cell))||[]){if(!filter(f)||!inside({x,z},f.tri))continue;const y=bary({x,z},...f.tri);if(y>maxY+.02||best&&y<=best.height)continue;best={...f,height:y,y,bottom:Number.isFinite(f.tri[0].bottom)?bary({x,z},...f.tri,'bottom'):-Infinity};}return best;}
+function intersects(x,z,r,filter,clipper){for(const f of candidates(x-r,z-r,x+r,z+r)){if(filter&&!filter(f))continue;const p=clipper?clipper(f.tri,f):f.tri;if(disc(p,x,z,r))return true;}return false;}
+return{add,at,candidates,intersects,faces,bins};}
+const api={create,cross,bary,inside,clip,disc};global.CourtyardExplorationSurfaces=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
+})(typeof window!=='undefined'?window:globalThis);
