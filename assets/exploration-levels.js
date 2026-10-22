@@ -13,14 +13,18 @@
  * // An explicitly supplied null actionState means the untouched inspect result.
  * // Observe immediately after a successful apply with dt:0; frame ticks handle holds.
  * tracker.interact(0|1|2);    // authorizes one existing action at the current goal
- * tracker.exit(); tracker.reset(index?); tracker.progress(index?); tracker.all();
+ * tracker.exit(); tracker.retry(index?); tracker.reset(index?); tracker.progress(index?); tracker.all();
  * inspect is an alias for progress. enter returns a snapshot; interact returns
  * {ok,reason,progress}. Invalid input never advances. Completion requires physically
  * returning to entry after all three phase goals. The host applies the existing
  * building action ONLY after interact returns ok, then observes its actual state.
  * Missing action/facing/dt context NEVER bypasses a requirement. A stage can need
  * another press, a one-second sample, or two safe exterior viewpoints. The host
- * displays expected.instruction / objectiveText and uses canInteract for its UI.
+ * displays feedback.text / objectiveText and uses canInteract for its UI.
+ * retry clears only the unfinished observation, preserving completed phases and
+ * the actual exhibit state. It never moves the visitor or operates a source control.
+ * feedback.code distinguishes distance, facing, holds, viewpoints and recovery;
+ * interact retains its existing reason codes and includes the same useful feedback.
  * Authored instructions remain unmodified in SPECS and expected.sourceInstruction.
  * This module never locks reading.
  *
@@ -127,6 +131,7 @@
     }
     function clearGoal(state) {
       state.presses=0; state.pending=null; state.waiting=false; state.held=0; state.sampleAnchor=null; state.viewIndex=-1;
+      state.confirmedCounts=null; state.recovery=null;
     }
     function stateFor(spec, config) {
       if (!states.has(spec.index)) {
@@ -156,9 +161,9 @@
     }
     function validAction(value,state) {
       if(value===null)return {index:state.spec.index,phase:-1,counts:[0,0,0],playing:false,paused:false};
-      if (!value || value.index!==state.spec.index || value.kind!==state.spec.kind || !Number.isInteger(value.phase) ||
+      if (!value || value.index!==state.spec.index || value.kind!==state.spec.kind || !Number.isInteger(value.phase) || value.phase < -1 || value.phase > 2 ||
         !Array.isArray(value.counts) || value.counts.length!==3 || !value.counts.every(n=>Number.isSafeInteger(n)&&n>=0)) return null;
-      return {index:value.index,phase:value.phase,counts:value.counts.slice(),playing:!!value.playing,paused:!!value.paused};
+      return {index:value.index,phase:value.phase,counts:value.counts.slice(),playing:!!value.playing,paused:!!value.paused,completed:!!value.completed};
     }
     function objectiveFor(state, near) {
       const goal=goalFor(state), viewing=state.viewIndex>=0, facingRequired=!!goal.face||viewing;
@@ -173,7 +178,41 @@
       if (state.stage<3 && near && !state.actionState && !state.pending) text+=' · 等待展陈状态';
       return {family:state.spec.objectiveFamily,kind:goal.kind,text,presses:state.presses,requiredPresses:goal.presses,
         seconds:state.held,requiredSeconds:goal.seconds||0,pendingAction:!!state.pending,waiting:state.waiting,
-        viewIndex:state.viewIndex,viewCount:goal.views?.length||0,facingRequired,facingSatisfied};
+        remainingSeconds:Math.max(0,(goal.seconds||0)-state.held),
+        viewIndex:state.viewIndex,viewCount:goal.views?.length||0,
+        completedViews:Math.max(0,state.viewIndex),requiredViews:goal.views?.length||0,
+        facingRequired,facingSatisfied,recovery:state.recovery?{...state.recovery}:null};
+    }
+    const RETRY_HINT='仅重新开始当前未完成的观察；保留已完成阶段、当前位置和展陈状态，不会替你操作构件。';
+    function feedbackFor(state, near, objective, distance, isActive, reason) {
+      if(reason==='disposed')return {code:'disposed',text:'探索已关闭；原文阅读不受影响。'};
+      if(!state)return {code:reason||'not-entered',text:'先进入这座建筑的探索；原文仍可直接阅读。'};
+      const stage=state.spec.stages[state.stage],station=currentStation(state),goal=goalFor(state);
+      const travel=station ? '前往'+station.label+(distance==null?'': '，距站点范围还差 '+Math.max(0,distance-station.radius).toFixed(1)+' 米') : '';
+      const make=(code,text)=>({code,text});
+      if(!isActive)return make('inactive','探索未开启；可从已完成阶段继续，原文始终开放。');
+      if(state.stage===4)return make('already-complete','本轮已完成；可自由阅读、重访或退出。');
+      if(state.stage===3)return make('return-to-entry',travel+'，返回入口后完成本轮；无需再操作构件。');
+      if(reason==='wrong-phase')return make('wrong-phase','当前需要「'+stage.label+'」，请按指引操作这一项，不是其他阶段。');
+      if(reason==='not-facing-building')return make('not-facing-building','已到站，请转向建筑中央，再操作「'+stage.label+'」。');
+      if(reason==='action-state-unavailable')return make('action-state-unavailable','暂未取得展陈状态；等待状态恢复后再操作，阅读不受影响。');
+      // The authored pause/resume toggle cannot replay an already ended process.
+      // Explain the real control instead of silently resetting it or waiting forever.
+      if(goal.kind==='playback'&&state.actionState?.completed&&!state.actionState.playing)
+        return make('playback-ended','播放已结束；已完成阶段保留。请先退出探索，操作「重放」，再进入继续观察。');
+      if(state.recovery){
+        const next=!near?travel+'，再操作「'+stage.label+'」。':!state.actionState?'等待展陈状态恢复后再操作。':objective.facingRequired&&!objective.facingSatisfied?'请转向建筑中央，再操作「'+stage.label+'」。':'请重新操作「'+stage.label+'」。';
+        if(state.recovery.code==='retry')return make('retry','仅重新开始当前未完成的观察；已完成阶段、当前位置和展陈状态保留。'+next);
+        const lead=state.recovery.code==='phase-changed'?'展陈已切换到其他阶段':'展陈状态已改变';
+        return make(state.recovery.code,lead+'；本阶段观察已重新开始，已完成阶段保留。'+next);
+      }
+      if(!near)return make('not-at-station',(state.viewIndex>=0?'双视点 '+(state.viewIndex+1)+' / '+goal.views.length+'：':'')+travel+'。');
+      if(state.pending)return make('action-not-observed','尚未收到这次展陈操作的生效状态；可重试本阶段观察，不会代替你操作构件。');
+      if(!state.actionState)return make('action-state-unavailable','暂未取得展陈状态；等待状态恢复后再操作，阅读不受影响。');
+      if(objective.facingRequired&&!objective.facingSatisfied)return make('not-facing-building',(state.viewIndex>=0?'双视点 '+(state.viewIndex+1)+' / '+goal.views.length+'：':'')+'已到站，请转向建筑中央。');
+      if(state.waiting)return make('hold-observation','已开始观察：原地停留 '+Math.min(goal.seconds,state.held).toFixed(1)+' / '+goal.seconds+' 秒，还需 '+objective.remainingSeconds.toFixed(1)+' 秒；移动或离站会重新计时。');
+      if(state.viewIndex>=0)return make('viewpoint-incomplete','双视点 '+(state.viewIndex+1)+' / '+goal.views.length+'：在'+station.label+'朝向建筑中央；无需再次操作比照层。');
+      return make('ready','已到'+station.label+'；'+objective.text+'。');
     }
     function snapshot(state) {
       if (!state) return null;
@@ -182,6 +221,7 @@
       const near=isActive&&distance!=null&&!!station&&distance<=station.radius;
       const runCompleted=state.stage===spec.stages.length, objective=objectiveFor(state,near);
       const canInteract=near&&state.stage<3&&!state.pending&&!state.waiting&&state.viewIndex<0&&objective.facingSatisfied&&!!state.actionState;
+      const feedback=feedbackFor(state,near,objective,distance,isActive);
       const instruction=runCompleted?'本轮探索完成；可以自由阅读或重新走一遍':stage.instruction+' · 任务指引：'+objective.text;
       return {
         index:spec.index,id:spec.id,sourceUrl:spec.sourceUrl,name:spec.name,title:spec.title,
@@ -191,10 +231,11 @@
         completed:completed.has(spec.id),runCompleted,replay:completed.has(spec.id)&&!runCompleted,
         readingUnlocked:true,publicEntryOnly:spec.publicEntryOnly,framework:FRAMEWORK,exemplar:spec.exemplar,
         objective,objectiveText:objective.text,objectiveLabel:spec.objectiveLabel,
+        feedback,canRetry:isActive&&state.stage<3,retryHint:RETRY_HINT,
         expected:stage?{...stage,station:station.id,sectionIds:stage.sectionIds.slice(),sourceInstruction:stage.instruction,instruction,
           position:{x:station.x,y:station.y,z:station.z},radius:station.radius,stationLabel:station.label}:null,
         station:station?{...station}:null,stations:Object.fromEntries(Object.entries(state.stations).map(([key,value])=>[key,{...value}])),
-        distance,near,canInteract,instruction,phase:stage?.phase??null
+        distance,distanceRemaining:distance==null||!station?null:Math.max(0,distance-station.radius),near,canInteract,instruction,phase:stage?.phase??null
       };
     }
     function publish(state, event) {
@@ -239,9 +280,24 @@
       let event=null, confirmed=false;
       // Free exhibit controls can change or stop a local demo while a route is
       // interrupted. Keep completed phases, never keep an impossible subgoal.
-      if(!state.pending&&action&&(state.presses>0||state.waiting||state.viewIndex>=0)&&
-        (action.phase!==state.spec.stages[state.stage]?.phase||(state.waiting&&!action.playing))){
-        clearGoal(state);event='objective-restarted';
+      function restartObservation(code) {
+        clearGoal(state);state.recovery={code};event='objective-restarted';
+      }
+      if(!state.pending&&action&&(state.presses>0||state.waiting||state.viewIndex>=0)){
+        const changedPhase=action.phase!==state.spec.stages[state.stage]?.phase;
+        const changedCount=state.confirmedCounts&&action.counts.some((n,i)=>n!==state.confirmedCounts[i]);
+        const changedPlayback=goal.kind==='playback'&&(state.presses===1?!action.playing:state.presses===2?!action.paused:false);
+        if(changedPhase||changedCount||changedPlayback||(state.waiting&&!action.playing))
+          restartObservation(changedPhase?'phase-changed':goal.kind==='playback'&&action.completed?'playback-ended':'action-state-changed');
+      }
+      // Do not strand a pending acknowledgement after a free control changes the
+      // source. An unchanged pre-action state still waits, never fakes success.
+      if(state.pending&&action){
+        const pending=state.pending, unchanged=action.phase===pending.before.phase&&
+          action.counts.every((n,i)=>n===pending.before.counts[i])&&action.playing===pending.before.playing&&action.paused===pending.before.paused;
+        const matches=action.phase===pending.phase&&action.counts[pending.phase]===pending.count&&
+          action.counts.every((n,i)=>i===pending.phase||n===pending.before.counts[i]);
+        if(!unchanged&&!matches)restartObservation(action.phase!==pending.phase?'phase-changed':'action-state-changed');
       }
       if(state.pending&&action&&action.phase===state.pending.phase&&action.counts[action.phase]===state.pending.count){
         // For playback, verify the actual authored toggle, not a click counter.
@@ -249,14 +305,16 @@
         // Re-entering from a freely running process may make the first toggle
         // pause it. That safe preparation is real, but does not fake the sample.
         if(goal.kind==='playback'&&state.presses===0&&action.paused){
-          state.pending=null;confirmed=true;event='playback-prepared';
+          state.pending=null;state.recovery=null;confirmed=true;event='playback-prepared';
         } else if(playing){
-          state.pending=null;state.presses++;confirmed=true;event='action-observed';
+          state.pending=null;state.recovery=null;state.confirmedCounts=action.counts.slice();state.presses++;confirmed=true;event='action-observed';
           if(goal.seconds&&state.presses===goal.holdAfter){state.waiting=true;state.held=0;state.sampleAnchor=state.position?{...state.position}:null;}
           else if(state.presses===goal.presses){
             if(goal.views){state.viewIndex=0;state.near=false;event='viewpoint';}
             else {advance(state);event='phase';}
           }
+        } else {
+          restartObservation(action.completed?'playback-ended':'action-state-changed');
         }
       }
       // A real, bounded foreground sample is required; missing/huge dt never
@@ -283,7 +341,11 @@
       return event?publish(state,event):after;
     }
     function interact(phase) {
-      const state=activeState(),failure=reason=>({ok:false,reason,progress:snapshot(state)});
+      const state=activeState(),failure=reason=>{
+        const progress=snapshot(state);
+        const feedback=feedbackFor(state,progress?.near,progress?.objective,progress?.distance,progress?.active,reason);
+        return {ok:false,reason,feedback,progress};
+      };
       if(disposed)return failure('disposed');
       if(!state)return failure('not-entered');
       if(state.stage>=3)return failure(state.stage===3?'return-to-entry':'already-complete');
@@ -295,13 +357,24 @@
       if(!state.actionState)return failure('action-state-unavailable');
       if(goalFor(state).face&&!facesBuilding(state))return failure('not-facing-building');
       const accepted=state.spec.stages[state.stage];
-      state.pending={phase,count:state.actionState.counts[phase]+1};
+      state.recovery=null;
+      state.pending={phase,count:state.actionState.counts[phase]+1,before:{...state.actionState,counts:state.actionState.counts.slice()}};
       return {ok:true,reason:'action-requested',phase:accepted.phase,sectionIds:accepted.sectionIds.slice(),progress:publish(state,'action')};
     }
     function exit() {
       const state=activeState();if(!state)return null;
       active=null;clearMotion(state);clearGoal(state);
       return publish(state,'exit');
+    }
+    function retry(input) {
+      if(disposed)return null;
+      const spec=input==null?activeState()?.spec:resolve(input);if(!spec)return null;
+      const state=stateFor(spec);
+      // No exhibit callback, storage write, movement, completed-step reset or
+      // level switch: only the current unfinished observation may be retried.
+      if(active!==spec.index||state.stage>=3)return snapshot(state);
+      clearGoal(state);state.recovery={code:'retry'};
+      return publish(state,'retry');
     }
     function reset(input) {
       if(disposed)return null;
@@ -311,9 +384,9 @@
       return publish(state,'reset');
     }
     function dispose() { if (!disposed) { exit(); disposed = true; states.clear(); } }
-    return Object.freeze({enter,observe,interact,exit,reset,progress,inspect:progress,
+    return Object.freeze({enter,observe,interact,exit,retry,reset,progress,inspect:progress,
       all:()=>SPECS.map(spec=>snapshot(stateFor(spec))),
       completedCount:()=>completed.size,dispose});
   }
-  global.CourtyardExplorationLevels = Object.freeze({SPECS,OBJECTIVES,makeStations,create,STORAGE_KEY,framework:FRAMEWORK,count:SPECS.length,version:'1.1.0'});
+  global.CourtyardExplorationLevels = Object.freeze({SPECS,OBJECTIVES,makeStations,create,STORAGE_KEY,framework:FRAMEWORK,count:SPECS.length,version:'1.2.0'});
 })(typeof window !== 'undefined' ? window : globalThis);

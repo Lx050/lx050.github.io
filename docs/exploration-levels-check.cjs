@@ -10,10 +10,10 @@ const actions=JSON.parse(fs.readFileSync(path.join(root,'assets/building-actions
 const plain=value=>JSON.parse(JSON.stringify(value));
 function load(storage,code=source){const c={console};c.window=c;if(storage)Object.defineProperty(c,'localStorage',storage);vm.createContext(c);new vm.Script(code,{filename:'exploration-levels.js'}).runInContext(c);return c.CourtyardExplorationLevels;}
 const API=load();
-// SHA-256 of JSON.stringify(SPECS) in published a6b94448. This protects every
-// authored instruction/title/URL/section, without requiring Git in a release ZIP.
+// Baseline authored source-spec digest. This protects every source instruction,
+// title, URL and section without requiring Git in a release ZIP.
 const authored=API.SPECS.map(spec=>Object.fromEntries(Object.entries(spec).filter(([key])=>!['objectiveFamily','objectiveLabel','exemplar'].includes(key))));
-assert.equal(crypto.createHash('sha256').update(JSON.stringify(authored)).digest('hex'),'84bba5166d448093adb004b71d9f5f8d1783f0db6c3c08277322012ecd5c6956','all published source spec fields remain unchanged');
+assert.equal(crypto.createHash('sha256').update(JSON.stringify(authored)).digest('hex'),'84bba5166d448093adb004b71d9f5f8d1783f0db6c3c08277322012ecd5c6956','all baseline source spec fields remain unchanged');
 function memory(initial){let value=initial??null;const writes=[];return{writes,get value(){return value;},getItem(key){assert.equal(key,API.STORAGE_KEY);return value;},setItem(key,next){assert.equal(key,API.STORAGE_KEY);value=next;writes.push(next);}};}
 const hostStates=new WeakMap();
 function hostState(t){if(!hostStates.has(t))hostStates.set(t,new Map());const all=hostStates.get(t);return all.get(t.progress().index)||null;}
@@ -86,7 +86,78 @@ for(const index of[3,22,24]){
 }
 function hostStateForIndex(t,index){return hostStates.get(t).get(index);}
 const changed=API.create({storage:null});changed.enter(24);atExpected(changed);assert(apply(changed,0).ok);hostState(changed).playing=false;atExpected(changed);assert.equal(changed.progress().objective.waiting,false);assert.equal(changed.progress().canInteract,true,'stopped active sample can be restarted');finishPhase(changed);assert.equal(changed.progress().stage,1);
+// Actionable feedback distinguishes navigation, facing, hold, viewpoints and phase mistakes.
+const feedback=API.create({storage:null});feedback.enter(23);
+assert.equal(feedback.progress().feedback.code,'not-at-station');assert.match(feedback.progress().feedback.text,/观察站/);
+pt=feedback.progress().expected.position;observe(feedback,{...pt,x:pt.x+10});assert(feedback.progress().distanceRemaining>0);assert.match(feedback.progress().feedback.text,/米/);
+observe(feedback,pt,{facing:{x:pt.x,z:pt.z}});assert.equal(feedback.progress().feedback.code,'not-facing-building');assert.match(feedback.interact(0).feedback.text,/转向/);
+assert.equal(feedback.interact(1).feedback.code,'wrong-phase');assert.match(feedback.interact(1).feedback.text,/展翼/);
+atExpected(feedback);assert.equal(feedback.progress().feedback.code,'ready');
+for(const reducedMotion of[false,true]){
+ // Retry clears only an unfinished objective, not an authored source operation,
+ // completed stage, completion record, player position, or active run identity.
+ for(const index of[0,1,3,6,10,22,23,24]){
+  const store=memory(),t=API.create({storage:store}),phase=index===1?2:[0,3,6,22].includes(index)?1:0;
+  t.enter(index);while(t.progress().stage<phase)finishPhase(t);atExpected(t,{reducedMotion});
+  if(index!==23)assert(apply(t,phase).ok);
+  if(index===3||index===24){
+   for(let n=0;n<4;n++)atExpected(t,{dt:.1,reducedMotion});
+   const p=t.progress();assert.equal(p.feedback.code,'hold-observation');assert(p.objective.remainingSeconds>0&&p.objective.remainingSeconds<1);
+   assert.equal(t.interact(phase).feedback.code,'hold-observation');
+  }
+  if(index===22){
+   assert.equal(t.progress().objective.requiredViews,2);assert.equal(t.progress().objective.completedViews,0);
+   atExpected(t,{reducedMotion});assert.equal(t.progress().objective.completedViews,1);
+   pt=t.progress().expected.position;observe(t,pt,{facing:{x:0,z:0},reducedMotion});assert.match(t.progress().feedback.text,/双视点 2 \/ 2/);
+  }
+  const before=t.progress(),sourceBefore=plain(hostState(t)),writes=store.writes.length;
+  const positionBefore=before.expected.position;
+  const retried=t.retry(index);
+  for(const key of['stage','completedSteps','completedActions','ratio','completed','runCompleted','replay','active'])assert.equal(retried[key],before[key],key+' retained by retry');
+  assert.equal(retried.canRetry,true);assert.equal(retried.readingUnlocked,true);assert.equal(retried.feedback.code,'retry');assert.match(retried.retryHint,/仅重新开始/);
+  assert.equal(retried.objective.presses,0);assert.equal(retried.objective.waiting,false);assert.equal(retried.objective.viewIndex,-1);assert.equal(retried.objective.seconds,0);
+  assert.equal(retried.objective.pendingAction,false);assert.deepEqual(plain(hostState(t)),sourceBefore,'retry never touches authored state');assert.equal(store.writes.length,writes);
+  // The position stays at the second viewpoint even though the target resets.
+  const expectedDistance=index===22?Math.hypot(positionBefore.x-retried.expected.position.x,positionBefore.y-retried.expected.position.y,positionBefore.z-retried.expected.position.z):before.distance;
+  assert.equal(retried.distance,expectedDistance,'retry does not teleport or erase observed position');
+  finishPhase(t);assert.equal(t.progress().stage,phase+1);while(t.progress().stage<3)finishPhase(t);
+  const returning=plain(t.progress());assert.equal(returning.canRetry,false);assert.equal(returning.feedback.code,'return-to-entry');assert.deepEqual(plain(t.retry(index)),returning,'return checkpoint is not restarted');
+  atExpected(t);const completedSnapshot=plain(t.progress());assert.equal(completedSnapshot.canRetry,false);assert.deepEqual(plain(t.retry()),completedSnapshot,'completed run and persistent completion remain intact');
+  const completeWrites=store.writes.length;t.enter(index);assert.equal(t.retry().completed,true,'prior completion retained during a replay');assert.equal(store.writes.length,completeWrites);t.exit();
+  const inactive=plain(t.progress(index));assert.equal(inactive.canRetry,false);assert.deepEqual(plain(t.retry(index)),inactive,'retry never enters an inactive level');assert.equal(t.retry(99),null);
+ }
+ // A changed source while active restarts only the unfinished observation.
+ for(const index of[3,22,24]){
+  const t=API.create({storage:null}),phase=index===24?0:1;t.enter(index);while(t.progress().stage<phase)finishPhase(t);atExpected(t);assert(apply(t,phase).ok);
+  const a=hostState(t);a.phase=2;a.counts[2]++;a.playing=index===3;a.paused=false;
+  const changed=atExpected(t,{reducedMotion});assert.equal(changed.stage,phase);assert.equal(changed.feedback.code,'phase-changed');assert.match(changed.feedback.text,/已完成阶段保留/);
+  assert.equal(changed.objective.waiting,false);assert.equal(changed.objective.viewIndex,-1);assert.equal(changed.objective.presses,0);finishPhase(t);assert.equal(t.progress().stage,phase+1);
+ }
+ // External pause/resume on the same phase cannot strand the next toggle.
+ for(const presses of[1,2]){
+  const t=API.create({storage:null});t.enter(3);finishPhase(t);atExpected(t);apply(t,1);for(let n=0;n<12;n++)atExpected(t,{dt:.1,reducedMotion});
+  if(presses===2)assert(apply(t,1).ok);
+  const a=hostState(t);a.playing=presses===2;a.paused=presses===1;
+  const changed=atExpected(t,{reducedMotion});assert.equal(changed.stage,1);assert.equal(changed.feedback.code,'action-state-changed');assert.equal(changed.objective.pendingAction,false);assert.equal(changed.objective.waiting,false);
+  finishPhase(t);assert.equal(t.progress().stage,2);
+ }
+ // Exit, actual phase-2 action and re-entry, with both accessibility settings.
+ for(const index of[3,22,24]){
+  const t=API.create({storage:null}),phase=index===24?0:1;t.enter(index);while(t.progress().stage<phase)finishPhase(t);atExpected(t);apply(t,phase);t.exit();
+  const a=hostStateForIndex(t,index);a.phase=2;a.counts[2]++;a.playing=index===3;a.paused=false;
+  t.enter(index);atExpected(t,{reducedMotion});assert.equal(t.progress().stage,phase);assert.equal(t.progress().objective.waiting,false);finishPhase(t);assert.equal(t.progress().stage,phase+1);
+ }
+}
+// A missing acknowledgement is retryable, but a late source count never counts
+// as a new objective. A conflicting actual action clears pending safely.
+const pending=API.create({storage:null});pending.enter(0);atExpected(pending);assert(pending.interact(0).ok);assert.equal(pending.progress().feedback.code,'action-not-observed');
+assert.equal(pending.retry().objective.pendingAction,false);observe(pending,pending.progress().expected.position,{actionState:{index:0,kind:'ink',phase:0,counts:[1,0,0]}});assert.equal(pending.progress().stage,0);
+assert(pending.interact(0).ok);observe(pending,pending.progress().expected.position,{actionState:{index:0,kind:'ink',phase:2,counts:[1,0,1]}});assert.equal(pending.progress().stage,0);assert.equal(pending.progress().objective.pendingAction,false);assert.equal(pending.progress().feedback.code,'phase-changed');
+// Completed playback needs its authored Replay control, not an invented reset.
+const ended=API.create({storage:null});ended.enter(3);finishPhase(ended);atExpected(ended);apply(ended,1);const endedAction=hostState(ended);endedAction.playing=false;endedAction.completed=true;
+atExpected(ended);assert.equal(ended.progress().feedback.code,'playback-ended');assert.match(ended.progress().feedback.text,/重放/);assert.equal(ended.progress().objective.waiting,false);assert.equal(ended.progress().stage,1);
+endedAction.completed=false;endedAction.playing=false;endedAction.paused=false;assert(ended.interact(1).ok);endedAction.counts[1]++;endedAction.completed=true;atExpected(ended);assert.equal(ended.progress().objective.pendingAction,false);assert.equal(ended.progress().feedback.code,'playback-ended');
 // Semantic events stay quiet during stable foreground frames and after dispose.
-let count=0;const quiet=API.create({storage:null,onChange(){count++;}});quiet.enter(0);const origin=quiet.progress().expected.position;observe(quiet,origin);const before=count;for(let n=0;n<1000;n++)observe(quiet,origin);assert.equal(count,before);quiet.dispose();assert.equal(quiet.observe(origin),null);assert.equal(quiet.enter(0),null);assert.equal(quiet.interact(0).reason,'disposed');
+let count=0;const quiet=API.create({storage:null,onChange(){count++;}});quiet.enter(0);const origin=quiet.progress().expected.position;observe(quiet,origin);const before=count;for(let n=0;n<1000;n++)observe(quiet,origin);assert.equal(count,before);quiet.dispose();assert.equal(quiet.observe(origin),null);assert.equal(quiet.enter(0),null);assert.equal(quiet.retry(0),null);assert.equal(quiet.interact(0).reason,'disposed');assert.equal(quiet.interact(0).feedback.code,'disposed');
 console.log(JSON.stringify({ok:true,levels:26,sourceIdentities:26,sourceSpecsUnchanged:true,exemplars:8,families:families.size,routeOrders:routes.size,
- checks:['all authored spec fields unchanged','safe station geometry unchanged','remote and aerial rejection','actual action acknowledgement','repeat control comparisons','start/pause/resume','foreground stationary sample','two safe comparison viewpoints','current local facing','reduced motion parity','physical return','exit and revisit','interrupted effect reconciliation','reset and replay','completion-only storage','corrupt and blocked storage','public-entry boundaries','independent reading','quiet frame updates']},null,2));
+ checks:['all authored spec fields unchanged','safe station geometry unchanged','remote and aerial rejection','actual action acknowledgement','repeat control comparisons','start/pause/resume','foreground stationary sample','two safe comparison viewpoints','current local facing','reduced motion parity','physical return','exit and revisit','interrupted effect reconciliation','actionable refusal feedback','retry preserves checkpoints and source state','active phase and playback recovery','normal/reduced retry parity','reset and replay','completion-only storage','corrupt and blocked storage','public-entry boundaries','independent reading','quiet frame updates']},null,2));
