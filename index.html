@@ -172,7 +172,7 @@ const TRACKS=[
 @media(max-width:480px) and (max-height:600px) and (orientation:portrait){.mapbox{width:72px}.mapbox canvas{width:72px;height:72px}.mapbox #location{display:none}#nearby-controls{max-height:calc(100dvh - var(--joy-bottom) - var(--joy-size) - 252px)}}
 
 </style>
-<link rel="stylesheet" href="assets/exploration-world.css?v=c33413a87b99dbc3">
+<link rel="stylesheet" href="assets/exploration-world.css?v=6014e6dbcef2cbd2">
 </head>
 <body>
 <main id="world" tabindex="-1" aria-label="可探索的三维数字庭院。使用 WASD 或方向键行走；靠近建筑后按回车翻阅建筑中的碑文。"></main>
@@ -275,11 +275,12 @@ const TRACKS=[
 <script src="assets/courtyard-masterplan.js?v=ca5318aa97c26874"></script>
 <script src="assets/detail-lod.js?v=3cc8af34c41bee31"></script>
 <script src="assets/exploration-geography.js?v=435a567f2de99687"></script>
-<script src="assets/exploration-levels.js?v=f2142df86d8929d6"></script>
+<script src="assets/exploration-levels.js?v=de52249690cfa890"></script>
 <script src="assets/exploration-transport.js?v=01489168024d33f0"></script>
 <script src="assets/exploration-surfaces.js?v=d0c61a4f566330a4"></script>
 <script src="assets/exploration-journeys.js?v=d088a39b49710538"></script>
-<script src="assets/exploration-world.js?v=4cdacb91f7701153"></script>
+<script src="assets/exploration-guidance.js?v=fd5194aec86e2c17"></script>
+<script src="assets/exploration-world.js?v=c74e5f25cae151d9"></script>
 <script>
 (() => {
 'use strict';
@@ -478,8 +479,8 @@ const readingQuery=new URLSearchParams(location.search),requestedReading=reading
 if(requestedReading!==null&&/^\d+$/.test(requestedReading)&&Number(requestedReading)<LINKS.length)Promise.resolve().then(()=>readingRoom?.open(Number(requestedReading),readingQuery.get('chapter')||undefined));
 window.CourtyardDirectory.install({grid:$('directory-grid'),entries:LINKS,zones:ZONES,reader:readingRoom,onSource(index){if(ready)markVisited(index);}});
 $('music-credits').innerHTML='<h3>夜乐 · 背景音乐署名</h3><small class="mc-note">入庭后夜间随机播放，一曲播罢自动接续下一首。以下均为公有领域或 CC0 / CC-BY 授权的演奏录音。</small>'+TRACKS.map(t=>`<small>${t.n} — ${t.a}，${t.l}</small>`).join('');
-function modalOpen(){return !!readingRoom?.isOpen||!$('directory').hidden||!$('atlas').hidden;}
-function clearInput(){keys.clear();resetJoystick(true);releaseSprint();currentSpeed=6.3;sprinting=false;velocity.set(0,0);if(typeof motor!=='undefined')motor.jumpBuffer=0;}
+function modalOpen(){return !!readingRoom?.isOpen||!$('directory').hidden||!$('atlas').hidden||!!explorationWorld?.atlasOpen;}
+function clearInput(){keys.clear();resetJoystick(true);releaseSprint();currentSpeed=6.3;sprinting=false;velocity.set(0,0);if(typeof motor!=='undefined')motor.jumpBuffer=0;explorationWorld?.pauseInput();}
 function showDirectory(){if(ready&&worldActive())return;previousFocus=document.activeElement;if(ready)clearInput();$('directory').hidden=false;$('hud').inert=true;$('intro').inert=true;$('close-directory').focus();}
 function closeDirectory(){$('directory').hidden=true;$('hud').inert=!started;$('intro').inert=started;previousFocus?.focus();}
 $('fallback-read').onclick=()=>readingRoom?.open(20);
@@ -2358,7 +2359,7 @@ function bindLook(element,canPick){
     if(drag.id!==e.pointerId)return;lastLookAt=elapsed;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.travel+=Math.hypot(dx,dy);cameraState.yaw-=dx*.0045;cameraState.pitch=THREE.MathUtils.clamp(cameraState.pitch+dy*.0035,orbitMinPitch(),WORLD.CAMERA_MAX_PITCH);drag.x=e.clientX;drag.y=e.clientY;
   });
   element.addEventListener('pointerup',e=>{if(!drag||drag.id!==e.pointerId)return;const click=drag.travel<7;drag=null;lookActive=Math.max(0,lookActive-1);lastLookAt=elapsed;if(canPick&&click){const selected=pick(e);if(selected)visit(selected.landmark,selected.sectionId);}});
-  ['pointercancel','lostpointercapture'].forEach(type=>element.addEventListener(type,()=>{if(drag)lookActive=Math.max(0,lookActive-1);drag=null;lastLookAt=elapsed;}));
+  ['pointercancel','lostpointercapture'].forEach(type=>element.addEventListener(type,()=>{const pointerId=drag?.id;if(drag)lookActive=Math.max(0,lookActive-1);drag=null;lastLookAt=elapsed;if(pointerId!==undefined&&element.hasPointerCapture(pointerId))element.releasePointerCapture(pointerId);}));
 }
 bindLook(renderer.domElement,true);bindLook($('viewpad'),false);
 renderer.domElement.addEventListener('wheel',e=>{e.preventDefault();if(worldInputBlocked())return;interruptWorldReveal();lastLookAt=elapsed;cameraState.distance=THREE.MathUtils.clamp(cameraState.distance+e.deltaY*.008,WORLD.CAMERA_MIN_DISTANCE,WORLD.CAMERA_MAX_DISTANCE);},{passive:false});
@@ -3483,7 +3484,7 @@ if(new URLSearchParams(location.search).has('architectureQA'))window.__garden.ar
 if(explorationEnabled){
  try{explorationWorld=window.CourtyardExplorationWorld.create({THREE,scene,player,body,camera,cameraLook,cameraState,motor,keys,joy,records:architecturalRecords,landmarks,navigation:navigationBuildings,
   environment:[hemi,moon,moon.target,sun,sun.target,fill,skyDome,stars,sunOrb,sunHalo,sunCorona,moonOrb,moonHalo,moonGlow,...clouds],renderPass:mainRenderPass,
-  skyTick,stepWalker,stepOrbit,clear:clearInput,modalOpen,reader:readingRoom,actions:buildingActions,updateButterfly:dt=>updateButterflySea(dt,landmarks[23]),updateButterflyReflection:updateButterflySeaReflection,lightQuality:()=>lightQuality,reduced:()=>reduced});}catch(error){console.warn('Exploration initialization failed',error);fail('探索世界暂时无法完整加载。请刷新重试，或从目录直接阅读全部 26 处内容。');return;}
+  skyTick,stepWalker,stepOrbit,clear:clearInput,cancelLook(){for(const el of [renderer.domElement,$('viewpad')])el.dispatchEvent(new Event('pointercancel'));},modalOpen,reader:readingRoom,actions:buildingActions,updateButterfly:dt=>updateButterflySea(dt,landmarks[23]),updateButterflyReflection:updateButterflySeaReflection,lightQuality:()=>lightQuality,reduced:()=>reduced});}catch(error){console.warn('Exploration initialization failed',error);fail('探索世界暂时无法完整加载。请刷新重试，或从目录直接阅读全部 26 处内容。');return;}
  $('world').setAttribute('aria-label','可探索的海陆空世界。WASD 或摇杆移动，M 地图与自由传送，E 进入建筑关卡，F 飞行，V 载具，B 登船。');$('home').textContent='回起点';$('home').title='安全返回起航岛（R）';document.querySelector('.subtitle').textContent='数字庭院 · 远行';
  document.querySelector('.intro-kicker').textContent='A WORLD OF THOUGHTS / 海 · 陆 · 空';
  document.querySelector('.intro-description').innerHTML='作品与故事，散落在大陆、群岛和云端。<br>步行、驾车、乘船，或者展开翼远行。';
