@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0c0e10">
-<meta name="description" content="Lx050 的数字庭院。海陆空之间，二十六处作品与故事，提灯远行。">
+<meta name="description" content="Lx050 的数字庭院。海陆空之间，三十二处作品与故事，提灯远行。">
 <title>Lx050 · 夜游数字庭院</title>
 <script>
 // 夜间随机播放曲目（东方古曲/乐器 + 西方古典与夏夜氛围），本站自托管、按需加载；播完自动随机下一首。
@@ -181,9 +181,9 @@ const TRACKS=[
   <header class="topbar">
     <div class="identity"><span class="seal" aria-hidden="true">游</span><div><div class="wordmark">Lx050</div><div class="subtitle">数字庭院 · 夜游</div></div></div>
     <nav class="districts" aria-label="前往分区">
-      <button data-zone="0" title="前往作品区">作品<span>08</span></button><button data-zone="1" title="前往服务区">服务<span>05</span></button><button data-zone="2" title="前往项目区">项目<span>11</span></button><button data-zone="3" title="前往连接区">连接<span>02</span></button>
+      <button data-zone="0" title="前往作品区">作品<span>11</span></button><button data-zone="1" title="前往服务区">服务<span>07</span></button><button data-zone="2" title="前往项目区">项目<span>12</span></button><button data-zone="3" title="前往连接区">连接<span>02</span></button>
     </nav>
-    <div class="tools"><button id="sky-button" type="button" title="天时流转 · 点击拨到下一时相">天时 · 夜</button><label class="weather-label">天气<select id="weather-select" aria-label="庭院天气"><option value="clear">晴</option><option value="snow">飘雪</option><option value="rain">细雨</option><option value="wind">风起</option><option value="storm">远雷</option></select></label><span id="bridge-count" title="七桥挑战:每桥恰走一次" aria-live="polite">七桥 0/7</span><span id="visited" title="已探访并点亮的入口" aria-live="polite">00 / 26</span><button id="home" title="返回庭心（R）">归庭</button><button id="list-button" aria-haspopup="dialog">无障碍文本</button><button id="bgm-button" type="button" aria-label="开启背景音乐" aria-pressed="false" title="开启背景音乐"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M11 4 6 8H3v8h3l5 4Z"/><g class="bgm-waves"><path d="M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14"/></g><path class="bgm-cross" d="m16 9 6 6m0-6-6 6"/></svg></button></div>
+    <div class="tools"><button id="sky-button" type="button" title="天时流转 · 点击拨到下一时相">天时 · 夜</button><label class="weather-label">天气<select id="weather-select" aria-label="庭院天气"><option value="clear">晴</option><option value="snow">飘雪</option><option value="rain">细雨</option><option value="wind">风起</option><option value="storm">远雷</option></select></label><span id="bridge-count" title="七桥挑战:每桥恰走一次" aria-live="polite">七桥 0/7</span><span id="visited" title="已探访并点亮的入口" aria-live="polite">00 / 32</span><button id="home" title="返回庭心（R）">归庭</button><button id="list-button" aria-haspopup="dialog">无障碍文本</button><button id="bgm-button" type="button" aria-label="开启背景音乐" aria-pressed="false" title="开启背景音乐"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M11 4 6 8H3v8h3l5 4Z"/><g class="bgm-waves"><path d="M15 8a6 6 0 0 1 0 8M18 5a10 10 0 0 1 0 14"/></g><path class="bgm-cross" d="m16 9 6 6m0-6-6 6"/></svg></button></div>
   </header>
   <div class="margin-note" aria-hidden="true"><i></i>灯火所及，皆是来处。</div>
   <div class="viewpad" id="viewpad" tabindex="0" role="group" aria-label="视角控制：拖动旋转视角，聚焦后使用方向键调整，Home 重置"><span class="arrows">↔</span><small>拖动视角</small></div>
@@ -213,9 +213,9 @@ const TRACKS=[
   <div class="intro-inner"><div class="intro-kicker">A SMALL ISLAND OF THOUGHTS</div><h1>Lx050<span style="color:var(--red)">.</span></h1><div class="intro-poem">在数字之间，留一点人间</div><div class="intro-line"></div><p class="intro-description">一些作品，一些故事，一些仍在生长的念头。<br>借一盏灯，随意走走。</p><button class="start" id="start" disabled>正在点灯<span class="arrow">↗</span></button><div class="intro-controls" id="intro-controls">WASD / 方向键行走 · Shift 跑步 · 空格跳跃 · 回车翻碑<br>点击或按任意键，开始夜游</div></div>
   <div class="intro-footer"><span>作品 / 服务 / 项目 / 连接</span><span>慢一点，也没有关系。 &nbsp; © Lx050</span></div>
 </section>
-<section id="atlas" role="dialog" aria-modal="true" aria-labelledby="atlas-title" hidden><div class="atlas-inner"><header class="atlas-head"><h2 id="atlas-title">一岛 · 二十六盏灯</h2><button id="close-atlas" aria-label="关闭大地图">×</button></header><div class="atlas-tools"><button id="atlas-minus" aria-label="缩小地图">−</button><output id="atlas-scale" aria-live="polite"></output><button id="atlas-plus" aria-label="放大地图">+</button><button id="atlas-home">归庭</button><small>拖动地图 · 点名录定位</small></div><div class="atlas-route" aria-label="可选游线"><button id="route-pilot" aria-pressed="false">庭门 → 庭心 → 蝴蝶</button><button id="route-first" aria-pressed="false">墨息 → 蝴蝶 → 月雪</button><button id="route-clear" hidden>不显示游线</button><small id="route-status" role="status">游线可选，不会自动移动；随时继续自由漫游。</small></div><div class="atlas-body"><div class="atlas-chart"><canvas id="atlas-map" aria-label="北向上全岛地图，完整名称亦可在下方或右侧名录查找"></canvas></div><nav id="atlas-list" aria-label="四区地标名录"></nav></div><div id="atlas-legend" class="atlas-legend"></div></div></section>
-<section id="directory" role="dialog" aria-modal="true" aria-labelledby="directory-title" hidden><div class="directory-inner"><div class="directory-head"><h2 id="directory-title">庭院目录</h2><button id="close-directory" aria-label="关闭目录">×</button></div><p class="directory-sub">二十六处内容，可在庭院里阅读。原站链接另开标签页；登录与远端服务仍由原站提供。</p><div id="directory-grid" class="directory-grid"></div><div class="music-credits" id="music-credits"></div></div></section>
-<div id="error" role="alert" hidden><div class="cf-moon" aria-hidden="true"></div><p class="cf-kicker">MANIFORLD · 庭中静读</p><h2 style="font-family:var(--serif);font-weight:400">留一盏灯，读一卷书</h2><p id="error-message">三维场景暂时无法加载，请刷新重试。也可以从目录直接访问全部入口。</p><div class="cf-actions"><button id="fallback-read">从《月雪》读起</button><button id="fallback-list">打开全部 26 处目录</button></div><p class="cf-footnote">文字阅览无需三维加速 · 阅读位置保留在此浏览器</p></div>
+<section id="atlas" role="dialog" aria-modal="true" aria-labelledby="atlas-title" hidden><div class="atlas-inner"><header class="atlas-head"><h2 id="atlas-title">一岛 · 三十二盏灯</h2><button id="close-atlas" aria-label="关闭大地图">×</button></header><div class="atlas-tools"><button id="atlas-minus" aria-label="缩小地图">−</button><output id="atlas-scale" aria-live="polite"></output><button id="atlas-plus" aria-label="放大地图">+</button><button id="atlas-home">归庭</button><small>拖动地图 · 点名录定位</small></div><div class="atlas-route" aria-label="可选游线"><button id="route-pilot" aria-pressed="false">庭门 → 庭心 → 蝴蝶</button><button id="route-first" aria-pressed="false">墨息 → 蝴蝶 → 月雪</button><button id="route-clear" hidden>不显示游线</button><small id="route-status" role="status">游线可选，不会自动移动；随时继续自由漫游。</small></div><div class="atlas-body"><div class="atlas-chart"><canvas id="atlas-map" aria-label="北向上全岛地图，完整名称亦可在下方或右侧名录查找"></canvas></div><nav id="atlas-list" aria-label="四区地标名录"></nav></div><div id="atlas-legend" class="atlas-legend"></div></div></section>
+<section id="directory" role="dialog" aria-modal="true" aria-labelledby="directory-title" hidden><div class="directory-inner"><div class="directory-head"><h2 id="directory-title">庭院目录</h2><button id="close-directory" aria-label="关闭目录">×</button></div><p class="directory-sub">三十二处内容，可在庭院里阅读。原站链接另开标签页；登录与远端服务仍由原站提供。</p><div id="directory-grid" class="directory-grid"></div><div class="music-credits" id="music-credits"></div></div></section>
+<div id="error" role="alert" hidden><div class="cf-moon" aria-hidden="true"></div><p class="cf-kicker">MANIFORLD · 庭中静读</p><h2 style="font-family:var(--serif);font-weight:400">留一盏灯，读一卷书</h2><p id="error-message">三维场景暂时无法加载，请刷新重试。也可以从目录直接访问全部入口。</p><div class="cf-actions"><button id="fallback-read">从《月雪》读起</button><button id="fallback-list">打开全部 32 处目录</button></div><p class="cf-footnote">文字阅览无需三维加速 · 阅读位置保留在此浏览器</p></div>
 <noscript>请启用 JavaScript，来这座小岛走走。</noscript>
 <script src="vendor/three.min.js?v=9274bbcec8d96168"></script>
 <script src="vendor/three/GLTFLoader.js?v=5c15967ba830918a"></script>
@@ -312,19 +312,25 @@ const LINKS = [
   {zone:1,title:'API',desc:'LLM 网关，连接想法与智能。',url:'https://api.maniforld.com',x:-19,z:13},
   {zone:1,title:'标书',desc:'智能标书，让繁复工作更有条理。',url:'https://biaoshu.maniforld.com',x:-12,z:13},
   {zone:1,title:'Reme',desc:'家中守护，为日常多留一分安心。',url:'https://reme.maniforld.com',x:-15.5,z:20},
-  {zone:2,title:'AI两年',desc:'关于 AI 两年的一份记录。',url:'/?read=13',x:7,z:-21},
-  {zone:2,title:'凝结核列传',desc:'翻开《凝结核列传》。',url:'/?read=14',x:13,z:-21},
-  {zone:2,title:'从因到果',desc:'沿着线索，走进《从因到果》。',url:'/?read=15',x:19,z:-21},
+  {zone:2,title:'AI两年',desc:'关于 AI 两年的一份记录。',url:'https://ai-two-years.maniforld.com',x:7,z:-21},
+  {zone:2,title:'凝结核列传',desc:'翻开《凝结核列传》。',url:'https://biographies.maniforld.com',x:13,z:-21},
+  {zone:2,title:'从因到果',desc:'沿着线索，走进《从因到果》。',url:'https://causal-web.maniforld.com',x:19,z:-21},
   {zone:2,title:'哭泣的城市',desc:'在《哭泣的城市》里停留片刻。',url:'https://crying-city.maniforld.com',x:7,z:-15},
   {zone:2,title:'双星记',desc:'翻开故事，走近《双星记》。',url:'https://double-stars.maniforld.com',x:13,z:-15},
   {zone:2,title:'思想者的五个版本',desc:'走进《思想者的五个版本》。',url:'https://five-versions.maniforld.com',x:19,z:-15},
-  {zone:2,title:'置身青媒内',desc:'从内部望见青媒的日常。',url:'/?read=19',x:7,z:-9},
-  {zone:2,title:'月雪',desc:'翻开《月雪》，留一点安静。',url:'/?read=20',x:13,z:-9},
+  {zone:2,title:'置身青媒内',desc:'从内部望见青媒的日常。',url:'https://inside-qingmei.maniforld.com',x:7,z:-9},
+  {zone:2,title:'月雪',desc:'翻开《月雪》，留一点安静。',url:'https://moon-snow.maniforld.com',x:13,z:-9},
   {zone:2,title:'清样之前',desc:'在成为定稿之前，再读一遍。',url:'https://qingyang-before-proof.maniforld.com',x:19,z:-9},
   {zone:2,title:'拓片',desc:'走近《拓片》，触碰文字的纹理。',url:'https://rubbing.maniforld.com',x:7,z:-3},
   {zone:2,title:'未上色的蝴蝶',desc:'为尚未上色的故事，留一点想象。',url:'https://uncolored-butterfly.maniforld.com',x:14,z:-3},
   {zone:3,title:'MindCareAI',desc:'心理健康平台，给心事一个落脚处。',url:'https://k.playe.top',x:10,z:12},
-  {zone:3,title:'GitHub',desc:'@Lx050 · 代码与想法生长的地方。',url:'https://github.com/Lx050',x:19,z:12}
+  {zone:3,title:'GitHub',desc:'@Lx050 · 代码与想法生长的地方。',url:'https://github.com/Lx050',x:19,z:12},
+  {zone:0,title:'AI-MAP',desc:'把撸串通道的路程，收成一张还能出发的图。',url:'https://aimap.maniforld.com',x:-48,z:-83.1},
+  {zone:0,title:'我嘞个豆',desc:'拼豆图纸的工作台，一颗颗豆子自己亮起来。',url:'https://pd.maniforld.com',x:-81.4,z:-50.9},
+  {zone:0,title:'席卡',desc:'给席间的每个名字，写一张刚刚好的卡片。',url:'https://xika.maniforld.com',x:-95.9,z:3.4},
+  {zone:1,title:'链证融',desc:'企业经营与协同，让同一条链上的人彼此看见。',url:'https://lianzhengrong.maniforld.com',x:-115,z:56.1},
+  {zone:1,title:'智能枢纽',desc:'让来往的服务，在同一座枢纽里停靠。',url:'https://smarthub.maniforld.com',x:-67.8,z:108.6},
+  {zone:2,title:'合成大奶娃',desc:'翻开《合成大奶娃》，留一点被说出来的声音。',url:'https://bignaiwa.maniforld.com',x:103.6,z:75.2}
 ];
 const ZONES = [
   {name:'作品',note:'造物之庭',x:-14,z:-13,color:0xc0563e,spawn:[-14,-3]},
@@ -332,12 +338,14 @@ const ZONES = [
   {name:'项目',note:'未完之书',x:13,z:-12,color:0x78928b,spawn:[3,-7]},
   {name:'连接',note:'彼此之桥',x:14,z:12,color:0xad8d72,spawn:[14,8]}
 ];
-// Four sectors, two rings, no random positions. Larger project sector fits eleven monuments.
-const sectorBounds=[[176,272],[272,352],[60,176],[-8,60]],innerCounts=[3,2,4,1];
+// Four sectors, two rings, no random positions. The first 8 / 5 / 11 / 2 monuments
+// keep this tuned court. Entrances hung later keep the x,z written beside them.
+const sectorBounds=[[176,272],[272,352],[60,176],[-8,60]],innerCounts=[3,2,4,1],laidOutCounts=[8,5,11,2];
 ZONES.forEach((zone,zi)=>{
-  const entries=LINKS.filter(e=>e.zone===zi),[a,b]=sectorBounds[zi],ni=innerCounts[zi];
+  const entries=LINKS.filter(e=>e.zone===zi),[a,b]=sectorBounds[zi],ni=innerCounts[zi],laid=Math.min(entries.length,laidOutCounts[zi]);
   entries.forEach((e,j)=>{
-    const inside=j<ni,n=inside?ni:entries.length-ni,k=inside?j:j-ni,pad=inside?18:8;
+    if(j>=laid)return;
+    const inside=j<ni,n=inside?ni:laid-ni,k=inside?j:j-ni,pad=inside?18:8;
     let angle=(zi===3?(inside?20:48):(n===1?(a+b)/2:a+pad+(b-a-2*pad)*k/(n-1)))*Math.PI/180;
     if(zi===2&&inside&&j>=2)angle=(j===2?135:163)*Math.PI/180;
     const r=(zi===3?!inside:inside)?WORLD.INNER_RING:WORLD.OUTER_RING;
@@ -495,7 +503,7 @@ $('directory').addEventListener('keydown',e=>{
   }
 });
 function fail(message){failed=true;if(ready)clearInput();$('error-message').textContent=message;$('error').hidden=false;$('intro').classList.add('gone');$('hud').inert=true;}
-if(!window.THREE){fail('三维引擎未能加载。请检查网络后刷新，或从目录访问全部 26 个入口。');return;}
+if(!window.THREE){fail('三维引擎未能加载。请检查网络后刷新，或从目录访问全部 32 个入口。');return;}
 if(!window.CourtyardArchitecture||!window.CourtyardInfrastructure||!window.CourtyardRuntime){fail('建筑资源未能加载。请刷新重试，或从目录访问全部入口。');return;}
 if(!window.CourtyardContent||![0,1,2,3,4,5,6,7,10,12,13,14,15,16,17,18,19,20,21,22,24,25].every(i=>window.CourtyardContentBuilders?.[i])){fail('内容空间资源未能完整加载。请刷新重试，或从目录直接访问。');return;}
 let renderer;
@@ -1883,7 +1891,7 @@ LINKS.forEach((entry,index)=>{
   mesh(G.cylinder,M.wood,beacon,0,0,0,.07,.27,.07);
   mesh(G.sphere,M.glow,beacon,0,.2,0,.11,.16,.11);halo(beacon,0,.2,0,1.35,.4);
   // An emissive miniature lantern avoids adding 26 expensive PointLights.
-  const targetHeight=({7:54,9:60,10:56,23:50,24:48})[index]||[32,36,30,30,30,38,34,36,36,36,36,30,42,30,30,30,32,30,34,36,30,34,34,36,36,32][index];
+  const targetHeight=({7:54,9:60,10:56,23:50,24:48})[index]||[32,36,30,30,30,38,34,36,36,36,36,30,42,30,30,30,32,30,34,36,30,34,34,36,36,32][index]||34;
   const lm={entry,group,name,glow,lightHalo,marker,beacon,index,zproc,activation:0,site:terraceSites[index],targetHeight};landmarks.push(lm);
   if(index!==23){
     const fallback=new THREE.Group();zproc.forEach(m=>fallback.add(m));
@@ -2238,7 +2246,7 @@ const cameraState={yaw:0,pitch:WORLD.CAMERA_PITCH,distance:WORLD.CAMERA_DISTANCE
   anchor:camTarget,effectiveDistance:WORLD.CAMERA_DISTANCE,renderYaw:0,renderPitch:WORLD.CAMERA_PITCH,initialized:false};
 const visited=new Set();
 try{const saved=JSON.parse(localStorage.getItem('garden-visited-v1')||'[]');if(Array.isArray(saved))saved.forEach(url=>{const i=LINKS.findIndex(entry=>entry.url===url);if(i>=0)visited.add(i);});}catch(error){/* Storage may be unavailable in private mode. */}
-function updateVisited(){$('visited').textContent=String(visited.size).padStart(2,'0')+' / 26';}
+function updateVisited(){$('visited').textContent=String(visited.size).padStart(2,'0')+' / '+String(LINKS.length).padStart(2,'0');}
 function markVisited(index){
   if(index<0||visited.has(index))return;visited.add(index);updateVisited();
   try{localStorage.setItem('garden-visited-v1',JSON.stringify([...visited].map(i=>LINKS[i].url)));}catch(error){/* Keep progress for this session. */}
@@ -3484,7 +3492,7 @@ if(new URLSearchParams(location.search).has('architectureQA'))window.__garden.ar
 if(explorationEnabled){
  try{explorationWorld=window.CourtyardExplorationWorld.create({THREE,scene,player,body,camera,cameraLook,cameraState,motor,keys,joy,records:architecturalRecords,landmarks,navigation:navigationBuildings,
   environment:[hemi,moon,moon.target,sun,sun.target,fill,skyDome,stars,sunOrb,sunHalo,sunCorona,moonOrb,moonHalo,moonGlow,...clouds],renderPass:mainRenderPass,
-  skyTick,stepWalker,stepOrbit,clear:clearInput,cancelLook(){for(const el of [renderer.domElement,$('viewpad')])el.dispatchEvent(new Event('pointercancel'));},modalOpen,reader:readingRoom,actions:buildingActions,updateButterfly:dt=>updateButterflySea(dt,landmarks[23]),updateButterflyReflection:updateButterflySeaReflection,lightQuality:()=>lightQuality,reduced:()=>reduced});}catch(error){console.warn('Exploration initialization failed',error);fail('探索世界暂时无法完整加载。请刷新重试，或从目录直接阅读全部 26 处内容。');return;}
+  skyTick,stepWalker,stepOrbit,clear:clearInput,cancelLook(){for(const el of [renderer.domElement,$('viewpad')])el.dispatchEvent(new Event('pointercancel'));},modalOpen,reader:readingRoom,actions:buildingActions,updateButterfly:dt=>updateButterflySea(dt,landmarks[23]),updateButterflyReflection:updateButterflySeaReflection,lightQuality:()=>lightQuality,reduced:()=>reduced});}catch(error){console.warn('Exploration initialization failed',error);fail('探索世界暂时无法完整加载。请刷新重试，或从目录直接阅读全部 32 处内容。');return;}
  $('world').setAttribute('aria-label','可探索的海陆空世界。WASD 或摇杆移动，M 地图与自由传送，E 进入建筑关卡，F 飞行，V 载具，B 登船。');$('home').textContent='回起点';$('home').title='安全返回起航岛（R）';document.querySelector('.subtitle').textContent='数字庭院 · 远行';
  document.querySelector('.intro-kicker').textContent='A WORLD OF THOUGHTS / 海 · 陆 · 空';
  document.querySelector('.intro-description').innerHTML='作品与故事，散落在大陆、群岛和云端。<br>步行、驾车、乘船，或者展开翼远行。';
